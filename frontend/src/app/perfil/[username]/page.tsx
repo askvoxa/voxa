@@ -11,6 +11,7 @@ type Profile = {
   min_price: number
   daily_limit: number
   questions_answered_today: number
+  is_active: boolean | null
 }
 
 type PublicAnswer = {
@@ -33,6 +34,7 @@ const DEMO_PROFILE: Profile = {
   min_price: 15,
   daily_limit: 20,
   questions_answered_today: 3,
+  is_active: true,
 }
 
 const DEMO_ANSWERS: PublicAnswer[] = [
@@ -170,11 +172,23 @@ export default async function PerfilPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today')
+    .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active')
     .eq('username', params.username)
     .single<Profile>()
 
   if (!profile) notFound()
+
+  if (profile.is_active === false) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center py-12 px-4">
+        <div className="text-center">
+          <p className="text-4xl mb-4">🚫</p>
+          <h1 className="text-xl font-bold text-white mb-2">Perfil indisponível</h1>
+          <p className="text-gray-500 text-sm">Esta conta foi desativada.</p>
+        </div>
+      </div>
+    )
+  }
 
   const { data: publicAnswers } = await supabase
     .from('questions')

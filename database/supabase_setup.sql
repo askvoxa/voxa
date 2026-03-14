@@ -17,6 +17,8 @@ CREATE TABLE profiles (
     daily_limit INTEGER DEFAULT 10,
     questions_answered_today INTEGER DEFAULT 0,
     referred_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

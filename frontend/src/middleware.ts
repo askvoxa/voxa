@@ -38,6 +38,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Rotas admin: exigem login + is_admin = true
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+    if (!profile?.is_admin) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
   // Se já está logado e tenta acessar /login, redireciona para /dashboard
   if (pathname === '/login' && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -47,5 +62,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/setup/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/setup/:path*', '/login', '/admin/:path*'],
 }
