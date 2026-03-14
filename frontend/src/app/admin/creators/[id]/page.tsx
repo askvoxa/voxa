@@ -1,54 +1,47 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { PLATFORM_FEE_RATE, CREATOR_NET_RATE } from '@/lib/constants'
 import { requireAdmin } from '@/lib/admin'
+import { getPlatformSettings, effectiveCreatorRate } from '@/lib/platform-settings'
 import BanToggle from './BanToggle'
 import RefundButton from './RefundButton'
+import CreatorParamsForm from './CreatorParamsForm'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-type Question = {
-  id: string
-  sender_name: string
-  content: string
-  price_paid: number
-  status: string
-  is_anonymous: boolean
-  created_at: string
-  answered_at: string | null
-}
-
 export default async function AdminCreatorDetailPage({ params }: { params: { id: string } }) {
   const adminId = await requireAdmin()
   if (!adminId) redirect('/dashboard')
 
-  const [{ data: profile }, { data: questions }] = await Promise.all([
+  const [{ data: profile }, { data: questions }, platformSettings] = await Promise.all([
     supabaseAdmin
       .from('profiles')
-      .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active, created_at')
+      .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active, created_at, custom_creator_rate, custom_deadline_hours')
       .eq('id', params.id)
       .single(),
     supabaseAdmin
       .from('questions')
       .select('id, sender_name, content, price_paid, status, is_anonymous, created_at, answered_at')
       .eq('creator_id', params.id)
-      .order('created_at', { ascending: false })
-      .returns<Question[]>(),
+      .order('created_at', { ascending: false }),
+    getPlatformSettings(),
   ])
 
   if (!profile) notFound()
 
   const qs = questions ?? []
 
+  const creatorRate = effectiveCreatorRate(platformSettings, profile.custom_creator_rate)
+  const platformFeeRate = 1 - creatorRate
+
   const totalGross = qs
     .filter(q => q.status === 'answered')
     .reduce((sum, q) => sum + Number(q.price_paid), 0)
-  const platformFee = totalGross * PLATFORM_FEE_RATE
-  const netEarnings = totalGross * CREATOR_NET_RATE
+  const platformFee = totalGross * platformFeeRate
+  const netEarnings = totalGross * creatorRate
   const answeredCount = qs.filter(q => q.status === 'answered').length
   const answerRate = qs.length > 0 ? Math.round((answeredCount / qs.length) * 100) : 0
   const avgPrice = answeredCount > 0 ? totalGross / answeredCount : 0
@@ -58,6 +51,8 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
 
   const fmt = (n: number) =>
     `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  const fmtPct = (r: number) => `${(r * 100).toFixed(1).replace(/\.0$/, '')}%`
 
   return (
     <div className="p-8">
@@ -107,9 +102,16 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
           <p className="text-xl font-bold text-gray-900">{fmt(totalGross)}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Líquido do Criador</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+            Líquido do Criador
+            {profile.custom_creator_rate !== null && (
+              <span className="ml-1 text-purple-600">(individual)</span>
+            )}
+          </p>
           <p className="text-xl font-bold text-green-600">{fmt(netEarnings)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Taxa plataforma: {fmt(platformFee)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Taxa ({fmtPct(platformFeeRate)}): {fmt(platformFee)}
+          </p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Taxa de Resposta</p>
@@ -122,6 +124,15 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
           <p className="text-xs text-gray-400 mt-0.5">Hoje: {profile.questions_answered_today}/{profile.daily_limit}</p>
         </div>
       </div>
+
+      {/* Individual params form */}
+      <CreatorParamsForm
+        creatorId={profile.id}
+        username={profile.username}
+        customCreatorRate={profile.custom_creator_rate ?? null}
+        customDeadlineHours={profile.custom_deadline_hours ?? null}
+        platformSettings={platformSettings}
+      />
 
       {/* Questions table */}
       <h2 className="text-lg font-bold text-gray-900 mb-4">Histórico de Perguntas ({qs.length})</h2>

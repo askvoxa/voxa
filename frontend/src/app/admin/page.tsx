@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { requireAdmin } from '@/lib/admin'
-import { PLATFORM_FEE_RATE } from '@/lib/constants'
+import { getPlatformSettings } from '@/lib/platform-settings'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,6 +23,8 @@ export default async function AdminPage() {
   // Defense in depth: verify admin beyond middleware
   const adminId = await requireAdmin()
   if (!adminId) redirect('/dashboard')
+
+  const platformSettings = await getPlatformSettings()
 
   const [
     { data: approvedTx },
@@ -52,7 +54,8 @@ export default async function AdminPage() {
 
   // Financial (still need row data for sum — transactions table is small)
   const gmv = (approvedTx ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
-  const fees = gmv * PLATFORM_FEE_RATE
+  const fees = gmv * platformSettings.platform_fee_rate
+  const feePct = `${(platformSettings.platform_fee_rate * 100).toFixed(1).replace(/\.0$/, '')}%`
   const refundsTotal = (refundedTx ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
 
   const totalQuestions = (pendingCount ?? 0) + (answeredCount ?? 0) + (expiredCount ?? 0)
@@ -69,7 +72,7 @@ export default async function AdminPage() {
       <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Financeiro</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <MetricCard label="GMV Total" value={fmt(gmv)} sub="Pagamentos aprovados" />
-        <MetricCard label="Receita da Plataforma (10%)" value={fmt(fees)} />
+        <MetricCard label={`Receita da Plataforma (${feePct})`} value={fmt(fees)} />
         <MetricCard label="Reembolsos Processados" value={fmt(refundsTotal)} />
       </div>
 
@@ -86,7 +89,7 @@ export default async function AdminPage() {
       <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Saúde Operacional</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <MetricCard label="Fila de Reembolsos" value={String(refundQueueCount ?? 0)} sub="Aguardando processamento" />
-        <MetricCard label="Perguntas Expiradas" value={String(expiredCount ?? 0)} sub="Sem resposta em 36h" />
+        <MetricCard label="Perguntas Expiradas" value={String(expiredCount ?? 0)} sub={`Sem resposta em ${platformSettings.response_deadline_hours}h`} />
         <MetricCard label="Criadores Banidos" value={String(bannedCreators ?? 0)} sub={`de ${totalCreators ?? 0} total`} />
       </div>
 

@@ -18,6 +18,9 @@ model Profile {
   referred_by_id           String?
   is_admin                 Boolean         @default(false)
   is_active                Boolean         @default(true)
+  // Individual overrides — null = use platform default from platform_settings
+  custom_creator_rate      Decimal?        @db.Decimal(5, 4)
+  custom_deadline_hours    Int?
   created_at               DateTime        @default(now())
   referred_by              Profile?        @relation("Referrals", fields: [referred_by_id], references: [id], onDelete: SetNull)
   referrals                Profile[]       @relation("Referrals")
@@ -80,6 +83,17 @@ model PaymentIntent {
   created_at       DateTime @default(now())
 
   @@map("payment_intents")
+}
+
+// Configurações globais da plataforma (singleton — id = 1).
+// Gerenciado pelo admin em /admin/settings.
+model PlatformSettings {
+  id                      Int      @id @default(1)
+  platform_fee_rate       Decimal  @default(0.1000) @db.Decimal(5, 4)
+  response_deadline_hours Int      @default(36)
+  updated_at              DateTime @default(now())
+
+  @@map("platform_settings")
 }
 
 // Fila de reembolsos — perguntas expiradas (>36h sem resposta) aguardando reembolso no MP.
