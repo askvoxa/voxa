@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import MercadoPagoConfig, { Payment } from 'mercadopago'
+import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 
 const mp = new MercadoPagoConfig({
@@ -52,14 +52,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ processed: 0, message: 'Nenhum reembolso pendente' })
   }
 
-  const paymentClient = new Payment(mp)
+  const refundClient = new PaymentRefund(mp)
   let processed = 0
   let failed = 0
 
   for (const item of pending) {
     try {
-      await paymentClient.refund({
-        id: item.mp_payment_id,
+      await refundClient.create({
+        payment_id: item.mp_payment_id,
         body: { amount: item.amount },
       })
 
