@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Pode ser alterado para "mysql", "sqlite", etc.
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id                       String     @id @default(uuid())
+  username                 String     @unique
+  bio                      String?
+  avatar_url               String?
+  min_price                Float      @default(0.0)
+  daily_limit              Int        @default(10)
+  questions_answered_today Int        @default(0)
+  referred_by_id           String?
+  referred_by              Profile?   @relation("Referrals", fields: [referred_by_id], references: [id], onDelete: SetNull)
+  referrals                Profile[]  @relation("Referrals")
+  questions                Question[]
+
+  @@map("profiles")
+}
+
+enum QuestionStatus {
+  pending
+  answered
+  expired
+}
+
+model Question {
+  id                 String         @id @default(uuid())
+  creator_id         String
+  creator            Profile        @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  sender_name        String
+  content            String
+  media_url          String?
+  status             QuestionStatus @default(pending)
+  price_paid         Float
+  service_type       String         @default("base")
+  is_anonymous       Boolean        @default(false)
+  is_shareable       Boolean        @default(false)
+  response_text      String?
+  response_audio_url String?
+  answered_at        DateTime?
+  created_at         DateTime       @default(now())
+  transactions       Transaction[]
+
+  @@map("questions")
+}
+
+model Transaction {
+  id             String   @id @default(uuid())
+  question_id    String
+  question       Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  amount         Float
+  status         String
+  payment_method String
+
+  @@map("transactions")
+}
