@@ -42,6 +42,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
 
+  // Ref para garantir revogação de URL ao desmontar o componente (evita memory leak)
+  const audioUrlRef = useRef<string | null>(null)
+  useEffect(() => { audioUrlRef.current = audioUrl }, [audioUrl])
+  useEffect(() => {
+    return () => { if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current) }
+  }, [])
+
   // Detecta suporte a MediaRecorder (iOS Safari não suporta)
   const [supportsRecording, setSupportsRecording] = useState(false)
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
+import { timingSafeEqual } from 'crypto'
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -33,7 +34,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const secret = searchParams.get('secret')
 
-  if (!process.env.REFUND_SECRET || secret !== process.env.REFUND_SECRET) {
+  const refundSecret = process.env.REFUND_SECRET
+  if (!refundSecret || !secret) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+  // Comparação timing-safe para evitar timing attacks
+  const secretsMatch = secret.length === refundSecret.length &&
+    timingSafeEqual(Buffer.from(secret), Buffer.from(refundSecret))
+  if (!secretsMatch) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 

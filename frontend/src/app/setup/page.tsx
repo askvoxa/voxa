@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { CREATOR_NET_RATE } from '@/lib/constants'
+
+const RESERVED_USERNAMES = new Set([
+  'admin', 'api', 'dashboard', 'login', 'setup', 'perfil', 'vender',
+  'auth', 'webhook', 'suporte', 'support', 'help', 'voxa', 'exemplo',
+])
 
 export default function SetupPage() {
   const router = useRouter()
@@ -32,6 +38,10 @@ export default function SetupPage() {
       setUsernameStatus('idle')
       return
     }
+    if (RESERVED_USERNAMES.has(username)) {
+      setUsernameStatus('taken')
+      return
+    }
     const timeout = setTimeout(async () => {
       setUsernameStatus('checking')
       const supabase = createClient()
@@ -39,7 +49,7 @@ export default function SetupPage() {
         .from('profiles')
         .select('id')
         .eq('username', username)
-        .single()
+        .maybeSingle()
       setUsernameStatus(data ? 'taken' : 'available')
     }, 500)
     return () => clearTimeout(timeout)
@@ -163,7 +173,7 @@ export default function SetupPage() {
           <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
             <p className="text-xs text-gray-400 mb-1">Estimativa mensal com essa configuração:</p>
             <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-instagram">
-              R$ {(minPrice * dailyLimit * 30 * 0.9).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              R$ {(minPrice * dailyLimit * 30 * CREATOR_NET_RATE).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">após 10% de taxa da plataforma</p>
           </div>

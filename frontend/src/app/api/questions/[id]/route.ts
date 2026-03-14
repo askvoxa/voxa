@@ -39,6 +39,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Informe a resposta' }, { status: 400 })
     }
 
+    // Validar que a URL de áudio vem do bucket correto do Supabase (evita URLs maliciosas)
+    if (response_audio_url) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const allowedPrefix = `${supabaseUrl}/storage/v1/object/public/responses/`
+      if (!String(response_audio_url).startsWith(allowedPrefix)) {
+        return NextResponse.json({ error: 'URL de áudio inválida' }, { status: 400 })
+      }
+    }
+
     // Atualizar a pergunta
     const { error: updateError } = await supabase
       .from('questions')

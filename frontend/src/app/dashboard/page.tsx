@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import QuestionList from './QuestionList'
+import { CREATOR_NET_RATE } from '@/lib/constants'
 
 type Question = {
   id: string
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
     .eq('status', 'answered')
 
   const earningsToday = (todayAnswered ?? []).reduce(
-    (sum, q) => sum + Number(q.price_paid) * 0.9, // desconta 10% da plataforma
+    (sum, q) => sum + Number(q.price_paid) * CREATOR_NET_RATE,
     0
   )
 

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     // Buscar o perfil do criador pelo username
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('id, username, min_price, daily_limit, questions_answered_today')
+      .select('id, username, min_price, daily_limit')
       .eq('username', username)
       .single()
 
@@ -48,8 +48,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Criador não encontrado' }, { status: 404 })
     }
 
-    // Validar limite diário
-    if (profile.questions_answered_today >= profile.daily_limit) {
+    // Validar limite diário via função SQL atômica (evita race condition)
+    const { data: canAccept, error: limitError } = await supabaseAdmin
+      .rpc('can_accept_question', { p_creator_id: profile.id })
+
+    if (limitError || !canAccept) {
       return NextResponse.json({ error: 'Limite diário atingido' }, { status: 422 })
     }
 

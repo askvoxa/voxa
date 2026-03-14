@@ -29,8 +29,8 @@ function verifyMPSignature(
 ): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET
   if (!secret) {
-    console.warn('[webhook] MP_WEBHOOK_SECRET não configurado — verificação de assinatura desabilitada')
-    return true
+    console.error('[webhook] MP_WEBHOOK_SECRET não configurado — rejeitar todas as requisições')
+    return false
   }
   if (!xSignature || !xRequestId) return false
 
@@ -99,6 +99,19 @@ export async function POST(request: Request) {
 
     if (!qd || !qd.creator_id || !qd.content) {
       console.error('[webhook] question_data inválido no intent:', externalRef)
+      return NextResponse.json({ received: true })
+    }
+
+    // Idempotência: verificar se este pagamento já foi processado antes de inserir
+    const { data: existingTransaction } = await supabaseAdmin
+      .from('transactions')
+      .select('id')
+      .eq('mp_payment_id', String(paymentId))
+      .maybeSingle()
+
+    if (existingTransaction) {
+      // Pagamento já processado — limpar intent residual (se houver) e retornar sucesso
+      await supabaseAdmin.from('payment_intents').delete().eq('id', externalRef)
       return NextResponse.json({ received: true })
     }
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import QuestionForm from './QuestionForm'
+import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 
 type Profile = {
   id: string
@@ -227,7 +228,7 @@ export default async function PerfilPage({
         {paymentStatus === 'approved' && (
           <div className="mx-6 mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
             <p className="text-green-400 font-bold text-sm">✓ Pagamento aprovado!</p>
-            <p className="text-gray-400 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até 36 horas.</p>
+            <p className="text-gray-400 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até {RESPONSE_DEADLINE_HOURS} horas.</p>
           </div>
         )}
         {paymentStatus === 'pending' && (

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import VisibilityToggle from './VisibilityToggle'
+import { CREATOR_NET_RATE } from '@/lib/constants'
 
 type AnsweredQuestion = {
   id: string
@@ -80,7 +81,7 @@ export default async function HistoryPage({
   const { data: allAnswered } = await totalQuery
 
   const totalGrossEarnings = (allAnswered ?? []).reduce((sum, q) => sum + Number(q.price_paid), 0)
-  const totalNetEarnings = totalGrossEarnings * 0.9
+  const totalNetEarnings = totalGrossEarnings * CREATOR_NET_RATE
   const totalCount = count ?? 0
   const avgPerQuestion = totalCount > 0 ? totalNetEarnings / totalCount : 0
   const totalPages = Math.ceil(totalCount / pageSize)
@@ -183,7 +184,7 @@ export default async function HistoryPage({
                   <div className="flex items-center gap-2">
                     <VisibilityToggle questionId={q.id} initialVisible={q.is_shareable} />
                     <span className="text-green-600 font-bold bg-green-50 border border-green-200 px-2 py-1 rounded-lg text-sm">
-                      +R$ {(Number(q.price_paid) * 0.9).toFixed(2).replace('.', ',')}
+                      +R$ {(Number(q.price_paid) * CREATOR_NET_RATE).toFixed(2).replace('.', ',')}
                     </span>
                   </div>
                 </div>

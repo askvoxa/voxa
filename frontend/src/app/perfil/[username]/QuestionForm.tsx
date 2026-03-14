@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
+import { PLATFORM_FEE_RATE, RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 
 type Props = {
   username: string
@@ -22,7 +23,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const [amount, setAmount] = useState(baseMin)
   const [name, setName] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
-  const [isShareable, setIsShareable] = useState(true)
+  const [isShareable, setIsShareable] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -42,6 +43,10 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
     }
     if (amount < currentMin) {
       setError(`Valor mínimo para ${serviceType === 'premium' ? 'Vídeo' : 'Base'} é R$ ${currentMin}.`)
+      return
+    }
+    if (amount > 10000) {
+      setError('Valor máximo é R$ 10.000.')
       return
     }
 
@@ -100,9 +105,11 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
             id="questionInput"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
+            maxLength={500}
             className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#DD2A7B] focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-500"
             placeholder="O que você quer saber? Sua pergunta será destacada na tela do criador."
           />
+          <p className="text-xs text-gray-600 text-right mt-1">{question.length}/500</p>
           <p className="text-xs text-gray-500 mt-2">
             <span className="text-red-400/80 font-semibold">Nota:</span> Mensagens ofensivas causarão banimento e cancelamento sem estorno.
           </p>
@@ -200,6 +207,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
             <input
               type="number"
               min={serviceType === 'premium' ? premiumMin : baseMin}
+              max={10000}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
               className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#DD2A7B] outline-none transition-all"
@@ -212,13 +220,13 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               <span className="font-semibold text-white">R$ {amount.toFixed(2).replace('.', ',')}</span>
             </div>
             <div className="flex justify-between text-sm text-gray-500 mb-3">
-              <span>Taxa de Serviço (10%)</span>
-              <span>R$ {(amount * 0.1).toFixed(2).replace('.', ',')}</span>
+              <span>Taxa de Serviço ({PLATFORM_FEE_RATE * 100}%)</span>
+              <span>R$ {(amount * PLATFORM_FEE_RATE).toFixed(2).replace('.', ',')}</span>
             </div>
             <div className="border-t border-white/10 pt-3 flex justify-between items-center">
               <span className="font-bold text-gray-300">Total a Pagar</span>
               <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-instagram">
-                R$ {(amount * 1.1).toFixed(2).replace('.', ',')}
+                R$ {(amount * (1 + PLATFORM_FEE_RATE)).toFixed(2).replace('.', ',')}
               </span>
             </div>
           </div>
@@ -240,14 +248,14 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               Preparando pagamento...
             </span>
           ) : (
-            `Pagar R$ ${(amount * 1.1).toFixed(2).replace('.', ',')} via Mercado Pago`
+            `Pagar R$ ${(amount * (1 + PLATFORM_FEE_RATE)).toFixed(2).replace('.', ',')} via Mercado Pago`
           )}
         </button>
 
         <div className="flex items-center justify-center gap-2 text-sm text-gray-400 bg-white/5 p-3 rounded-lg border border-white/5">
           <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
           <p className="leading-snug">
-            <strong className="text-gray-300">Garantia VOXA:</strong> Se o criador não responder em 36h, seu dinheiro é estornado 100% automaticamente.
+            <strong className="text-gray-300">Garantia VOXA:</strong> Se o criador não responder em {RESPONSE_DEADLINE_HOURS}h, seu dinheiro é estornado 100% automaticamente.
           </p>
         </div>
 

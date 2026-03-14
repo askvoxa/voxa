@@ -191,6 +191,62 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- SELECT * FROM cron.job;
 
 -- ============================================================
+-- Índices de performance
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_questions_creator_status ON questions(creator_id, status);
+CREATE INDEX IF NOT EXISTS idx_questions_creator_answered_at ON questions(creator_id, answered_at DESC);
+CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
+CREATE INDEX IF NOT EXISTS idx_payment_intents_creator ON payment_intents(creator_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_intents_preference ON payment_intents(mp_preference_id);
+CREATE INDEX IF NOT EXISTS idx_refund_queue_status ON refund_queue(status, created_at);
+
+-- Constraint de idempotência: evita transações duplicadas pelo mesmo pagamento MP
+ALTER TABLE transactions ADD CONSTRAINT IF NOT EXISTS transactions_mp_payment_id_unique UNIQUE (mp_payment_id);
+
+-- ============================================================
+-- Função: incremento atômico do contador diário (chamada ao responder pergunta)
+-- Rodar no SQL Editor se ainda não existir:
+-- ============================================================
+CREATE OR REPLACE FUNCTION increment_answered_today(profile_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE profiles SET questions_answered_today = questions_answered_today + 1
+  WHERE id = profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
+-- Função: verificação atômica do limite diário com lock pessimista
+-- Evita race condition quando múltiplos fãs enviam perguntas simultaneamente
+-- Conta perguntas já respondidas + payment_intents ativos (em processamento)
+-- ============================================================
+CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID)
+RETURNS boolean AS $$
+DECLARE
+  v_daily_limit integer;
+  v_answered_today integer;
+  v_pending_intents integer;
+BEGIN
+  -- Lock pessimista: serializa verificações concorrentes para o mesmo criador
+  SELECT daily_limit, questions_answered_today
+  INTO v_daily_limit, v_answered_today
+  FROM profiles
+  WHERE id = p_creator_id
+  FOR UPDATE;
+
+  -- Conta payment_intents ativos nas últimas 2h (pagamentos em andamento)
+  SELECT COUNT(*)
+  INTO v_pending_intents
+  FROM payment_intents
+  WHERE creator_id = p_creator_id
+    AND created_at > NOW() - INTERVAL '2 hours';
+
+  RETURN (v_answered_today + v_pending_intents) < v_daily_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
 -- Storage: criar bucket 'responses' para áudios
 -- (fazer via Dashboard: Storage > New Bucket > "responses" > Public)
 -- Ou via SQL:
