@@ -93,13 +93,6 @@ export default function SettingsPage() {
     setError('')
     setSuccess(false)
 
-    const trimmedAvatarUrl = avatarUrl.trim()
-    if (trimmedAvatarUrl && !trimmedAvatarUrl.startsWith('https://')) {
-      setError('URL da foto de perfil deve começar com https://')
-      setIsSaving(false)
-      return
-    }
-
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
@@ -110,7 +103,7 @@ export default function SettingsPage() {
         bio: bio.trim().slice(0, 200) || null,
         min_price: minPrice,
         daily_limit: dailyLimit,
-        avatar_url: trimmedAvatarUrl || null,
+        avatar_url: avatarUrl || null,
       })
       .eq('id', user.id)
 
@@ -176,40 +169,24 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex-1 space-y-3">
-              {/* Upload button */}
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="avatar-upload"
-                />
-                <label
-                  htmlFor="avatar-upload"
-                  className={`inline-flex items-center gap-2 cursor-pointer bg-gradient-instagram text-white text-sm font-semibold px-4 py-2 rounded-xl transition-opacity ${isUploading || isLoading ? 'opacity-50 pointer-events-none' : 'hover:opacity-90'}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  {isUploading ? 'Enviando...' : 'Fazer upload'}
-                </label>
-                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP ou GIF — máx. 5 MB</p>
-              </div>
-
-              {/* URL input */}
-              <div>
-                <p className="text-xs text-gray-500 mb-1 font-medium">Ou cole uma URL:</p>
-                <input
-                  type="url"
-                  value={avatarUrl}
-                  onChange={e => setAvatarUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
-                />
-              </div>
-
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="avatar-upload"
+              />
+              <label
+                htmlFor="avatar-upload"
+                className={`inline-flex items-center gap-2 cursor-pointer bg-gradient-instagram text-white text-sm font-semibold px-4 py-2 rounded-xl transition-opacity ${isUploading || isLoading ? 'opacity-50 pointer-events-none' : 'hover:opacity-90'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {isUploading ? 'Enviando...' : 'Fazer upload'}
+              </label>
+              <p className="text-xs text-gray-400">JPG, PNG, WebP ou GIF — máx. 5 MB</p>
               {avatarUrl && (
                 <button
                   type="button"
