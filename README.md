@@ -48,9 +48,14 @@ npm run dev
 
 Pronto! Seu servidor estará disponível em `http://localhost:3000`.
 
-## 📦 Deploy
+## 📦 Deploy (Produção)
 
-A aplicação está configurada e preparada para o lançamento no ambiente de nuvem do **Render**. Consulte as diretrizes contidas em documentações internas no repositório para realizar os builds e gerenciar o CI/CD adequadamente.
+A aplicação está oficialmente hospedada no ambiente de nuvem do **Render.com**. 
+Durante a homologação para produção, as seguintes arquiteturas foram consolidadas:
+
+- **Autenticação Segura (Google OAuth):** Configuração da variável `NEXT_PUBLIC_APP_URL` para suprimir os redirecionamentos de proxy reverso locais (`localhost:10000`) do Render, garantindo o retorno seguro para a dashboard no domínio oficial.
+- **Exportação de Stories HD:** A renderização de cards via `html2canvas` foi refatorada e otimizada (Scale 3x) utilizando Blobs em memória. Superou as limitações nativas de CSS Blur, garantindo download imediato em alta resolução diretamente do navegador do usuário sem onerar o servidor.
+- **Integração Mercado Pago:** Webhooks síncronos apontando para a URL de produção para a aprovação automática de pagamentos no banco de dados.
 
 ---
 > Produto desenvolvido no Brasil por Jeferson Kollenz.
