@@ -50,6 +50,10 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
       setError('Valor máximo é R$ 10.000.')
       return
     }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Informe um e-mail válido para continuar.')
+      return
+    }
 
     setError('')
     setIsSubmitting(true)
@@ -132,11 +136,12 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Seu E-mail (opcional)</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Seu E-mail</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
             className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#DD2A7B] outline-none transition-all placeholder-gray-500"
             placeholder="para@exemplo.com"
           />
