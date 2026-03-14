@@ -2,8 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams, origin: defaultOrigin } = new URL(request.url)
   const code = searchParams.get('code')
+  
+  // No Render, o request.url vem como localhost. Devemos forçar pela ENV do app original.
+  const origin = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || defaultOrigin
 
   if (code) {
     const supabase = createClient()
