@@ -8,17 +8,19 @@ datasource db {
 }
 
 model Profile {
-  id                       String     @id @default(uuid())
-  username                 String     @unique
+  id                       String          @id @default(uuid())
+  username                 String          @unique
   bio                      String?
   avatar_url               String?
-  min_price                Float      @default(0.0)
-  daily_limit              Int        @default(10)
-  questions_answered_today Int        @default(0)
+  min_price                Float           @default(10.0)
+  daily_limit              Int             @default(10)
+  questions_answered_today Int             @default(0)
   referred_by_id           String?
-  referred_by              Profile?   @relation("Referrals", fields: [referred_by_id], references: [id], onDelete: SetNull)
-  referrals                Profile[]  @relation("Referrals")
+  created_at               DateTime        @default(now())
+  referred_by              Profile?        @relation("Referrals", fields: [referred_by_id], references: [id], onDelete: SetNull)
+  referrals                Profile[]       @relation("Referrals")
   questions                Question[]
+  payment_intents          PaymentIntent[]
 
   @@map("profiles")
 }
@@ -51,12 +53,43 @@ model Question {
 }
 
 model Transaction {
-  id             String   @id @default(uuid())
-  question_id    String
-  question       Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
-  amount         Float
-  status         String
-  payment_method String
+  id               String   @id @default(uuid())
+  question_id      String
+  question         Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  amount           Float
+  status           String
+  payment_method   String
+  mp_payment_id    String?
+  mp_preference_id String?
+  created_at       DateTime @default(now())
 
   @@map("transactions")
+}
+
+// Tabela temporária — armazena dados da pergunta durante o fluxo de pagamento MP.
+// Deletada pelo webhook após confirmação do pagamento.
+model PaymentIntent {
+  id               String   @id @default(uuid())
+  creator_id       String
+  creator          Profile  @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  question_data    Json
+  amount           Decimal  @db.Decimal(10, 2)
+  mp_preference_id String?
+  created_at       DateTime @default(now())
+
+  @@map("payment_intents")
+}
+
+// Fila de reembolsos — perguntas expiradas (>36h sem resposta) aguardando reembolso no MP.
+// Processada por /api/refunds/process (cron externo ou Render.com Cron Jobs).
+model RefundQueue {
+  id            String    @id @default(uuid())
+  question_id   String
+  mp_payment_id String
+  amount        Decimal   @db.Decimal(10, 2)
+  status        String    @default("pending") // pending | processed | failed
+  created_at    DateTime  @default(now())
+  processed_at  DateTime?
+
+  @@map("refund_queue")
 }

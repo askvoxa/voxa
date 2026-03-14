@@ -116,6 +116,7 @@ export default function SetupPage() {
               rows={3}
               className="w-full bg-[#1a1a1a] border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-white/40 resize-none"
             />
+            <p className="text-right text-xs text-gray-500 mt-1">{bio.length}/200</p>
           </div>
 
           {/* Preço mínimo */}

@@ -24,6 +24,99 @@ type PublicAnswer = {
   answered_at: string | null
 }
 
+const DEMO_PROFILE: Profile = {
+  id: 'demo',
+  username: 'exemplo',
+  bio: 'Criadora de conteúdo fitness 💪 | Nutricionista e personal trainer. Respondendo suas dúvidas sobre treino, dieta e saúde.',
+  avatar_url: null,
+  min_price: 15,
+  daily_limit: 20,
+  questions_answered_today: 3,
+}
+
+const DEMO_ANSWERS: PublicAnswer[] = [
+  {
+    id: '1',
+    sender_name: 'João',
+    content: 'Qual é a melhor proteína para quem está começando na academia?',
+    service_type: 'base',
+    is_anonymous: false,
+    price_paid: 25,
+    response_text: 'Para iniciantes, o Whey Concentrado é a melhor escolha custo-benefício. Consuma 1 dose logo após o treino com água ou leite desnatado. Priorize marcas com pelo menos 20g de proteína por porção.',
+    response_audio_url: null,
+    answered_at: new Date(Date.now() - 2 * 3600000).toISOString(),
+  },
+  {
+    id: '2',
+    sender_name: 'Anônimo',
+    content: 'Como perder gordura abdominal sem perder massa muscular?',
+    service_type: 'base',
+    is_anonymous: true,
+    price_paid: 40,
+    response_text: 'O segredo é déficit calórico moderado (300–500 kcal) mantendo proteína alta (2g/kg de peso). Combine treino de força com cardio leve. Evite dietas muito restritivas que quebram músculo.',
+    response_audio_url: null,
+    answered_at: new Date(Date.now() - 24 * 3600000).toISOString(),
+  },
+]
+
+function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: PublicAnswer[], avatarUrl: string, displayName: string }) {
+  return (
+    <div className="w-full max-w-2xl mt-16 px-2">
+      <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+        <svg className="w-6 h-6 text-[#DD2A7B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+        Respostas Recentes
+      </h3>
+      <div className="space-y-6">
+        {publicAnswers.map((item) => (
+          <div key={item.id} className="bg-[#111] rounded-[24px] p-6 border border-white/5 shadow-sm hover:border-white/10 transition-colors">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-lg shadow-inner">
+                  {item.is_anonymous ? '👻' : '👤'}
+                </div>
+                <div>
+                  <p className="font-bold text-white text-sm">
+                    {item.is_anonymous ? 'Usuário Anônimo' : item.sender_name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {item.service_type === 'premium' ? '🎥 Vídeo' : '💬 Resposta Base'}
+                  </p>
+                </div>
+              </div>
+              <span className="text-green-400 font-bold bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg text-xs">
+                R$ {Number(item.price_paid).toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            <p className="text-gray-300 text-lg font-medium mb-4 leading-relaxed">
+              &ldquo;{item.content}&rdquo;
+            </p>
+
+            <div className="bg-[#1a1a1a] shadow-inner rounded-2xl p-4 border border-white/5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-gradient-instagram p-[1px]">
+                  <img className="w-full h-full rounded-full object-cover" src={avatarUrl} alt="Creator" />
+                </div>
+                <span className="text-xs font-bold text-gray-400">{displayName} respondeu:</span>
+              </div>
+
+              {item.response_audio_url && (
+                <audio controls src={item.response_audio_url} className="w-full mt-1" preload="none" />
+              )}
+
+              {item.response_text && !item.response_audio_url && (
+                <p className="text-gray-200 text-sm leading-relaxed">{item.response_text}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default async function PerfilPage({
   params,
   searchParams,
@@ -32,6 +125,46 @@ export default async function PerfilPage({
   searchParams: { payment_status?: string }
 }) {
   const paymentStatus = searchParams.payment_status
+
+  // Perfil de demonstração — não requer banco de dados
+  if (params.username === 'exemplo') {
+    const profile = DEMO_PROFILE
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=exemplo`
+    const displayName = `@${profile.username}`
+
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center py-12 px-4 sm:px-6">
+        <div className="w-full max-w-lg bg-[#111] rounded-[32px] shadow-2xl border border-white/10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#DD2A7B] opacity-5 blur-[100px] rounded-full pointer-events-none -mt-32 -mr-32"></div>
+          <div className="h-32 bg-gradient-instagram relative">
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 rounded-full p-1 bg-[#111]">
+              <img className="w-24 h-24 rounded-full border-4 border-[#111] object-cover" src={avatarUrl} alt={displayName} />
+            </div>
+          </div>
+          <div className="pt-16 pb-8 px-8 text-center border-b border-white/5 relative z-10">
+            <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full text-xs text-yellow-400 font-semibold mb-3">
+              ✨ Perfil de demonstração
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
+            {profile.bio && <p className="text-gray-400 text-sm mb-4 leading-relaxed">{profile.bio}</p>}
+            <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold text-gray-300">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              Aceitando perguntas hoje (17/20)
+            </div>
+          </div>
+          <QuestionForm
+            username={profile.username}
+            minPrice={profile.min_price}
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            disabled={true}
+          />
+        </div>
+        <AnswerFeed publicAnswers={DEMO_ANSWERS} avatarUrl={avatarUrl} displayName={displayName} />
+      </div>
+    )
+  }
+
   const supabase = createClient()
 
   const { data: profile } = await supabase
@@ -94,7 +227,7 @@ export default async function PerfilPage({
         {paymentStatus === 'approved' && (
           <div className="mx-6 mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
             <p className="text-green-400 font-bold text-sm">✓ Pagamento aprovado!</p>
-            <p className="text-gray-400 text-xs mt-1">Sua pergunta foi enviada com sucesso. O criador responderá em até 36h.</p>
+            <p className="text-gray-400 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até 36 horas.</p>
           </div>
         )}
         {paymentStatus === 'pending' && (
@@ -122,60 +255,7 @@ export default async function PerfilPage({
 
       {/* Feed de respostas públicas */}
       {publicAnswers && publicAnswers.length > 0 && (
-        <div className="w-full max-w-2xl mt-16 px-2">
-          <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-            <svg className="w-6 h-6 text-[#DD2A7B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-            Respostas Recentes
-          </h3>
-
-          <div className="space-y-6">
-            {publicAnswers.map((item) => (
-              <div key={item.id} className="bg-[#111] rounded-[24px] p-6 border border-white/5 shadow-sm hover:border-white/10 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-lg shadow-inner">
-                      {item.is_anonymous ? '👻' : '👤'}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white text-sm">
-                        {item.is_anonymous ? 'Usuário Anônimo' : item.sender_name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {item.service_type === 'premium' ? '🎥 Vídeo' : '💬 Resposta Base'}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-green-400 font-bold bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg text-xs">
-                    R$ {Number(item.price_paid).toFixed(2).replace('.', ',')}
-                  </span>
-                </div>
-
-                <p className="text-gray-300 text-lg font-medium mb-4 leading-relaxed">
-                  &ldquo;{item.content}&rdquo;
-                </p>
-
-                <div className="bg-[#1a1a1a] shadow-inner rounded-2xl p-4 border border-white/5 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-gradient-instagram p-[1px]">
-                      <img className="w-full h-full rounded-full object-cover" src={avatarUrl} alt="Creator" />
-                    </div>
-                    <span className="text-xs font-bold text-gray-400">{displayName} respondeu:</span>
-                  </div>
-
-                  {item.response_audio_url && (
-                    <audio controls src={item.response_audio_url} className="w-full mt-1" />
-                  )}
-
-                  {item.response_text && !item.response_audio_url && (
-                    <p className="text-gray-200 text-sm leading-relaxed">{item.response_text}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} />
       )}
     </div>
   )

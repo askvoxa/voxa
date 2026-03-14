@@ -71,7 +71,9 @@ export default async function DashboardPage() {
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="font-bold text-xl text-gradient-instagram">VOXA</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 hidden sm:block">@{profile.username}</span>
+            <a href="/dashboard/history" className="text-sm text-gray-500 hover:text-gray-800 transition-colors hidden sm:block">Histórico</a>
+            <a href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-800 transition-colors hidden sm:block">Configurações</a>
+            <a href={`/perfil/${profile.username}`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors hidden sm:block">@{profile.username}</a>
             <div className="w-10 h-10 rounded-full bg-gradient-instagram p-[2px]">
               <div className="w-full h-full rounded-full bg-white overflow-hidden">
                 <img src={avatarUrl} alt={profile.username} className="object-cover w-full h-full" />

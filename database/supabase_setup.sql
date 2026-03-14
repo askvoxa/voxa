@@ -124,7 +124,6 @@ ALTER TABLE payment_intents ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- Função para resetar questions_answered_today à meia-noite
--- (opcional — pode ser chamada via cron do Supabase)
 -- ============================================================
 CREATE OR REPLACE FUNCTION reset_daily_question_counts()
 RETURNS void AS $$
@@ -132,6 +131,64 @@ BEGIN
     UPDATE profiles SET questions_answered_today = 0;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Tabela de fila de reembolsos
+-- Populada automaticamente pela função expire_pending_questions()
+-- Processada pelo endpoint GET /api/refunds/process
+-- ============================================================
+CREATE TABLE IF NOT EXISTS refund_queue (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+    mp_payment_id TEXT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status TEXT DEFAULT 'pending', -- pending | processed | failed
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE refund_queue ENABLE ROW LEVEL SECURITY;
+-- Apenas service role acessa (sem políticas públicas)
+
+-- ============================================================
+-- Função para expirar perguntas pendentes após 36h e enfileirar reembolso
+-- Chamada a cada 30 minutos via cron
+-- ============================================================
+CREATE OR REPLACE FUNCTION expire_pending_questions()
+RETURNS void AS $$
+DECLARE
+    expired_question RECORD;
+BEGIN
+    FOR expired_question IN
+        SELECT q.id, t.mp_payment_id, t.amount
+        FROM questions q
+        JOIN transactions t ON t.question_id = q.id
+        WHERE q.status = 'pending'
+          AND q.created_at < NOW() - INTERVAL '36 hours'
+    LOOP
+        UPDATE questions SET status = 'expired' WHERE id = expired_question.id;
+        INSERT INTO refund_queue (question_id, mp_payment_id, amount)
+        VALUES (expired_question.id, expired_question.mp_payment_id, expired_question.amount);
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
+-- Cron jobs (requerem extensão pg_cron — habilitar no painel Supabase)
+-- Painel: Database > Extensions > pg_cron
+-- ============================================================
+
+-- Habilitar pg_cron (rodar uma vez se não estiver ativo):
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Reset diário às 03:00 UTC (meia-noite BRT = UTC-3)
+-- SELECT cron.schedule('reset-daily-counts', '0 3 * * *', $$SELECT reset_daily_question_counts()$$);
+
+-- Expirar perguntas antigas a cada 30 minutos
+-- SELECT cron.schedule('expire-questions', '*/30 * * * *', $$SELECT expire_pending_questions()$$);
+
+-- Verificar agendamentos ativos:
+-- SELECT * FROM cron.job;
 
 -- ============================================================
 -- Storage: criar bucket 'responses' para áudios

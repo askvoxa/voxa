@@ -13,6 +13,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const VALID_SERVICE_TYPES = ['base', 'premium'] as const
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -20,6 +22,19 @@ export async function POST(request: Request) {
 
     if (!username || !question || !amount) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
+    }
+
+    // Sanitizar e validar entradas
+    const sanitizedQuestion = String(question).trim().slice(0, 1000)
+    const sanitizedName = String(name || '').trim().slice(0, 100)
+    const sanitizedServiceType: 'base' | 'premium' = VALID_SERVICE_TYPES.includes(serviceType) ? serviceType : 'base'
+    const sanitizedAmount = Number(amount)
+
+    if (!sanitizedQuestion) {
+      return NextResponse.json({ error: 'Pergunta inválida' }, { status: 400 })
+    }
+    if (isNaN(sanitizedAmount) || sanitizedAmount <= 0 || sanitizedAmount > 10000) {
+      return NextResponse.json({ error: 'Valor inválido' }, { status: 400 })
     }
 
     // Buscar o perfil do criador pelo username
@@ -39,12 +54,12 @@ export async function POST(request: Request) {
     }
 
     // Validar valor mínimo
-    const minPrice = serviceType === 'premium' ? Math.max(50, profile.min_price) : profile.min_price
-    if (amount < minPrice) {
+    const minPrice = sanitizedServiceType === 'premium' ? Math.max(50, profile.min_price) : profile.min_price
+    if (sanitizedAmount < minPrice) {
       return NextResponse.json({ error: `Valor mínimo é R$ ${minPrice}` }, { status: 422 })
     }
 
-    const total = Number((amount * 1.1).toFixed(2))
+    const total = Number((sanitizedAmount * 1.1).toFixed(2))
     const externalRef = randomUUID()
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -57,12 +72,12 @@ export async function POST(request: Request) {
         amount: total,
         question_data: {
           creator_id: profile.id,
-          sender_name: isAnonymous ? 'Anônimo' : (name?.trim() || 'Anônimo'),
-          content: question.trim(),
-          price_paid: amount,
-          service_type: serviceType,
-          is_anonymous: isAnonymous,
-          is_shareable: isShareable,
+          sender_name: isAnonymous ? 'Anônimo' : (sanitizedName || 'Anônimo'),
+          content: sanitizedQuestion,
+          price_paid: sanitizedAmount,
+          service_type: sanitizedServiceType,
+          is_anonymous: Boolean(isAnonymous),
+          is_shareable: Boolean(isShareable),
         },
       })
 
@@ -79,8 +94,8 @@ export async function POST(request: Request) {
         items: [
           {
             id: externalRef,
-            title: `Pergunta para @${username} (${serviceType === 'premium' ? 'Vídeo' : 'Base'})`,
-            description: question.trim().slice(0, 256),
+            title: `Pergunta para @${username} (${sanitizedServiceType === 'premium' ? 'Vídeo' : 'Base'})`,
+            description: sanitizedQuestion.slice(0, 256),
             quantity: 1,
             unit_price: total,
             currency_id: 'BRL',

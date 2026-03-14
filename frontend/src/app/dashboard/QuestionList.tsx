@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import html2canvas from 'html2canvas'
 import { createClient } from '@/lib/supabase/client'
 
@@ -24,6 +24,8 @@ type Props = {
 
 type ResponseMode = 'text' | 'audio' | null
 
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024 // 10MB
+
 export default function QuestionList({ questions: initial, creatorUsername, creatorId }: Props) {
   const [questions, setQuestions] = useState<Question[]>(initial)
   const [respondingTo, setRespondingTo] = useState<string | null>(null)
@@ -31,6 +33,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const [responseText, setResponseText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Áudio
   const [recording, setRecording] = useState(false)
@@ -39,16 +42,30 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
 
+  // Detecta suporte a MediaRecorder (iOS Safari não suporta)
+  const [supportsRecording, setSupportsRecording] = useState(false)
+  useEffect(() => {
+    setSupportsRecording(typeof window !== 'undefined' && !!window.MediaRecorder)
+  }, [])
+
   // Story modal
   const [selectedStory, setSelectedStory] = useState<Question | null>(null)
   const storyRef = useRef<HTMLDivElement>(null)
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg)
+    setTimeout(() => setSuccessMessage(''), 3500)
+  }
 
   const openRespond = (id: string, mode: ResponseMode) => {
     setRespondingTo(id)
     setResponseMode(mode)
     setResponseText('')
     setAudioBlob(null)
-    setAudioUrl(null)
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+      setAudioUrl(null)
+    }
     setSubmitError('')
   }
 
@@ -56,9 +73,14 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setRespondingTo(null)
     setResponseMode(null)
     stopRecording()
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+      setAudioUrl(null)
+    }
+    setAudioBlob(null)
   }
 
-  // ── Gravação de áudio ──────────────────────────────────────────
+  // ── Gravação de áudio (desktop/Android) ────────────────────────
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -83,7 +105,22 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop()
     }
+    mediaRecorderRef.current = null
     setRecording(false)
+  }
+
+  // ── Upload de arquivo de áudio (fallback iOS Safari) ───────────
+  const handleAudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_AUDIO_SIZE) {
+      setSubmitError('Arquivo muito grande. Máximo 10MB.')
+      return
+    }
+    setAudioBlob(file)
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    setAudioUrl(URL.createObjectURL(file))
+    setSubmitError('')
   }
 
   // ── Envio da resposta ──────────────────────────────────────────
@@ -95,14 +132,22 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
       let response_audio_url: string | null = null
 
       if (responseMode === 'audio' && audioBlob) {
-        // Upload para Supabase Storage
-        const supabase = createClient()
-        const fileName = `${creatorId}/${questionId}-${Date.now()}.webm`
-        const { error: uploadError } = await supabase.storage
-          .from('responses')
-          .upload(fileName, audioBlob, { contentType: 'audio/webm', upsert: true })
+        if (audioBlob.size > MAX_AUDIO_SIZE) {
+          throw new Error('Arquivo de áudio muito grande. Máximo 10MB.')
+        }
 
-        if (uploadError) throw new Error('Erro ao enviar áudio: ' + uploadError.message)
+        const supabase = createClient()
+        const ext = audioBlob.type.includes('webm') ? 'webm' : 'mp3'
+        const fileName = `${creatorId}/${questionId}-${Date.now()}.${ext}`
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('responses')
+          .upload(fileName, audioBlob, { contentType: audioBlob.type || 'audio/webm', upsert: true })
+
+        // Verificar explicitamente se upload foi bem-sucedido antes de prosseguir
+        if (uploadError || !uploadData) {
+          throw new Error('Erro ao enviar áudio. Tente novamente.')
+        }
 
         const { data: urlData } = supabase.storage.from('responses').getPublicUrl(fileName)
         response_audio_url = urlData.publicUrl
@@ -123,9 +168,10 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
         throw new Error(data.error ?? 'Erro ao salvar resposta')
       }
 
-      // Remover da lista otimisticamente
+      // Remover da lista somente após confirmação da API (sem remoção otimista prematura)
       setQuestions(prev => prev.filter(q => q.id !== questionId))
       closeRespond()
+      showSuccess('Resposta enviada com sucesso!')
     } catch (err: any) {
       setSubmitError(err.message)
     } finally {
@@ -137,10 +183,10 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const downloadStory = async () => {
     if (!storyRef.current) return
     try {
-      const canvas = await html2canvas(storyRef.current, { 
-        useCORS: true, 
-        scale: 3, // Aumenta a resolução
-        backgroundColor: null // Evita fundos pretos/cinzas inesperados
+      const canvas = await html2canvas(storyRef.current, {
+        useCORS: true,
+        scale: 3,
+        backgroundColor: null,
       } as any)
       canvas.toBlob((blob) => {
         if (!blob) {
@@ -187,6 +233,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
   return (
     <>
+      {/* Toast de sucesso */}
+      {successMessage && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg text-sm">
+          ✓ {successMessage}
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
         <h3 className="text-xl font-bold mb-6">Perguntas Pendentes</h3>
 
@@ -235,6 +288,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                         onChange={e => setResponseText(e.target.value)}
                         placeholder="Digite sua resposta..."
                         rows={4}
+                        maxLength={5000}
                         className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#DD2A7B] resize-none"
                       />
                     )}
@@ -243,21 +297,38 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
                         {audioUrl ? (
                           <>
-                            <audio controls src={audioUrl} className="w-full" />
+                            <audio controls src={audioUrl} className="w-full" preload="metadata" />
                             <button
-                              onClick={() => { setAudioBlob(null); setAudioUrl(null) }}
+                              onClick={() => {
+                                if (audioUrl) URL.revokeObjectURL(audioUrl)
+                                setAudioBlob(null)
+                                setAudioUrl(null)
+                              }}
                               className="text-xs text-gray-500 underline"
                             >
                               Regravar
                             </button>
                           </>
-                        ) : (
+                        ) : supportsRecording ? (
                           <button
                             onClick={recording ? stopRecording : startRecording}
                             className={`w-full py-3 rounded-xl font-bold text-white transition-all ${recording ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-purple-500 to-[#DD2A7B]'}`}
                           >
                             {recording ? '⏹ Parar gravação' : '🎙️ Iniciar gravação'}
                           </button>
+                        ) : (
+                          <div>
+                            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-3">
+                              Gravação não disponível neste navegador. Envie um arquivo de áudio:
+                            </p>
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              onChange={handleAudioFileUpload}
+                              className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#DD2A7B] file:text-white hover:file:opacity-90"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Máximo 10MB (MP3, M4A, WAV)</p>
+                          </div>
                         )}
                       </div>
                     )}
@@ -278,7 +349,8 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       </button>
                       <button
                         onClick={closeRespond}
-                        className="px-4 py-3 border border-gray-200 rounded-xl text-gray-500 text-sm font-medium hover:bg-gray-50"
+                        disabled={isSubmitting}
+                        className="px-4 py-3 border border-gray-200 rounded-xl text-gray-500 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
                       >
                         Cancelar
                       </button>
