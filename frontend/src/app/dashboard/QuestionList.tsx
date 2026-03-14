@@ -37,6 +37,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
   // Áudio
   const [recording, setRecording] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -55,9 +56,24 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setSupportsRecording(typeof window !== 'undefined' && !!window.MediaRecorder)
   }, [])
 
+  // Timer de gravação
+  useEffect(() => {
+    if (!recording) { setRecordingSeconds(0); return }
+    const interval = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+    return () => clearInterval(interval)
+  }, [recording])
+
   // Story modal
   const [selectedStory, setSelectedStory] = useState<Question | null>(null)
   const storyRef = useRef<HTMLDivElement>(null)
+
+  // Fechar modal com ESC
+  useEffect(() => {
+    if (!selectedStory) return
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedStory(null) }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [selectedStory])
 
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg)
@@ -321,7 +337,9 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                             onClick={recording ? stopRecording : startRecording}
                             className={`w-full py-3 rounded-xl font-bold text-white transition-all ${recording ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-purple-500 to-[#DD2A7B]'}`}
                           >
-                            {recording ? '⏹ Parar gravação' : '🎙️ Iniciar gravação'}
+                            {recording
+                              ? `⏹ Parar gravação — ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`
+                              : '🎙️ Iniciar gravação'}
                           </button>
                         ) : (
                           <div>

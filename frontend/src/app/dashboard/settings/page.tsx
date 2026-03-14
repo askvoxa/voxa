@@ -19,7 +19,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +83,8 @@ export default function SettingsPage() {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.path)
     setAvatarUrl(publicUrl)
     setIsUploading(false)
+    setSuccessMessage('Avatar atualizado com sucesso!')
+    setTimeout(() => setSuccessMessage(''), 3000)
 
     // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -91,7 +93,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true)
     setError('')
-    setSuccess(false)
+    setSuccessMessage('')
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -111,8 +113,8 @@ export default function SettingsPage() {
     if (updateError) {
       setError('Erro ao salvar. Tente novamente.')
     } else {
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
+      setSuccessMessage('Configurações salvas com sucesso!')
+      setTimeout(() => setSuccessMessage(''), 3000)
     }
   }
 
@@ -121,8 +123,36 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400">Carregando...</div>
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+          <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+              <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="flex items-start gap-4">
+              <div className="w-20 h-20 rounded-full bg-gray-200 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-3">
+                <div className="h-9 w-32 bg-gray-200 rounded-xl animate-pulse" />
+                <div className="h-3 w-44 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+          {[0, 1, 2].map(i => (
+            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="h-5 w-40 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="h-4 w-64 bg-gray-100 rounded animate-pulse mb-4" />
+              <div className="h-10 w-full bg-gray-100 rounded-xl animate-pulse" />
+            </div>
+          ))}
+          <div className="h-14 w-full bg-gray-200 rounded-2xl animate-pulse" />
+        </main>
       </div>
     )
   }
@@ -255,9 +285,9 @@ export default function SettingsPage() {
 
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-        {success && (
+        {successMessage && (
           <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
-            <p className="text-green-600 font-semibold text-sm">✓ Configurações salvas com sucesso!</p>
+            <p className="text-green-600 font-semibold text-sm">✓ {successMessage}</p>
           </div>
         )}
 

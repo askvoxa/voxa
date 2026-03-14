@@ -248,7 +248,7 @@ export default async function PerfilPage({
         {paymentStatus === 'pending' && (
           <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl text-center">
             <p className="text-yellow-400 font-bold text-sm">⏳ Pagamento em processamento</p>
-            <p className="text-gray-400 text-xs mt-1">PIX ou boleto pendente. Sua pergunta será ativada assim que o pagamento for confirmado.</p>
+            <p className="text-gray-400 text-xs mt-1">Se pagou via PIX, pode levar até 5 minutos para confirmar. Sua pergunta será enviada automaticamente assim que o pagamento for aprovado.</p>
           </div>
         )}
         {paymentStatus === 'failure' && (
@@ -269,8 +269,12 @@ export default async function PerfilPage({
       </div>
 
       {/* Feed de respostas públicas */}
-      {publicAnswers && publicAnswers.length > 0 && (
+      {publicAnswers && publicAnswers.length > 0 ? (
         <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} />
+      ) : (
+        <div className="w-full max-w-2xl mt-12 px-4 text-center">
+          <p className="text-gray-600 text-sm">Ainda não há respostas públicas neste perfil.</p>
+        </div>
       )}
     </div>
   )

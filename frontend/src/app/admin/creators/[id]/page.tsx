@@ -154,6 +154,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
       {/* Questions table */}
       <h2 className="text-lg font-bold text-gray-900 mb-4">Histórico de Perguntas ({qs.length})</h2>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100">
@@ -203,6 +204,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

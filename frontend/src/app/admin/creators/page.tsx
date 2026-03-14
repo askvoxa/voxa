@@ -21,6 +21,7 @@ export default async function AdminCreatorsPage() {
     <div className="p-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Todos os Criadores</h1>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100">
@@ -75,6 +76,7 @@ export default async function AdminCreatorsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
