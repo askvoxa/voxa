@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import QuestionForm from './QuestionForm'
+import AnswerFeedback from './AnswerFeedback'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 
 type Profile = {
@@ -12,6 +13,7 @@ type Profile = {
   daily_limit: number
   questions_answered_today: number
   is_active: boolean | null
+  fast_ask_suggestions?: Array<{ label: string; question: string; amount: number }>
 }
 
 type PublicAnswer = {
@@ -84,7 +86,7 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
                     {item.is_anonymous ? 'Usuário Anônimo' : item.sender_name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {item.service_type === 'premium' ? '🎥 Vídeo' : '💬 Resposta Base'}
+                    {item.service_type === 'premium' ? '🎥 Vídeo' : item.service_type === 'support' ? '❤️ Apoio' : '💬 Resposta Base'}
                   </p>
                 </div>
               </div>
@@ -97,7 +99,7 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
               &ldquo;{item.content}&rdquo;
             </p>
 
-            <div className="bg-[#1a1a1a] shadow-inner rounded-2xl p-4 border border-white/5 mb-4">
+            <div className="bg-[#1a1a1a] shadow-inner rounded-2xl p-4 border border-white/5 mb-2">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-full bg-gradient-instagram p-[1px]">
                   <img className="w-full h-full rounded-full object-cover" src={avatarUrl} alt="Creator" />
@@ -113,6 +115,9 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
                 <p className="text-gray-200 text-sm leading-relaxed">{item.response_text}</p>
               )}
             </div>
+
+            {/* Sistema de avaliação */}
+            <AnswerFeedback answerId={item.id} />
           </div>
         ))}
       </div>
@@ -172,7 +177,7 @@ export default async function PerfilPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active')
+    .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active, fast_ask_suggestions')
     .eq('username', params.username)
     .single<Profile>()
 
@@ -265,6 +270,7 @@ export default async function PerfilPage({
           avatarUrl={avatarUrl}
           displayName={displayName}
           disabled={questionsLeft === 0}
+          fastAskSuggestions={profile.fast_ask_suggestions}
         />
       </div>
 
