@@ -24,10 +24,18 @@ type Mode = 'question' | 'support'
 
 const SUPPORT_PRESETS = [10, 25, 50, 100]
 
+const DEFAULT_FAST_ASK: FastAskSuggestion[] = [
+  { label: '⚡ Dica rápida', question: 'Qual é a sua dica mais valiosa que você daria para alguém começando agora?', amount: 20 },
+  { label: '🎨 Análise de perfil', question: 'Você pode analisar meu perfil e me dar um feedback honesto sobre o meu estilo?', amount: 35 },
+  { label: '🌟 Recomendação', question: 'Qual é a sua recomendação exclusiva para quem quer se destacar nessa área?', amount: 15 },
+]
+
 export default function QuestionForm({ username, minPrice, displayName, disabled, fastAskSuggestions }: Props) {
   const router = useRouter()
-  const premiumMin = Math.max(50, minPrice)
-  const baseMin = minPrice
+
+  // BUG FIX: garante que minPrice é sempre um número positivo válido
+  const baseMin = Math.max(1, Number(minPrice) || 1)
+  const premiumMin = Math.max(50, baseMin)
 
   const [mode, setMode] = useState<Mode>('question')
   const [question, setQuestion] = useState('')
@@ -43,26 +51,24 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const [error, setError] = useState('')
   const [activeSuggestion, setActiveSuggestion] = useState<number | null>(null)
 
-  // Usa sugestões do criador se existirem, senão usa padrão
-  const suggestions: FastAskSuggestion[] = fastAskSuggestions && fastAskSuggestions.length > 0
-    ? fastAskSuggestions
-    : [
-        { label: '⚡ Dica rápida', question: 'Qual é a sua dica mais valiosa que você daria para alguém começando agora?', amount: 20 },
-        { label: '🎨 Análise de perfil', question: 'Você pode analisar meu perfil e me dar um feedback honesto sobre o meu estilo?', amount: 35 },
-        { label: '🌟 Recomendação', question: 'Qual é a sua recomendação exclusiva para quem quer se destacar nessa área?', amount: 15 },
-      ]
+  // BUG FIX: filtra sugestões inválidas antes de usar
+  const suggestions: FastAskSuggestion[] =
+    Array.isArray(fastAskSuggestions) && fastAskSuggestions.length > 0
+      ? fastAskSuggestions.filter(s => s?.label && s?.question && Number(s?.amount) > 0)
+      : DEFAULT_FAST_ASK
 
   const getPriceColorClass = (val: number, current: number) =>
     current === val
       ? 'bg-gradient-instagram text-white border-transparent'
       : 'bg-[#1a1a1a] text-gray-300 border-white/10 hover:border-white/20'
 
-  const basePresets = Array.from(new Set([baseMin, baseMin * 2, 50, 100])).slice(0, 4)
-  const premiumPresets = Array.from(new Set([premiumMin, premiumMin * 2, 200, 500])).slice(0, 4)
+  const basePresets = Array.from(new Set([baseMin, baseMin * 2, 50, 100])).filter(v => v > 0).slice(0, 4)
+  const premiumPresets = Array.from(new Set([premiumMin, premiumMin * 2, 200, 500])).filter(v => v > 0).slice(0, 4)
 
   const handleFastAsk = (suggestion: FastAskSuggestion, index: number) => {
     setQuestion(suggestion.question)
-    const safeAmount = Math.max(suggestion.amount, baseMin)
+    // BUG FIX: sempre respeita o mínimo do criador
+    const safeAmount = Math.max(Number(suggestion.amount) || baseMin, baseMin)
     setAmount(safeAmount)
     setServiceType('base')
     setActiveSuggestion(index)
@@ -71,6 +77,14 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const handleModeSwitch = (newMode: Mode) => {
     setMode(newMode)
     setError('')
+  }
+
+  // BUG FIX: handler seguro para input numérico que evita NaN e valores fora do range
+  const handleAmountChange = (val: string, setter: (n: number) => void, min: number) => {
+    const parsed = parseFloat(val)
+    if (!isNaN(parsed)) {
+      setter(Math.max(min, Math.min(10000, parsed)))
+    }
   }
 
   const handleSubmit = async () => {
@@ -130,7 +144,15 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         return
       }
 
+      // BUG FIX: router.push pode falhar — garante reset do estado
+      if (!data.init_point) {
+        setError('Resposta inválida do servidor. Tente novamente.')
+        setIsSubmitting(false)
+        return
+      }
+
       router.push(data.init_point)
+      // Não reseta isSubmitting aqui intencionalmente — o redirect vai desmontar o componente
     } catch {
       setError('Erro de conexão. Verifique sua internet e tente novamente.')
       setIsSubmitting(false)
@@ -158,6 +180,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
       {/* Toggle Pergunta / Apoiar */}
       <div className="flex bg-[#1a1a1a] rounded-2xl p-1 mb-6 border border-white/5">
         <button
+          type="button"
           onClick={() => handleModeSwitch('question')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             !isSupport
@@ -169,6 +192,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
           <span>Fazer Pergunta</span>
         </button>
         <button
+          type="button"
           onClick={() => handleModeSwitch('support')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             isSupport
@@ -213,6 +237,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {SUPPORT_PRESETS.map(val => (
                   <button
+                    type="button"
                     key={val}
                     onClick={() => setSupportAmount(val)}
                     className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all ${getPriceColorClass(val, supportAmount)}`}
@@ -228,7 +253,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                   min={5}
                   max={10000}
                   value={supportAmount}
-                  onChange={(e) => setSupportAmount(Number(e.target.value))}
+                  onChange={(e) => handleAmountChange(e.target.value, setSupportAmount, 5)}
                   className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#DD2A7B] outline-none transition-all"
                 />
               </div>
@@ -259,10 +284,11 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                   <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                     {suggestions.map((suggestion, index) => {
                       const isActive = activeSuggestion === index
+                      const displayAmount = Math.max(Number(suggestion.amount) || baseMin, baseMin)
                       return (
                         <button
-                          key={index}
                           type="button"
+                          key={index}
                           onClick={() => handleFastAsk(suggestion, index)}
                           className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all whitespace-nowrap ${
                             isActive
@@ -272,7 +298,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                         >
                           <span>{suggestion.label}</span>
                           <span className={isActive ? 'text-[#DD2A7B]/70' : 'text-gray-600'}>
-                            · R$ {Math.max(suggestion.amount, baseMin)}
+                            · R$ {displayAmount}
                           </span>
                         </button>
                       )
@@ -290,6 +316,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               <label className="block text-sm font-medium text-gray-300 mb-2">Formato da Resposta</label>
               <div className="grid grid-cols-1 gap-4">
                 <button
+                  type="button"
                   onClick={() => { setServiceType('base'); if (amount < baseMin) setAmount(baseMin) }}
                   className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden ${serviceType === 'base' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
@@ -304,6 +331,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => { setServiceType('premium'); if (amount < premiumMin) setAmount(premiumMin) }}
                   className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden ${serviceType === 'premium' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
@@ -327,6 +355,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {(serviceType === 'premium' ? premiumPresets : basePresets).map(val => (
                   <button
+                    type="button"
                     key={val}
                     onClick={() => setAmount(val)}
                     className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all ${getPriceColorClass(val, amount)}`}
@@ -342,7 +371,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                   min={serviceType === 'premium' ? premiumMin : baseMin}
                   max={10000}
                   value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
+                  onChange={(e) => handleAmountChange(e.target.value, setAmount, serviceType === 'premium' ? premiumMin : baseMin)}
                   className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#DD2A7B] outline-none transition-all"
                 />
               </div>
@@ -425,6 +454,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         {error && <p className="text-sm text-red-400 -mt-2">{error}</p>}
 
         <button
+          type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="w-full bg-gradient-instagram text-white font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(221,42,123,0.3)] hover:opacity-90 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center min-h-[60px]"

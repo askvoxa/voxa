@@ -57,9 +57,11 @@ export default function SettingsPage() {
       setDailyLimit(profile.daily_limit ?? 10)
       setAvatarUrl(profile.avatar_url ?? '')
 
-      // Carrega sugestões salvas ou usa as padrão
-      if (profile.fast_ask_suggestions && profile.fast_ask_suggestions.length > 0) {
-        setSuggestions(profile.fast_ask_suggestions)
+      // BUG FIX: fast_ask_suggestions pode vir null do Supabase antes da migration
+      // Array.isArray garante que não quebra se a coluna ainda não existir
+      const saved = profile.fast_ask_suggestions
+      if (Array.isArray(saved) && saved.length > 0) {
+        setSuggestions(saved)
       }
 
       setIsLoading(false)
@@ -112,9 +114,15 @@ export default function SettingsPage() {
 
   // Fast Ask handlers
   const updateSuggestion = (index: number, field: keyof FastAskSuggestion, value: string | number) => {
-    setSuggestions(prev => prev.map((s, i) =>
-      i === index ? { ...s, [field]: value } : s
-    ))
+    setSuggestions(prev => prev.map((s, i) => {
+      if (i !== index) return s
+      if (field === 'amount') {
+        // BUG FIX: garante que amount é sempre número válido, nunca NaN
+        const parsed = parseFloat(String(value))
+        return { ...s, amount: isNaN(parsed) ? s.amount : Math.max(1, parsed) }
+      }
+      return { ...s, [field]: value }
+    }))
   }
 
   const addSuggestion = () => {
@@ -131,8 +139,10 @@ export default function SettingsPage() {
     setError('')
     setSuccessMessage('')
 
-    // Valida sugestões antes de salvar
-    const validSuggestions = suggestions.filter(s => s.label.trim() && s.question.trim() && s.amount > 0)
+    // BUG FIX: filtra sugestões inválidas antes de salvar — evita dados corrompidos no banco
+    const validSuggestions = suggestions.filter(
+      s => s.label?.trim() && s.question?.trim() && Number(s.amount) > 0
+    )
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -151,7 +161,28 @@ export default function SettingsPage() {
 
     setIsSaving(false)
     if (updateError) {
-      setError('Erro ao salvar. Tente novamente.')
+      // BUG FIX: se a coluna fast_ask_suggestions ainda não existe (migration pendente),
+      // tenta salvar sem ela para não bloquear o usuário
+      if (updateError.message?.includes('fast_ask_suggestions')) {
+        const { error: fallbackError } = await supabase
+          .from('profiles')
+          .update({
+            bio: bio.trim().slice(0, 200) || null,
+            min_price: minPrice,
+            daily_limit: dailyLimit,
+            avatar_url: avatarUrl || null,
+          })
+          .eq('id', user.id)
+
+        if (fallbackError) {
+          setError('Erro ao salvar. Tente novamente.')
+        } else {
+          setSuccessMessage('Configurações salvas! (Perguntas rápidas disponíveis após atualização do banco)')
+          setTimeout(() => setSuccessMessage(''), 5000)
+        }
+      } else {
+        setError('Erro ao salvar. Tente novamente.')
+      }
     } else {
       setSuccessMessage('Configurações salvas com sucesso!')
       setTimeout(() => setSuccessMessage(''), 3000)
@@ -342,7 +373,6 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Label da pílula */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
                     Texto da pílula <span className="text-gray-400">(aparece no botão)</span>
@@ -357,7 +387,6 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Pergunta completa */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
                     Pergunta completa <span className="text-gray-400">(preenche a textarea do fã)</span>
@@ -373,7 +402,6 @@ export default function SettingsPage() {
                   <p className="text-right text-xs text-gray-400 mt-0.5">{s.question.length}/200</p>
                 </div>
 
-                {/* Valor sugerido */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
                     Valor sugerido <span className="text-gray-400">(mínimo: R$ {minPrice})</span>
@@ -385,14 +413,14 @@ export default function SettingsPage() {
                       value={s.amount}
                       min={minPrice}
                       max={500}
-                      onChange={e => updateSuggestion(index, 'amount', Math.max(minPrice, Number(e.target.value)))}
+                      onChange={e => updateSuggestion(index, 'amount', e.target.value)}
                       className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
                     />
                     {/* Preview da pílula */}
                     <div className="flex-1 flex justify-end">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-500 bg-white">
                         {s.label || '...'}
-                        <span className="text-gray-400">· R$ {Math.max(s.amount, minPrice)}</span>
+                        <span className="text-gray-400">· R$ {Math.max(Number(s.amount) || minPrice, minPrice)}</span>
                       </span>
                     </div>
                   </div>
@@ -424,6 +452,7 @@ export default function SettingsPage() {
         )}
 
         <button
+          type="button"
           onClick={handleSave}
           disabled={isSaving || isUploading}
           className="w-full bg-gradient-instagram text-white font-bold py-4 rounded-2xl disabled:opacity-50 text-base"
