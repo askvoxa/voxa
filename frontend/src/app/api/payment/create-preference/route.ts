@@ -29,6 +29,9 @@ export async function POST(request: Request) {
     const sanitizedQuestion = String(question).trim().slice(0, 1000)
     const sanitizedName = String(name || '').trim().slice(0, 100)
     const sanitizedEmail = String(email || '').trim().slice(0, 254)
+    if (sanitizedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+      return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 })
+    }
     const sanitizedServiceType: 'base' | 'premium' = VALID_SERVICE_TYPES.includes(serviceType) ? serviceType : 'base'
     const sanitizedAmount = Number(amount)
 
@@ -93,37 +96,45 @@ export async function POST(request: Request) {
 
     // Criar preferência no Mercado Pago
     const preference = new Preference(mp)
-    const result = await preference.create({
-      body: {
-        external_reference: externalRef,
-        items: [
-          {
-            id: externalRef,
-            title: `Pergunta para @${username} (${sanitizedServiceType === 'premium' ? 'Vídeo' : 'Base'})`,
-            description: sanitizedQuestion.slice(0, 256),
-            category_id: 'services',
-            quantity: 1,
-            unit_price: total,
-            currency_id: 'BRL',
+    let result
+    try {
+      result = await preference.create({
+        body: {
+          external_reference: externalRef,
+          items: [
+            {
+              id: externalRef,
+              title: `Pergunta para @${username} (${sanitizedServiceType === 'premium' ? 'Vídeo' : 'Base'})`,
+              description: sanitizedQuestion.slice(0, 256),
+              category_id: 'services',
+              quantity: 1,
+              unit_price: total,
+              currency_id: 'BRL',
+            },
+          ],
+          payer: {
+            name: sanitizedName || 'Anônimo',
+            surname: '',
+            ...(sanitizedEmail && { email: sanitizedEmail }),
           },
-        ],
-        payer: {
-          name: sanitizedName || 'Anônimo',
-          surname: '',
-          ...(sanitizedEmail && { email: sanitizedEmail }),
+          statement_descriptor: 'VOXA',
+          back_urls: {
+            success: `${appUrl}/perfil/${username}?payment_status=approved&ref=${externalRef}`,
+            failure: `${appUrl}/perfil/${username}?payment_status=failure&ref=${externalRef}`,
+            pending: `${appUrl}/perfil/${username}?payment_status=pending&ref=${externalRef}`,
+          },
+          auto_return: 'approved',
+          notification_url: `${appUrl}/api/payment/webhook`,
+          expires: true,
+          expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min
         },
-        statement_descriptor: 'VOXA',
-        back_urls: {
-          success: `${appUrl}/perfil/${username}?payment_status=approved&ref=${externalRef}`,
-          failure: `${appUrl}/perfil/${username}?payment_status=failure&ref=${externalRef}`,
-          pending: `${appUrl}/perfil/${username}?payment_status=pending&ref=${externalRef}`,
-        },
-        auto_return: 'approved',
-        notification_url: `${appUrl}/api/payment/webhook`,
-        expires: true,
-        expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min
-      },
-    })
+      })
+    } catch (mpError: any) {
+      // Limpar payment_intent órfão se a criação da preference no MP falhou
+      await supabaseAdmin.from('payment_intents').delete().eq('id', externalRef)
+      console.error('create-preference MP error:', mpError)
+      return NextResponse.json({ error: 'Erro ao criar preferência de pagamento' }, { status: 500 })
+    }
 
     // Atualizar o payment_intent com o preference_id do MP
     await supabaseAdmin

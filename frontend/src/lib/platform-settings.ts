@@ -12,7 +12,16 @@ export const FALLBACK_SETTINGS: PlatformSettings = {
   response_deadline_hours: 36,
 }
 
+// Cache in-memory com TTL de 60s — evita query no banco a cada request
+let cachedSettings: PlatformSettings | null = null
+let cacheExpiry = 0
+const CACHE_TTL_MS = 60_000
+
 export async function getPlatformSettings(): Promise<PlatformSettings> {
+  if (cachedSettings && Date.now() < cacheExpiry) {
+    return cachedSettings
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -24,10 +33,13 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     .single()
 
   if (!data) return FALLBACK_SETTINGS
-  return {
+
+  cachedSettings = {
     platform_fee_rate: Number(data.platform_fee_rate),
     response_deadline_hours: Number(data.response_deadline_hours),
   }
+  cacheExpiry = Date.now() + CACHE_TTL_MS
+  return cachedSettings
 }
 
 /** Returns creator's effective take-home rate (0–1). Custom overrides platform default. */

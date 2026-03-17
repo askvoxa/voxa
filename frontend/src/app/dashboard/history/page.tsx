@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import VisibilityToggle from './VisibilityToggle'
 import { CREATOR_NET_RATE } from '@/lib/constants'
 
+// Revalidar dados a cada 30s — evita queries em cada request
+export const revalidate = 30
+
 type AnsweredQuestion = {
   id: string
   sender_name: string

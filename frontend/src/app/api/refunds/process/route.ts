@@ -13,14 +13,15 @@ const supabaseAdmin = createClient(
 )
 
 /**
- * GET /api/refunds/process?secret=REFUND_SECRET
+ * GET /api/refunds/process
  *
  * Processa a fila de reembolsos pendentes.
  * Deve ser chamado por um cron job a cada 30 minutos.
+ * Autenticação via header Authorization: Bearer {REFUND_SECRET}
  *
  * No Render.com: configurar Cron Job com:
  *   Schedule: 0,30 * * * * (a cada 30 min)
- *   Command: curl -s "{APP_URL}/api/refunds/process?secret={REFUND_SECRET}"
+ *   Command: curl -s -H "Authorization: Bearer {REFUND_SECRET}" "{APP_URL}/api/refunds/process"
  *
  * Alternativamente, usar pg_cron no Supabase para chamar expire_pending_questions()
  * e este endpoint separadamente para processar os reembolsos.
@@ -31,8 +32,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ disabled: true, message: 'Reembolsos automáticos desabilitados' })
   }
 
-  const { searchParams } = new URL(request.url)
-  const secret = searchParams.get('secret')
+  // Autenticação via header (evita vazamento do secret em logs de proxy/CDN)
+  const authHeader = request.headers.get('authorization')
+  const secret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
 
   const refundSecret = process.env.REFUND_SECRET
   if (!refundSecret || !secret) {

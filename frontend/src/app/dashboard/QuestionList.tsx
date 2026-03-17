@@ -43,9 +43,15 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
 
-  // Ref para garantir revogação de URL ao desmontar o componente (evita memory leak)
+  // Revogar URL de áudio anterior sempre que uma nova é criada (evita memory leak)
   const audioUrlRef = useRef<string | null>(null)
-  useEffect(() => { audioUrlRef.current = audioUrl }, [audioUrl])
+  useEffect(() => {
+    // Se a URL mudou e havia uma anterior, revogar a antiga
+    if (audioUrlRef.current && audioUrlRef.current !== audioUrl) {
+      URL.revokeObjectURL(audioUrlRef.current)
+    }
+    audioUrlRef.current = audioUrl
+  }, [audioUrl])
   useEffect(() => {
     return () => { if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current) }
   }, [])
@@ -85,10 +91,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setResponseMode(mode)
     setResponseText('')
     setAudioBlob(null)
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl)
-      setAudioUrl(null)
-    }
+    setAudioUrl(null) // useEffect no audioUrl cuida da revogação
     setSubmitError('')
   }
 
@@ -96,10 +99,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setRespondingTo(null)
     setResponseMode(null)
     stopRecording()
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl)
-      setAudioUrl(null)
-    }
+    setAudioUrl(null) // useEffect no audioUrl cuida da revogação
     setAudioBlob(null)
   }
 
@@ -141,8 +141,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
       return
     }
     setAudioBlob(file)
-    if (audioUrl) URL.revokeObjectURL(audioUrl)
-    setAudioUrl(URL.createObjectURL(file))
+    setAudioUrl(URL.createObjectURL(file)) // useEffect cuida de revogar a URL anterior
     setSubmitError('')
   }
 

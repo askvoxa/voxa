@@ -70,5 +70,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  console.log(`[admin/audit] Admin ${admin.id} alterou params do criador ${id}:`, JSON.stringify(updates))
+
   return NextResponse.json({ ok: true })
 }

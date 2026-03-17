@@ -32,7 +32,7 @@ function verifyMPSignature(
     console.error('[webhook] MP_WEBHOOK_SECRET não configurado — rejeitar todas as requisições')
     return false
   }
-  if (!xSignature || !xRequestId) return false
+  if (!xSignature || !xRequestId || !dataId) return false
 
   const parts = xSignature.split(',')
   const ts = parts.find(p => p.startsWith('ts='))?.split('=')[1]
@@ -41,7 +41,7 @@ function verifyMPSignature(
   if (!ts || !v1) return false
 
   // MP envia o payment ID como query param ?data.id=XXX — usar para o manifest
-  const manifest = `id:${dataId ?? ''};request-id:${xRequestId};ts:${ts};`
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`
   const hash = createHmac('sha256', secret).update(manifest).digest('hex')
 
   return hash === v1
@@ -112,6 +112,18 @@ export async function POST(request: Request) {
     if (existingTransaction) {
       // Pagamento já processado — limpar intent residual (se houver) e retornar sucesso
       await supabaseAdmin.from('payment_intents').delete().eq('id', externalRef)
+      return NextResponse.json({ received: true })
+    }
+
+    // Re-verificar limite diário atomicamente antes de inserir (evita race condition
+    // entre o check em create-preference e a inserção aqui no webhook)
+    const { data: canAccept } = await supabaseAdmin
+      .rpc('can_accept_question', { p_creator_id: qd.creator_id })
+
+    if (!canAccept) {
+      // Limite atingido entre o momento do pagamento e a confirmação — será tratado como reembolso
+      console.warn('[webhook] Limite diário atingido para creator:', qd.creator_id, '— pagamento aprovado mas pergunta rejeitada')
+      // Manter o payment_intent para que o sistema de reembolso possa processar
       return NextResponse.json({ received: true })
     }
 

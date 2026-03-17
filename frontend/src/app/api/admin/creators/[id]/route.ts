@@ -54,5 +54,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Erro ao atualizar perfil' }, { status: 500 })
   }
 
+  console.log(`[admin/audit] Admin ${admin.id} ${is_active ? 'reativou' : 'baniu'} criador ${params.id}`)
+
   return NextResponse.json({ success: true, is_active })
 }

@@ -21,6 +21,7 @@ model Profile {
   // Individual overrides — null = use platform default from platform_settings
   custom_creator_rate      Decimal?        @db.Decimal(5, 4)
   custom_deadline_hours    Int?
+  fast_ask_suggestions     Json?
   created_at               DateTime        @default(now())
   referred_by              Profile?        @relation("Referrals", fields: [referred_by_id], references: [id], onDelete: SetNull)
   referrals                Profile[]       @relation("Referrals")
@@ -64,7 +65,7 @@ model Transaction {
   amount           Float
   status           String
   payment_method   String
-  mp_payment_id    String?
+  mp_payment_id    String?  @unique
   mp_preference_id String?
   created_at       DateTime @default(now())
 

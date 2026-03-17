@@ -51,11 +51,18 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const [error, setError] = useState('')
   const [activeSuggestion, setActiveSuggestion] = useState<number | null>(null)
 
-  // BUG FIX: filtra sugestões inválidas antes de usar
-  const suggestions: FastAskSuggestion[] =
+  // Filtra sugestões inválidas e remove as que teriam o valor forçado acima do dobro do original
+  // (evita UX confusa como "Dica rápida · R$ 50" quando o original era R$ 15)
+  const rawSuggestions: FastAskSuggestion[] =
     Array.isArray(fastAskSuggestions) && fastAskSuggestions.length > 0
       ? fastAskSuggestions.filter(s => s?.label && s?.question && Number(s?.amount) > 0)
       : DEFAULT_FAST_ASK
+
+  const suggestions = rawSuggestions.filter(s => {
+    const original = Number(s.amount) || 0
+    // Se o minPrice forçaria o valor a mais que 2x o original, a sugestão perde o sentido
+    return original >= baseMin || baseMin <= original * 2
+  })
 
   const getPriceColorClass = (val: number, current: number) =>
     current === val

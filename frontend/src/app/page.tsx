@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, Shield, Zap } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 // ── Criadores fictícios ───────────────────────────────────────────────────────
 const CRIADORES = [
@@ -101,6 +102,31 @@ const CATEGORIAS = ['Todos', 'Fitness', 'Gastronomia', 'Finanças', 'Carreira', 
 export default function HomePage() {
   const [busca, setBusca] = useState('')
   const [categoriaAtiva, setCategoriaAtiva] = useState('Todos')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  const handleBuscaSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const termo = busca.trim()
+    if (!termo) return
+    // Sanitiza: só permite letras, números, underscores e hífens (formato de username válido)
+    const username = termo.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+    if (username) {
+      window.location.href = `/perfil/${username}`
+    }
+  }
+
+  const handleBuscaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleBuscaSubmit(e as unknown as React.FormEvent)
+    }
+  }
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user)
+    })
+  }, [])
 
   const criadoresFiltrados = CRIADORES.filter(c => {
     const matchCategoria = categoriaAtiva === 'Todos' || c.categoria === categoriaAtiva
@@ -119,12 +145,21 @@ export default function HomePage() {
           <span className="text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#DD2A7B] to-[#F77737]">
             VOXA
           </span>
-          <Link
-            href="/login"
-            className="text-sm font-semibold text-gray-500 hover:text-[#111] transition-colors"
-          >
-            Entrar →
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="text-sm font-semibold text-[#DD2A7B] hover:text-[#c4245f] transition-colors"
+            >
+              Meu dashboard →
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-semibold text-gray-500 hover:text-[#111] transition-colors"
+            >
+              Entrar →
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -149,16 +184,23 @@ export default function HomePage() {
         </p>
 
         {/* Barra de busca */}
-        <div className="relative max-w-lg mx-auto mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 w-5 h-5" />
+        <form onSubmit={handleBuscaSubmit} className="relative max-w-lg mx-auto mb-8">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            placeholder="Quem você quer ouvir hoje?"
-            className="w-full bg-white border border-black/10 rounded-2xl py-4 pl-12 pr-4 text-[#111] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]/30 focus:border-[#DD2A7B]/40 transition-all text-sm shadow-sm"
+            onKeyDown={handleBuscaKeyDown}
+            placeholder="Para quem você tem uma pergunta?"
+            className="w-full bg-white border border-black/10 rounded-2xl py-4 pl-12 pr-32 text-[#111] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]/30 focus:border-[#DD2A7B]/40 transition-all text-sm shadow-sm"
           />
-        </div>
+          <button
+            type="submit"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#DD2A7B] to-[#F77737] text-white text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+          >
+            Buscar
+          </button>
+        </form>
 
         {/* Chips de categoria */}
         <div className="flex flex-wrap items-center justify-center gap-2">

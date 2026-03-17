@@ -64,7 +64,12 @@ export async function PATCH(
     }
 
     // Incrementar questions_answered_today no perfil
-    await supabase.rpc('increment_answered_today', { profile_id: user.id })
+    const { error: rpcError } = await supabase.rpc('increment_answered_today', { profile_id: user.id })
+    if (rpcError) {
+      console.error('Erro ao incrementar contador diário:', rpcError)
+      // Não falha a resposta — a pergunta já foi respondida com sucesso,
+      // mas o contador pode ficar dessincronizado. Log para investigação.
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

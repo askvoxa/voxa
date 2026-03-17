@@ -68,6 +68,8 @@ export async function POST(request: Request) {
       .update({ status: 'expired' })
       .eq('id', question_id)
 
+    console.log(`[admin/audit] Admin ${admin.id} reembolsou question ${question_id} (mp_payment: ${transaction.mp_payment_id}, valor: ${transaction.amount})`)
+
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
     // MP call failed — revert the transaction status so the admin can retry

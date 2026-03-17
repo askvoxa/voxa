@@ -12,6 +12,10 @@ export async function GET(request: Request) {
     const supabase = createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
+    if (error) {
+      console.error('[auth/callback] Erro ao trocar código por sessão:', error.message)
+    }
+
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
 
