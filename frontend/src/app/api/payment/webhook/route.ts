@@ -71,8 +71,15 @@ export async function POST(request: Request) {
     }
 
     // Buscar detalhes do pagamento no MP
-    const paymentClient = new Payment(mp)
-    const payment = await paymentClient.get({ id: String(paymentId) })
+    let payment
+    try {
+      const paymentClient = new Payment(mp)
+      payment = await paymentClient.get({ id: String(paymentId) })
+    } catch (mpError: any) {
+      console.error('[webhook] Erro ao buscar payment no MP:', mpError?.message || mpError)
+      // Retornar 200 para o MP não retentar indefinidamente em caso de falha temporária
+      return NextResponse.json({ received: true })
+    }
 
     if (!payment || payment.status !== 'approved') {
       return NextResponse.json({ received: true })

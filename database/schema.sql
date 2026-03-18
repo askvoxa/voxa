@@ -26,6 +26,7 @@ CREATE TABLE questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     sender_name TEXT NOT NULL,
+    sender_email TEXT,
     content TEXT NOT NULL,
     media_url TEXT,
     status question_status DEFAULT 'pending',

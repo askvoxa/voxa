@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { LogOut } from 'lucide-react'
 import QuestionList from './QuestionList'
 import { CREATOR_NET_RATE } from '@/lib/constants'
 
@@ -91,7 +92,19 @@ export default function DashboardPage() {
     )
   }
 
-  if (!profile) return null
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center space-y-4 px-4">
+          <p className="text-gray-500 text-lg">Perfil não encontrado.</p>
+          <p className="text-gray-400 text-sm">Você precisa configurar seu perfil de criador primeiro.</p>
+          <a href="/setup" className="inline-block bg-gradient-instagram text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">
+            Configurar perfil
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   const pendingEarnings = questions.reduce((sum, q) => sum + Number(q.price_paid), 0)
   const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today)
@@ -108,11 +121,23 @@ export default function DashboardPage() {
               Meu perfil
             </a>
             <a href="/dashboard/history" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-              Historico
+              Histórico
             </a>
             <a href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-              Configuracoes
+              Configurações
             </a>
+            <button
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                router.push('/')
+              }}
+              className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+              aria-label="Sair da conta"
+              title="Sair"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>

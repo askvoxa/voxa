@@ -42,6 +42,7 @@ model Question {
   creator_id         String
   creator            Profile        @relation(fields: [creator_id], references: [id], onDelete: Cascade)
   sender_name        String
+  sender_email       String?
   content            String
   media_url          String?
   status             QuestionStatus @default(pending)

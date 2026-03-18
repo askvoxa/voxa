@@ -190,6 +190,9 @@ export default async function PerfilPage({
           <p className="text-4xl mb-4" role="img" aria-label="Indisponível">🚫</p>
           <h1 className="text-xl font-bold text-white mb-2">Perfil indisponível</h1>
           <p className="text-gray-500 text-sm">Esta conta foi desativada.</p>
+          <a href="/" className="inline-block mt-6 text-sm text-gray-400 hover:text-white transition-colors">
+            ← Voltar para a página inicial
+          </a>
         </div>
       </div>
     )

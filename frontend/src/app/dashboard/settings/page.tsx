@@ -478,8 +478,18 @@ export default function SettingsPage() {
           {isSaving ? 'Salvando...' : 'Salvar alterações'}
         </button>
 
-        <div className="text-center">
-          <a href="/dashboard" className="text-sm text-gray-400 hover:text-gray-600">Voltar ao dashboard</a>
+        <div className="text-center space-y-3">
+          <a href="/dashboard" className="block text-sm text-gray-400 hover:text-gray-600">Voltar ao dashboard</a>
+          <button
+            onClick={async () => {
+              const supabase = createClient()
+              await supabase.auth.signOut()
+              router.push('/')
+            }}
+            className="text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+          >
+            Sair da conta
+          </button>
         </div>
       </main>
 
