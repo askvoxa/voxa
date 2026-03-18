@@ -1,73 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Search, Shield, Zap } from 'lucide-react'
+import { Search, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-// ── Criadores fictícios ───────────────────────────────────────────────────────
-const CRIADORES = [
-  {
-    username: 'anafit',
-    nome: 'Ana Luiza',
-    nicho: 'Fitness & Nutrição',
-    categoria: 'Fitness',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=analuiza&backgroundColor=b6e3f4',
-    preco: 25,
-    respondidas: 312,
-    tempo: '24h',
-  },
-  {
-    username: 'chefmarcelo',
-    nome: 'Marcelo Souza',
-    nicho: 'Gastronomia & Receitas',
-    categoria: 'Gastronomia',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcelosouza&backgroundColor=ffdfbf',
-    preco: 20,
-    respondidas: 189,
-    tempo: '24h',
-  },
-  {
-    username: 'investidor_r',
-    nome: 'Rafael Mendes',
-    nicho: 'Finanças Pessoais',
-    categoria: 'Finanças',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=rafaelmendes&backgroundColor=c0aede',
-    preco: 80,
-    respondidas: 94,
-    tempo: '36h',
-  },
-  {
-    username: 'ju_lifestyle',
-    nome: 'Juliana Costa',
-    nicho: 'Lifestyle & Moda',
-    categoria: 'Lazer',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=julianacosta&backgroundColor=ffd5dc',
-    preco: 15,
-    respondidas: 541,
-    tempo: '24h',
-  },
-  {
-    username: 'carreiracomtiago',
-    nome: 'Tiago Oliveira',
-    nicho: 'Carreira & Liderança',
-    categoria: 'Carreira',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=tiagooliveira&backgroundColor=d1f4cc',
-    preco: 60,
-    respondidas: 143,
-    tempo: '24h',
-  },
-  {
-    username: 'carolcooks',
-    nome: 'Carolina Lima',
-    nicho: 'Culinária Vegana',
-    categoria: 'Gastronomia',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=carolinalima&backgroundColor=ffecd2',
-    preco: 30,
-    respondidas: 228,
-    tempo: '24h',
-  },
-]
+type Criador = {
+  username: string
+  bio: string | null
+  avatar_url: string | null
+  min_price: number
+}
 
 // ── Amostras de respostas ─────────────────────────────────────────────────────
 const AMOSTRAS = [
@@ -97,44 +40,63 @@ const AMOSTRAS = [
   },
 ]
 
-const CATEGORIAS = ['Todos', 'Fitness', 'Gastronomia', 'Finanças', 'Carreira', 'Lazer']
-
 export default function HomePage() {
   const [busca, setBusca] = useState('')
-  const [categoriaAtiva, setCategoriaAtiva] = useState('Todos')
+  const [criadores, setCriadores] = useState<Criador[]>([])
+  const [loading, setLoading] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleBuscaSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const termo = busca.trim()
     if (!termo) return
-    // Sanitiza: só permite letras, números, underscores e hífens (formato de username válido)
     const username = termo.toLowerCase().replace(/[^a-z0-9_-]/g, '')
     if (username) {
       window.location.href = `/perfil/${username}`
     }
   }
 
-  const handleBuscaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleBuscaSubmit(e as unknown as React.FormEvent)
+  // Fetch creators from Supabase (all active or filtered by search)
+  const fetchCriadores = async (termo: string) => {
+    const supabase = createClient()
+    let query = supabase
+      .from('profiles')
+      .select('username, bio, avatar_url, min_price')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    if (termo) {
+      const t = `%${termo}%`
+      query = query.or(`username.ilike.${t},bio.ilike.${t}`)
     }
+
+    const { data } = await query
+    setCriadores(data ?? [])
+    setLoading(false)
   }
 
+  // Auth check + initial load
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user)
     })
+    fetchCriadores('')
   }, [])
 
-  const criadoresFiltrados = CRIADORES.filter(c => {
-    const matchCategoria = categoriaAtiva === 'Todos' || c.categoria === categoriaAtiva
-    const matchBusca = busca === '' ||
-      c.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      c.nicho.toLowerCase().includes(busca.toLowerCase())
-    return matchCategoria && matchBusca
-  })
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setLoading(true)
+      fetchCriadores(busca.trim())
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [busca])
 
   return (
     <div className="min-h-screen bg-[#f9f8f7] text-[#111]">
@@ -184,13 +146,12 @@ export default function HomePage() {
         </p>
 
         {/* Barra de busca */}
-        <form onSubmit={handleBuscaSubmit} className="relative max-w-lg mx-auto mb-8">
+        <form onSubmit={handleBuscaSubmit} className="relative max-w-lg mx-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            onKeyDown={handleBuscaKeyDown}
             placeholder="Para quem você tem uma pergunta?"
             className="w-full bg-white border border-black/10 rounded-2xl py-4 pl-12 pr-32 text-[#111] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]/30 focus:border-[#DD2A7B]/40 transition-all text-sm shadow-sm"
           />
@@ -201,35 +162,47 @@ export default function HomePage() {
             Buscar
           </button>
         </form>
-
-        {/* Chips de categoria */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {CATEGORIAS.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setCategoriaAtiva(cat)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                categoriaAtiva === cat
-                  ? 'bg-[#111] text-white border-[#111] shadow-sm'
-                  : 'bg-white text-gray-500 border-black/10 hover:border-black/20 hover:text-[#111] shadow-sm'
-              }`}
-            >
-              {cat === 'Todos' ? 'Todos' : `#${cat}`}
-            </button>
-          ))}
-        </div>
       </section>
 
       {/* ── GRID DE CRIADORES ── */}
-      <section className="px-6 pb-20 max-w-5xl mx-auto">
-        {criadoresFiltrados.length === 0 ? (
+      <section className="px-6 pb-20 pt-10 max-w-5xl mx-auto">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white border border-black/8 rounded-[24px] p-6 shadow-sm animate-pulse">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-14 h-14 rounded-full bg-gray-200" />
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
+                    <div className="h-3 bg-gray-100 rounded w-36" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="h-6 bg-gray-100 rounded-full w-28" />
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-black/5">
+                  <div className="h-4 bg-gray-200 rounded w-32" />
+                  <div className="h-3 bg-gray-100 rounded w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : criadores.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400 text-sm">Nenhum criador encontrado para "{busca}".</p>
+            {busca ? (
+              <p className="text-gray-400 text-sm">Nenhum criador encontrado para &quot;{busca}&quot;.</p>
+            ) : (
+              <div>
+                <p className="text-gray-400 text-sm mb-3">Nenhum criador disponível no momento.</p>
+                <Link href="/sou-criador" className="text-sm font-semibold text-[#DD2A7B] hover:underline">
+                  Seja o primeiro criador →
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {criadoresFiltrados.map(c => (
+            {criadores.map(c => (
               <Link
                 key={c.username}
                 href={`/perfil/${c.username}`}
@@ -238,22 +211,18 @@ export default function HomePage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-5">
                   <img
-                    src={c.avatar}
-                    alt={c.nome}
+                    src={c.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.username}&backgroundColor=b6e3f4`}
+                    alt={c.username}
                     className="w-14 h-14 rounded-full object-cover bg-gray-100 border border-black/5"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#111] text-sm truncate">{c.nome}</p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{c.nicho}</p>
+                    <p className="font-bold text-[#111] text-sm truncate">@{c.username}</p>
+                    <p className="text-xs text-gray-400 truncate mt-0.5">{c.bio || 'Criador na VOXA'}</p>
                   </div>
                 </div>
 
-                {/* Badges */}
+                {/* Badge */}
                 <div className="flex items-center gap-2 mb-5">
-                  <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full text-xs font-semibold text-green-600">
-                    <Zap className="w-3 h-3" />
-                    Responde em {c.tempo}
-                  </span>
                   <span className="inline-flex items-center gap-1 bg-gray-50 border border-black/8 px-2.5 py-1 rounded-full text-xs font-medium text-gray-500">
                     <Shield className="w-3 h-3" />
                     Garantia VOXA
@@ -263,7 +232,7 @@ export default function HomePage() {
                 {/* CTA */}
                 <div className="flex items-center justify-between pt-4 border-t border-black/5">
                   <p className="text-sm font-black text-[#111]">
-                    A partir de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DD2A7B] to-[#F77737]">R$ {c.preco}</span>
+                    A partir de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DD2A7B] to-[#F77737]">R$ {c.min_price}</span>
                   </p>
                   <span className="text-xs font-semibold text-gray-400 group-hover:text-[#DD2A7B] group-hover:translate-x-0.5 transition-all">
                     Perguntar →
