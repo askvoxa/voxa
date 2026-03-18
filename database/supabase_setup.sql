@@ -270,3 +270,217 @@ WITH CHECK (
 CREATE POLICY "Áudios são públicos"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'responses');
+
+-- ============================================================
+-- MARCOS / CONQUISTAS — Sistema de gamificação para criadores
+-- ============================================================
+
+-- 5. Tabela de atividade diária (base para streak, sold-out, maratonista)
+CREATE TABLE daily_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    activity_date DATE NOT NULL,
+    questions_answered INTEGER DEFAULT 0,
+    was_soldout BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(creator_id, activity_date)
+);
+
+ALTER TABLE daily_activity ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Atividade diária é pública" ON daily_activity
+    FOR SELECT USING (true);
+
+CREATE INDEX idx_daily_activity_creator_date
+    ON daily_activity(creator_id, activity_date DESC);
+
+-- 6. Tabela de stats materializados por criador
+CREATE TABLE creator_stats (
+    creator_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+    total_answered INTEGER DEFAULT 0,
+    total_received INTEGER DEFAULT 0,
+    total_expired INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    max_streak INTEGER DEFAULT 0,
+    last_active_date DATE,
+    avg_response_seconds BIGINT DEFAULT 0,
+    soldout_days_last30 INTEGER DEFAULT 0,
+    marathon_count INTEGER DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE creator_stats ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Stats são públicos" ON creator_stats
+    FOR SELECT USING (true);
+
+-- 7. Trigger: atualiza stats quando criador responde uma pergunta
+CREATE OR REPLACE FUNCTION update_creator_stats_on_answer()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_today DATE;
+    v_daily_limit INTEGER;
+    v_day_answered INTEGER;
+    v_total_answered BIGINT;
+    v_total_expired BIGINT;
+    v_avg_seconds BIGINT;
+    v_streak INTEGER;
+    v_max_streak INTEGER;
+    v_last_date DATE;
+    v_marathon_count INTEGER;
+    v_soldout_days INTEGER;
+BEGIN
+    IF NEW.status <> 'answered' OR OLD.status = 'answered' THEN
+        RETURN NEW;
+    END IF;
+
+    v_today := (NOW() AT TIME ZONE 'America/Sao_Paulo')::DATE;
+
+    -- Upsert daily_activity
+    INSERT INTO daily_activity (creator_id, activity_date, questions_answered, was_soldout)
+    VALUES (NEW.creator_id, v_today, 1, FALSE)
+    ON CONFLICT (creator_id, activity_date)
+    DO UPDATE SET questions_answered = daily_activity.questions_answered + 1;
+
+    -- Checar sold-out
+    SELECT daily_limit INTO v_daily_limit FROM profiles WHERE id = NEW.creator_id;
+    SELECT questions_answered INTO v_day_answered
+        FROM daily_activity WHERE creator_id = NEW.creator_id AND activity_date = v_today;
+    IF v_day_answered >= v_daily_limit THEN
+        UPDATE daily_activity SET was_soldout = TRUE
+            WHERE creator_id = NEW.creator_id AND activity_date = v_today;
+    END IF;
+
+    -- Aggregates
+    SELECT COUNT(*) INTO v_total_answered FROM questions
+        WHERE creator_id = NEW.creator_id AND status = 'answered';
+    SELECT COUNT(*) INTO v_total_expired FROM questions
+        WHERE creator_id = NEW.creator_id AND status = 'expired';
+    SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (answered_at - created_at)))::BIGINT, 0)
+        INTO v_avg_seconds FROM questions
+        WHERE creator_id = NEW.creator_id AND status = 'answered';
+
+    -- Streak
+    SELECT current_streak, max_streak, last_active_date
+        INTO v_streak, v_max_streak, v_last_date
+        FROM creator_stats WHERE creator_id = NEW.creator_id;
+
+    IF v_last_date IS NULL OR v_last_date < v_today - 1 THEN
+        v_streak := 1;
+    ELSIF v_last_date = v_today - 1 THEN
+        v_streak := COALESCE(v_streak, 0) + 1;
+    ELSE
+        v_streak := COALESCE(v_streak, 1);
+    END IF;
+
+    IF v_streak > COALESCE(v_max_streak, 0) THEN
+        v_max_streak := v_streak;
+    END IF;
+
+    -- Marathon (dias com 10+ respostas)
+    SELECT COUNT(*) INTO v_marathon_count FROM daily_activity
+        WHERE creator_id = NEW.creator_id AND questions_answered >= 10;
+
+    -- Sold-out últimos 30 dias
+    SELECT COUNT(*) INTO v_soldout_days FROM daily_activity
+        WHERE creator_id = NEW.creator_id
+          AND was_soldout = TRUE
+          AND activity_date >= v_today - 30;
+
+    -- Upsert creator_stats
+    INSERT INTO creator_stats (
+        creator_id, total_answered, total_received, total_expired,
+        current_streak, max_streak, last_active_date,
+        avg_response_seconds, soldout_days_last30, marathon_count, updated_at
+    ) VALUES (
+        NEW.creator_id, v_total_answered, v_total_answered + v_total_expired, v_total_expired,
+        v_streak, v_max_streak, v_today,
+        v_avg_seconds, v_soldout_days, v_marathon_count, NOW()
+    )
+    ON CONFLICT (creator_id) DO UPDATE SET
+        total_answered = EXCLUDED.total_answered,
+        total_received = EXCLUDED.total_received,
+        total_expired = EXCLUDED.total_expired,
+        current_streak = EXCLUDED.current_streak,
+        max_streak = EXCLUDED.max_streak,
+        last_active_date = EXCLUDED.last_active_date,
+        avg_response_seconds = EXCLUDED.avg_response_seconds,
+        soldout_days_last30 = EXCLUDED.soldout_days_last30,
+        marathon_count = EXCLUDED.marathon_count,
+        updated_at = NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_update_stats_on_answer
+    AFTER UPDATE ON questions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_creator_stats_on_answer();
+
+-- 8. Trigger: atualiza stats quando pergunta expira (para taxa de resposta)
+CREATE OR REPLACE FUNCTION update_creator_stats_on_expire()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_total_answered BIGINT;
+    v_total_expired BIGINT;
+BEGIN
+    IF NEW.status <> 'expired' OR OLD.status = 'expired' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT COUNT(*) INTO v_total_answered FROM questions
+        WHERE creator_id = NEW.creator_id AND status = 'answered';
+    SELECT COUNT(*) INTO v_total_expired FROM questions
+        WHERE creator_id = NEW.creator_id AND status = 'expired';
+
+    INSERT INTO creator_stats (creator_id, total_answered, total_received, total_expired, updated_at)
+    VALUES (NEW.creator_id, v_total_answered, v_total_answered + v_total_expired, v_total_expired, NOW())
+    ON CONFLICT (creator_id) DO UPDATE SET
+        total_expired = EXCLUDED.total_expired,
+        total_received = EXCLUDED.total_received,
+        updated_at = NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_update_stats_on_expire
+    AFTER UPDATE ON questions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_creator_stats_on_expire();
+
+-- 9. Backfill: popular daily_activity e creator_stats a partir de dados existentes
+-- (rodar UMA VEZ após criar as tabelas acima)
+/*
+INSERT INTO daily_activity (creator_id, activity_date, questions_answered, was_soldout)
+SELECT
+    creator_id,
+    (answered_at AT TIME ZONE 'America/Sao_Paulo')::DATE as activity_date,
+    COUNT(*) as questions_answered,
+    FALSE as was_soldout
+FROM questions
+WHERE status = 'answered' AND answered_at IS NOT NULL
+GROUP BY creator_id, (answered_at AT TIME ZONE 'America/Sao_Paulo')::DATE
+ON CONFLICT (creator_id, activity_date) DO NOTHING;
+
+-- Após rodar o INSERT acima, popular creator_stats para cada criador:
+INSERT INTO creator_stats (creator_id, total_answered, total_received, total_expired, avg_response_seconds, marathon_count, updated_at)
+SELECT
+    q.creator_id,
+    COUNT(*) FILTER (WHERE q.status = 'answered') as total_answered,
+    COUNT(*) FILTER (WHERE q.status IN ('answered', 'expired')) as total_received,
+    COUNT(*) FILTER (WHERE q.status = 'expired') as total_expired,
+    COALESCE(AVG(EXTRACT(EPOCH FROM (q.answered_at - q.created_at))) FILTER (WHERE q.status = 'answered')::BIGINT, 0) as avg_response_seconds,
+    (SELECT COUNT(*) FROM daily_activity da WHERE da.creator_id = q.creator_id AND da.questions_answered >= 10) as marathon_count,
+    NOW() as updated_at
+FROM questions q
+GROUP BY q.creator_id
+ON CONFLICT (creator_id) DO UPDATE SET
+    total_answered = EXCLUDED.total_answered,
+    total_received = EXCLUDED.total_received,
+    total_expired = EXCLUDED.total_expired,
+    avg_response_seconds = EXCLUDED.avg_response_seconds,
+    marathon_count = EXCLUDED.marathon_count,
+    updated_at = NOW();
+*/

@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation'
 import QuestionForm from './QuestionForm'
 import AnswerFeedback from './AnswerFeedback'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
+import { computeMilestones, CreatorStats } from '@/lib/milestones'
+import MilestoneBadgeRow from '@/components/milestones/MilestoneBadgeRow'
+import MilestoneSection from '@/components/milestones/MilestoneSection'
 
 type Profile = {
   id: string
@@ -37,6 +40,19 @@ const DEMO_PROFILE: Profile = {
   daily_limit: 20,
   questions_answered_today: 3,
   is_active: true,
+}
+
+const DEMO_STATS: CreatorStats = {
+  creator_id: 'demo',
+  total_answered: 127,
+  total_received: 130,
+  total_expired: 3,
+  current_streak: 14,
+  max_streak: 14,
+  last_active_date: new Date().toISOString().split('T')[0],
+  avg_response_seconds: 4 * 3600,
+  soldout_days_last30: 8,
+  marathon_count: 3,
 }
 
 const DEMO_ANSWERS: PublicAnswer[] = [
@@ -139,6 +155,7 @@ export default async function PerfilPage({
     const profile = DEMO_PROFILE
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=exemplo`
     const displayName = `@${profile.username}`
+    const demoMilestones = computeMilestones(DEMO_STATS)
 
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center py-12 px-4 sm:px-6">
@@ -155,6 +172,9 @@ export default async function PerfilPage({
             </div>
             <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
             {profile.bio && <p className="text-gray-400 text-sm mb-4 leading-relaxed">{profile.bio}</p>}
+            <div className="flex justify-center mb-3">
+              <MilestoneBadgeRow milestones={demoMilestones} size="md" />
+            </div>
             <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold text-gray-300">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               Aceitando perguntas hoje (17/20)
@@ -168,6 +188,7 @@ export default async function PerfilPage({
             disabled={true}
           />
         </div>
+        <MilestoneSection milestones={demoMilestones} />
         <AnswerFeed publicAnswers={DEMO_ANSWERS} avatarUrl={avatarUrl} displayName={displayName} />
       </div>
     )
@@ -198,16 +219,24 @@ export default async function PerfilPage({
     )
   }
 
-  const { data: publicAnswers } = await supabase
-    .from('questions')
-    .select('id, sender_name, content, service_type, is_anonymous, price_paid, response_text, response_audio_url, answered_at')
-    .eq('creator_id', profile.id)
-    .eq('status', 'answered')
-    .eq('is_shareable', true)
-    .order('answered_at', { ascending: false })
-    .limit(10)
-    .returns<PublicAnswer[]>()
+  const [{ data: publicAnswers }, { data: statsData }] = await Promise.all([
+    supabase
+      .from('questions')
+      .select('id, sender_name, content, service_type, is_anonymous, price_paid, response_text, response_audio_url, answered_at')
+      .eq('creator_id', profile.id)
+      .eq('status', 'answered')
+      .eq('is_shareable', true)
+      .order('answered_at', { ascending: false })
+      .limit(10)
+      .returns<PublicAnswer[]>(),
+    supabase
+      .from('creator_stats')
+      .select('*')
+      .eq('creator_id', profile.id)
+      .single<CreatorStats>(),
+  ])
 
+  const milestones = computeMilestones(statsData ?? null)
   const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today)
   const avatarUrl = profile.avatar_url ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`
   const displayName = `@${profile.username}`
@@ -232,6 +261,11 @@ export default async function PerfilPage({
           <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
           {profile.bio && (
             <p className="text-gray-400 text-sm mb-4 leading-relaxed">{profile.bio}</p>
+          )}
+          {milestones.some(m => m.tier !== null) && (
+            <div className="flex justify-center mb-3">
+              <MilestoneBadgeRow milestones={milestones} size="md" />
+            </div>
           )}
           {questionsLeft > 0 ? (
             <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold text-gray-300">
@@ -276,6 +310,9 @@ export default async function PerfilPage({
           fastAskSuggestions={profile.fast_ask_suggestions}
         />
       </div>
+
+      {/* Conquistas */}
+      <MilestoneSection milestones={milestones} />
 
       {/* Feed de respostas públicas */}
       {publicAnswers && publicAnswers.length > 0 ? (

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import QuestionList from './QuestionList'
 import { CREATOR_NET_RATE } from '@/lib/constants'
+import { computeMilestones, CreatorStats, Milestone } from '@/lib/milestones'
+import MilestoneProgress from '@/components/milestones/MilestoneProgress'
 
 type Question = {
   id: string
@@ -32,6 +34,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [milestones, setMilestones] = useState<Milestone[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -49,15 +52,23 @@ export default function DashboardPage() {
       if (!profileData) { router.push('/setup'); return }
       setProfile(profileData)
 
-      const { data: questionsData } = await supabase
-        .from('questions')
-        .select('id, sender_name, content, price_paid, service_type, is_shareable, is_anonymous, created_at, status')
-        .eq('creator_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(50)
+      const [{ data: questionsData }, { data: statsData }] = await Promise.all([
+        supabase
+          .from('questions')
+          .select('id, sender_name, content, price_paid, service_type, is_shareable, is_anonymous, created_at, status')
+          .eq('creator_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('creator_stats')
+          .select('*')
+          .eq('creator_id', user.id)
+          .single<CreatorStats>(),
+      ])
 
       setQuestions(questionsData ?? [])
+      setMilestones(computeMilestones(statsData ?? null))
       setIsLoading(false)
     }
     load()
@@ -161,6 +172,9 @@ export default function DashboardPage() {
             <p className="text-2xl font-bold text-gray-800">{questionsLeft}<span className="text-sm text-gray-400 font-normal">/{profile.daily_limit}</span></p>
           </div>
         </div>
+
+        {/* Milestones */}
+        <MilestoneProgress milestones={milestones} />
 
         {/* Questions */}
         <QuestionList

@@ -4,12 +4,15 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Search, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { computeMilestones, CreatorStats } from '@/lib/milestones'
+import MilestoneBadgeRow from '@/components/milestones/MilestoneBadgeRow'
 
 type Criador = {
   username: string
   bio: string | null
   avatar_url: string | null
   min_price: number
+  creator_stats: CreatorStats[] | null
 }
 
 // ── Amostras de respostas ─────────────────────────────────────────────────────
@@ -62,7 +65,7 @@ export default function HomePage() {
     const supabase = createClient()
     let query = supabase
       .from('profiles')
-      .select('username, bio, avatar_url, min_price')
+      .select('username, bio, avatar_url, min_price, creator_stats(*)')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -222,8 +225,13 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Badge */}
-                <div className="flex items-center gap-2 mb-5">
+                {/* Milestones + Badge */}
+                <div className="flex items-center gap-2 mb-5 flex-wrap">
+                  <MilestoneBadgeRow
+                    milestones={computeMilestones(c.creator_stats?.[0] ?? null)}
+                    size="sm"
+                    maxVisible={4}
+                  />
                   <span className="inline-flex items-center gap-1 bg-gray-50 border border-black/8 px-2.5 py-1 rounded-full text-xs font-medium text-gray-600">
                     <Shield className="w-3 h-3" />
                     Garantia VOXA
