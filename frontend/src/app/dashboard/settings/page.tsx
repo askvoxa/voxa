@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { CREATOR_NET_RATE } from '@/lib/constants'
+import AvatarCropModal from './AvatarCropModal'
 
 type FastAskSuggestion = {
   label: string
@@ -39,6 +40,7 @@ export default function SettingsPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
 
   // Fast Ask
   const [suggestions, setSuggestions] = useState<FastAskSuggestion[]>(DEFAULT_SUGGESTIONS)
@@ -76,7 +78,7 @@ export default function SettingsPage() {
     load()
   }, [router])
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -90,19 +92,22 @@ export default function SettingsPage() {
       return
     }
 
+    setError('')
+    setCropImageSrc(URL.createObjectURL(file))
+  }
+
+  const handleCropConfirm = async (blob: Blob) => {
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc)
+    setCropImageSrc(null)
     setIsUploading(true)
     setError('')
 
     const supabase = createClient()
-    const extMap: Record<string, string> = {
-      'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
-    }
-    const ext = extMap[file.type] ?? 'jpg'
-    const path = `${userId}/${Date.now()}.${ext}`
+    const path = `${userId}/${Date.now()}.jpg`
 
     const { data, error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
 
     if (uploadError || !data) {
       setError('Erro ao fazer upload. Tente novamente.')
@@ -114,7 +119,12 @@ export default function SettingsPage() {
     setAvatarUrl(publicUrl)
     setIsUploading(false)
     showSuccess('Avatar atualizado com sucesso!')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
+  const handleCropCancel = () => {
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc)
+    setCropImageSrc(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -468,6 +478,14 @@ export default function SettingsPage() {
           <a href="/dashboard" className="text-sm text-gray-400 hover:text-gray-600">Voltar ao dashboard</a>
         </div>
       </main>
+
+      {cropImageSrc && (
+        <AvatarCropModal
+          imageSrc={cropImageSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }
