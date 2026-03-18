@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck, Heart } from 'lucide-react'
-import { PLATFORM_FEE_RATE, RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
+import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 
 type FastAskSuggestion = {
   label: string
@@ -189,8 +189,8 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const isSupport = mode === 'support'
   const finalAmount = isSupport ? supportAmount : amount
   const submitLabel = isSupport
-    ? `Enviar Apoio · R$ ${(finalAmount * (1 + PLATFORM_FEE_RATE)).toFixed(2).replace('.', ',')}`
-    : `Pagar R$ ${(finalAmount * (1 + PLATFORM_FEE_RATE)).toFixed(2).replace('.', ',')} via Mercado Pago`
+    ? `Enviar Apoio · R$ ${finalAmount.toFixed(2).replace('.', ',')}`
+    : `Pagar R$ ${finalAmount.toFixed(2).replace('.', ',')} via Mercado Pago`
 
   return (
     <div className="p-8 relative z-10">
@@ -399,18 +399,10 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
 
         {/* Resumo de valor */}
         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-white/5">
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>{isSupport ? 'Valor do Apoio' : 'Valor da Pergunta'}</span>
-            <span className="font-semibold text-white">R$ {finalAmount.toFixed(2).replace('.', ',')}</span>
-          </div>
-          <div className="flex justify-between text-sm text-gray-500 mb-3">
-            <span>Taxa de Serviço ({PLATFORM_FEE_RATE * 100}%)</span>
-            <span>R$ {(finalAmount * PLATFORM_FEE_RATE).toFixed(2).replace('.', ',')}</span>
-          </div>
-          <div className="border-t border-white/10 pt-3 flex justify-between items-center">
-            <span className="font-bold text-gray-300">Total a Pagar</span>
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-gray-300">{isSupport ? 'Valor do Apoio' : 'Total a Pagar'}</span>
             <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-instagram">
-              R$ {(finalAmount * (1 + PLATFORM_FEE_RATE)).toFixed(2).replace('.', ',')}
+              R$ {finalAmount.toFixed(2).replace('.', ',')}
             </span>
           </div>
         </div>

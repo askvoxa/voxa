@@ -136,6 +136,21 @@ export default async function HistoryPage({
           </div>
         </div>
 
+        {/* Entenda seus ganhos */}
+        <details className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+          <summary className="px-5 py-4 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
+            Entenda seus ganhos
+          </summary>
+          <div className="px-5 pb-4 text-sm text-gray-500 leading-relaxed border-t border-gray-100 pt-3">
+            <p>
+              O fã paga <span className="font-semibold text-gray-700">R$ 10,00</span> →
+              Voxa retém 10% (<span className="text-gray-600">R$ 1,00</span>) →
+              Você recebe <span className="font-bold text-green-600">R$ 9,00</span>
+            </p>
+            <p className="mt-1 text-xs text-gray-400">Todos os valores exibidos já são líquidos.</p>
+          </div>
+        </details>
+
         {/* Filtros por período */}
         <div className="flex gap-2 mb-6">
           {[

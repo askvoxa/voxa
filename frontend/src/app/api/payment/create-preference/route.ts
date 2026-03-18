@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { Preference } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
-import { PLATFORM_FEE_RATE } from '@/lib/constants'
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -67,7 +66,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Valor mínimo é R$ ${minPrice}` }, { status: 422 })
     }
 
-    const total = Number((sanitizedAmount * (1 + PLATFORM_FEE_RATE)).toFixed(2))
     const externalRef = randomUUID()
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -77,7 +75,7 @@ export async function POST(request: Request) {
       .insert({
         id: externalRef,
         creator_id: profile.id,
-        amount: total,
+        amount: sanitizedAmount,
         question_data: {
           creator_id: profile.id,
           sender_name: isAnonymous ? 'Anônimo' : (sanitizedName || 'Anônimo'),
@@ -109,7 +107,7 @@ export async function POST(request: Request) {
               description: sanitizedQuestion.slice(0, 256),
               category_id: 'services',
               quantity: 1,
-              unit_price: total,
+              unit_price: sanitizedAmount,
               currency_id: 'BRL',
             },
           ],

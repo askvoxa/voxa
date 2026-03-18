@@ -129,6 +129,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-bold text-green-600">
               R$ {(pendingEarnings * CREATOR_NET_RATE).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+            <p className="text-[10px] text-gray-400 mt-1">líquido após taxa Voxa (10%)</p>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Vagas hoje</p>
