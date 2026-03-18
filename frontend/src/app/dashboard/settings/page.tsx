@@ -282,14 +282,14 @@ export default function SettingsPage() {
               />
               <label
                 htmlFor="avatar-upload"
-                className={`inline-flex items-center gap-2 cursor-pointer bg-gradient-instagram text-white text-sm font-semibold px-4 py-2 rounded-xl transition-opacity ${isUploading || isLoading ? 'opacity-50 pointer-events-none' : 'hover:opacity-90'}`}
+                className={`inline-flex items-center gap-2 cursor-pointer bg-gradient-instagram text-white text-sm font-semibold px-4 py-3 rounded-xl transition-opacity ${isUploading || isLoading ? 'opacity-50 pointer-events-none' : 'hover:opacity-90'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 {isUploading ? 'Enviando...' : 'Fazer upload'}
               </label>
-              <p className="text-xs text-gray-400">JPG, PNG, WebP ou GIF — máx. 5 MB</p>
+              <p className="text-xs text-gray-500">JPG, PNG, WebP ou GIF — máx. 5 MB</p>
               {avatarUrl && (
                 <button
                   type="button"
@@ -314,7 +314,7 @@ export default function SettingsPage() {
             maxLength={200}
             className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#DD2A7B] resize-none"
           />
-          <p className="text-right text-xs text-gray-400 mt-1">{bio.length}/200</p>
+          <p className="text-right text-xs text-gray-500 mt-1">{bio.length}/200</p>
         </div>
 
         {/* Preço mínimo */}
@@ -324,6 +324,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4">
             <span className="text-2xl font-bold text-[#DD2A7B]">R$ {minPrice}</span>
             <input
+              id="settings-min-price"
               type="range"
               min={5}
               max={100}
@@ -331,6 +332,7 @@ export default function SettingsPage() {
               value={minPrice}
               onChange={e => setMinPrice(Number(e.target.value))}
               className="flex-1 accent-[#DD2A7B]"
+              aria-label={`Preço mínimo: R$ ${minPrice}`}
             />
           </div>
         </div>
@@ -340,8 +342,9 @@ export default function SettingsPage() {
           <h2 className="font-bold text-lg mb-1">Limite diário de perguntas</h2>
           <p className="text-sm text-gray-500 mb-4">Máximo de perguntas que você aceita responder por dia.</p>
           <div className="flex items-center gap-4">
-            <span className="text-2xl font-bold">{dailyLimit} <span className="text-base text-gray-400 font-normal">perguntas/dia</span></span>
+            <span className="text-2xl font-bold">{dailyLimit} <span className="text-base text-gray-500 font-normal">perguntas/dia</span></span>
             <input
+              id="settings-daily-limit"
               type="range"
               min={1}
               max={50}
@@ -349,6 +352,7 @@ export default function SettingsPage() {
               value={dailyLimit}
               onChange={e => setDailyLimit(Number(e.target.value))}
               className="flex-1 accent-[#DD2A7B]"
+              aria-label={`Limite diário: ${dailyLimit} perguntas`}
             />
           </div>
           <p className="text-sm text-gray-500 mt-3">
@@ -378,8 +382,8 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => removeSuggestion(index)}
-                    className="text-gray-300 hover:text-red-400 transition-colors"
-                    title="Remover sugestão"
+                    className="text-gray-300 hover:text-red-400 transition-colors cursor-pointer p-2 -m-2"
+                    aria-label={`Remover sugestão ${index + 1}`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

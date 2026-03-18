@@ -87,13 +87,13 @@ export default function ReferralDashboardPage() {
             <button
               onClick={copyToClipboard}
               disabled={!referralLink}
-              className={`font-bold text-lg py-4 px-8 rounded-2xl shadow-sm transition-all disabled:opacity-50 ${
+              className={`font-bold text-lg py-4 px-8 rounded-2xl shadow-sm transition-all disabled:opacity-50 cursor-pointer ${
                 copied
                   ? 'bg-green-500 hover:bg-green-600 text-white'
                   : 'bg-gradient-instagram text-white hover:opacity-90'
               }`}
             >
-              {copied ? 'Copiado! ✓' : 'Copiar Link'}
+              <span aria-live="polite">{copied ? 'Copiado! ✓' : 'Copiar Link'}</span>
             </button>
           </div>
         </div>

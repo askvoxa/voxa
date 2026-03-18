@@ -161,7 +161,7 @@ export default async function HistoryPage({
             <a
               key={key}
               href={`/dashboard/history?periodo=${key}`}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 periodo === key
                   ? 'bg-gradient-instagram text-white'
                   : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
@@ -175,7 +175,7 @@ export default async function HistoryPage({
         {/* Lista */}
         {!questions || questions.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
-            <p className="text-4xl mb-4">📭</p>
+            <p className="text-4xl mb-4" role="img" aria-label="Caixa vazia">📭</p>
             <p className="text-xl font-bold text-gray-700">Nenhuma resposta {periodo !== 'tudo' ? 'neste período' : 'ainda'}</p>
             <p className="text-gray-400 mt-2">
               {periodo !== 'tudo'
@@ -190,13 +190,13 @@ export default async function HistoryPage({
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
-                      {q.is_anonymous ? '👻' : '👤'}
+                      <span role="img" aria-label={q.is_anonymous ? 'Anônimo' : 'Usuário'}>{q.is_anonymous ? '👻' : '👤'}</span>
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-gray-800">
                         {q.is_anonymous ? 'Anônimo' : q.sender_name}
                       </p>
-                      <p className="text-xs text-gray-400">{formatDate(q.answered_at)}</p>
+                      <p className="text-xs text-gray-500">{formatDate(q.answered_at)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export default async function HistoryPage({
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   {q.response_audio_url && (
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs text-gray-500">🎙️ Resposta em áudio</span>
+                      <span className="text-xs text-gray-500"><span role="img" aria-label="Microfone">🎙️</span> Resposta em áudio</span>
                       <audio controls src={q.response_audio_url} className="flex-1" preload="none" style={{ height: 32 }} />
                     </div>
                   )}
@@ -231,7 +231,8 @@ export default async function HistoryPage({
             {page > 1 && (
               <a
                 href={`/dashboard/history?periodo=${periodo}&page=${page - 1}`}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300"
+                aria-label="Página anterior"
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300"
               >
                 ← Anterior
               </a>
@@ -242,7 +243,8 @@ export default async function HistoryPage({
             {page < totalPages && (
               <a
                 href={`/dashboard/history?periodo=${periodo}&page=${page + 1}`}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300"
+                aria-label="Próxima página"
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300"
               >
                 Próxima →
               </a>

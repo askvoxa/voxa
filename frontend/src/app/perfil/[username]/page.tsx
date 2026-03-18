@@ -79,14 +79,14 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-lg shadow-inner">
-                  {item.is_anonymous ? '👻' : '👤'}
+                  <span role="img" aria-label={item.is_anonymous ? 'Anônimo' : 'Usuário'}>{item.is_anonymous ? '👻' : '👤'}</span>
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm">
                     {item.is_anonymous ? 'Usuário Anônimo' : item.sender_name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {item.service_type === 'premium' ? '🎥 Vídeo' : item.service_type === 'support' ? '❤️ Apoio' : '💬 Resposta Base'}
+                    {item.service_type === 'premium' ? <><span role="img" aria-label="Vídeo">🎥</span> Vídeo</> : item.service_type === 'support' ? <><span role="img" aria-label="Apoio">❤️</span> Apoio</> : <><span role="img" aria-label="Mensagem">💬</span> Resposta Base</>}
                   </p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export default async function PerfilPage({
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center py-12 px-4">
         <div className="text-center">
-          <p className="text-4xl mb-4">🚫</p>
+          <p className="text-4xl mb-4" role="img" aria-label="Indisponível">🚫</p>
           <h1 className="text-xl font-bold text-white mb-2">Perfil indisponível</h1>
           <p className="text-gray-500 text-sm">Esta conta foi desativada.</p>
         </div>

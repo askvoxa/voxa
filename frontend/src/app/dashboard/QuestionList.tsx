@@ -240,7 +240,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   if (questions.length === 0) {
     return (
       <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
-        <p className="text-4xl mb-4">🎉</p>
+        <p className="text-4xl mb-4" role="img" aria-label="Celebração">🎉</p>
         <p className="text-xl font-bold text-gray-700">Tudo em dia!</p>
         <p className="text-gray-400 mt-2">Nenhuma pergunta pendente no momento.</p>
         <a
@@ -294,7 +294,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       </span>
                     </h4>
                     <p className="text-xs text-gray-500 mt-1">
-                      {timeAgo(q.created_at)} • {q.service_type === 'premium' ? '🎥 Vídeo Premium' : '💬 Resposta Base'}
+                      {timeAgo(q.created_at)} • {q.service_type === 'premium' ? <><span role="img" aria-label="Vídeo">🎥</span> Vídeo Premium</> : <><span role="img" aria-label="Mensagem">💬</span> Resposta Base</>}
                     </p>
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                                 setAudioBlob(null)
                                 setAudioUrl(null)
                               }}
-                              className="text-xs text-gray-500 underline"
+                              className="text-sm text-gray-500 underline cursor-pointer py-1"
                             >
                               Regravar
                             </button>
@@ -338,7 +338,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                           >
                             {recording
                               ? `⏹ Parar gravação — ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`
-                              : '🎙️ Iniciar gravação'}
+                              : <><span role="img" aria-label="Microfone">🎙️</span> Iniciar gravação</>}
                           </button>
                         ) : (
                           <div>
@@ -357,7 +357,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       </div>
                     )}
 
-                    {submitError && <p className="text-xs text-red-500">{submitError}</p>}
+                    {submitError && <p className="text-sm text-red-500" role="alert">{submitError}</p>}
 
                     <div className="flex gap-2">
                       <button
@@ -386,13 +386,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       onClick={() => openRespond(q.id, 'audio')}
                       className="flex-1 font-bold py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-[#DD2A7B] text-white hover:opacity-90 transition-all flex justify-center items-center gap-2"
                     >
-                      🎙️ Responder por Áudio
+                      <span role="img" aria-label="Microfone">🎙️</span> Responder por Áudio
                     </button>
                     <button
                       onClick={() => openRespond(q.id, 'text')}
                       className="flex-1 font-bold py-3 px-4 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-all flex justify-center items-center gap-2"
                     >
-                      💬 Responder por Texto
+                      <span role="img" aria-label="Mensagem">💬</span> Responder por Texto
                     </button>
                   </div>
                 )}
@@ -418,13 +418,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
       {/* Modal de Story */}
       {selectedStory && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-[400px] flex flex-col items-center">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Pré-visualização de Story">
+          <div className="relative w-full max-w-[400px] max-h-full overflow-auto flex flex-col items-center">
             <div className="w-full flex justify-between items-center mb-4 px-2">
-              <button onClick={() => setSelectedStory(null)} className="text-white font-bold text-sm bg-black/40 px-4 py-2 rounded-full hover:bg-black/60">
+              <button onClick={() => setSelectedStory(null)} className="text-white font-bold text-sm bg-black/40 px-4 py-3 rounded-full hover:bg-black/60 cursor-pointer">
                 Cancelar
               </button>
-              <button onClick={downloadStory} className="bg-white text-black font-bold text-sm px-4 py-2 rounded-full flex items-center gap-2 hover:bg-gray-100">
+              <button onClick={downloadStory} className="bg-white text-black font-bold text-sm px-4 py-3 rounded-full flex items-center gap-2 hover:bg-gray-100 cursor-pointer">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -434,7 +434,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
             <div
               ref={storyRef}
-              className="w-[360px] h-[640px] bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F56040] rounded-[32px] p-8 flex flex-col justify-center relative overflow-hidden shadow-2xl"
+              className="w-[360px] max-w-full aspect-[9/16] bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F56040] rounded-[32px] p-8 flex flex-col justify-center relative overflow-hidden shadow-2xl"
             >
               <div data-html2canvas-ignore className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-20 -mt-20"></div>
               <div data-html2canvas-ignore className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-400 opacity-20 rounded-full blur-3xl -ml-20 -mb-20"></div>
@@ -442,7 +442,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
               <div className="bg-white rounded-3xl p-6 shadow-xl relative z-10 w-full">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">
-                    {selectedStory.is_anonymous ? '👻' : '👤'}
+                    <span role="img" aria-label={selectedStory.is_anonymous ? 'Anônimo' : 'Usuário'}>{selectedStory.is_anonymous ? '👻' : '👤'}</span>
                   </div>
                   <div>
                     <p className="font-bold text-gray-900 text-sm">

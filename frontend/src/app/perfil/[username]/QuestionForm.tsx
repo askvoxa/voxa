@@ -200,19 +200,19 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         <button
           type="button"
           onClick={() => handleModeSwitch('question')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             !isSupport
               ? 'bg-[#111] text-white shadow-sm border border-white/10'
               : 'text-gray-500 hover:text-gray-300'
           }`}
         >
-          <span>💬</span>
+          <span role="img" aria-label="Mensagem">💬</span>
           <span>Fazer Pergunta</span>
         </button>
         <button
           type="button"
           onClick={() => handleModeSwitch('support')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             isSupport
               ? 'bg-[#111] text-white shadow-sm border border-white/10'
               : 'text-gray-500 hover:text-gray-300'
@@ -258,7 +258,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                     type="button"
                     key={val}
                     onClick={() => setSupportAmount(val)}
-                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all ${getPriceColorClass(val, supportAmount)}`}
+                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all cursor-pointer ${getPriceColorClass(val, supportAmount)}`}
                   >
                     R$ {val}
                   </button>
@@ -336,11 +336,11 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 <button
                   type="button"
                   onClick={() => { setServiceType('base'); if (amount < baseMin) setAmount(baseMin) }}
-                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden ${serviceType === 'base' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
+                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'base' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">💬</span>
+                      <span className="text-xl" role="img" aria-label="Mensagem">💬</span>
                       <span className={`font-semibold ${serviceType === 'base' ? 'text-white' : 'text-gray-300'}`}>Opção Base</span>
                     </div>
                     <span className="text-sm font-bold text-gray-400">R$ {baseMin}</span>
@@ -351,12 +351,12 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 <button
                   type="button"
                   onClick={() => { setServiceType('premium'); if (amount < premiumMin) setAmount(premiumMin) }}
-                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden ${serviceType === 'premium' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
+                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'premium' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(221,42,123,0.15)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
                   <div className="absolute top-0 right-0 bg-gradient-instagram text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">Premium</div>
                   <div className="flex items-center justify-between mb-1 mt-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">🎥</span>
+                      <span className="text-xl" role="img" aria-label="Vídeo">🎥</span>
                       <span className={`font-semibold ${serviceType === 'premium' ? 'text-white' : 'text-gray-300'}`}>Vídeo Exclusivo</span>
                     </div>
                     <span className="text-sm font-bold text-gray-400">R$ {premiumMin}</span>
@@ -376,7 +376,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                     type="button"
                     key={val}
                     onClick={() => setAmount(val)}
-                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all ${getPriceColorClass(val, amount)}`}
+                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all cursor-pointer ${getPriceColorClass(val, amount)}`}
                   >
                     R$ {val}
                   </button>
@@ -461,7 +461,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
           </label>
         </div>
 
-        {error && <p className="text-sm text-red-400 -mt-2">{error}</p>}
+        {error && <p className="text-sm text-red-400 -mt-2" role="alert">{error}</p>}
 
         <button
           type="button"

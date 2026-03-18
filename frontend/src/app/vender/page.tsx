@@ -125,7 +125,7 @@ export default function VenderPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-[#111] border border-white/5 rounded-[32px] p-8 hover:border-white/10 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center mb-6">
-                <span className="text-2xl">🛡️</span>
+                <span className="text-2xl" role="img" aria-label="Proteção">🛡️</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Zero Acesso à Conta</h3>
               <p className="text-gray-400 leading-relaxed text-sm">
@@ -135,7 +135,7 @@ export default function VenderPage() {
 
             <div className="bg-[#111] border border-white/5 rounded-[32px] p-8 hover:border-white/10 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-6">
-                <span className="text-2xl">🔑</span>
+                <span className="text-2xl" role="img" aria-label="Login seguro">🔑</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Login Independente</h3>
               <p className="text-gray-400 leading-relaxed text-sm">
@@ -145,7 +145,7 @@ export default function VenderPage() {
 
             <div className="bg-[#111] border border-white/5 rounded-[32px] p-8 hover:border-white/10 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-[#DD2A7B]/20 flex items-center justify-center mb-6">
-                <span className="text-2xl">🤖</span>
+                <span className="text-2xl" role="img" aria-label="Inteligência artificial">🤖</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Filtro Anti-Spam (IA)</h3>
               <p className="text-gray-400 leading-relaxed text-sm">
@@ -172,13 +172,14 @@ export default function VenderPage() {
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between mb-2">
-                    <label className="text-sm font-semibold text-gray-300">Preço Médio por Pergunta</label>
+                    <label htmlFor="price-slider" className="text-sm font-semibold text-gray-300">Preço Médio por Pergunta</label>
                     <span className="font-mono text-[#DD2A7B] font-bold">R$ {price}</span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="10" 
-                    max="200" 
+                  <input
+                    id="price-slider"
+                    type="range"
+                    min="10"
+                    max="200"
                     step="10"
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value))}
@@ -192,13 +193,14 @@ export default function VenderPage() {
 
                 <div>
                   <div className="flex justify-between mb-2">
-                    <label className="text-sm font-semibold text-gray-300">Perguntas Respondidas por Dia</label>
+                    <label htmlFor="questions-slider" className="text-sm font-semibold text-gray-300">Perguntas Respondidas por Dia</label>
                     <span className="font-mono text-[#DD2A7B] font-bold">{questionsPerDay}</span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="50" 
+                  <input
+                    id="questions-slider"
+                    type="range"
+                    min="1"
+                    max="50"
                     step="1"
                     value={questionsPerDay}
                     onChange={(e) => setQuestionsPerDay(Number(e.target.value))}

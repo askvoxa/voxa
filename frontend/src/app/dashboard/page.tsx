@@ -72,7 +72,7 @@ export default function DashboardPage() {
           </div>
         </header>
         <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[0, 1, 2].map(i => (
               <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
@@ -119,20 +119,20 @@ export default function DashboardPage() {
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Metrics */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Pendentes</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Pendentes</p>
             <p className="text-2xl font-bold text-gray-800">{questions.length}</p>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">A receber</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">A receber</p>
             <p className="text-2xl font-bold text-green-600">
               R$ {(pendingEarnings * CREATOR_NET_RATE).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-[10px] text-gray-400 mt-1">líquido após taxa Voxa (10%)</p>
+            <p className="text-xs text-gray-500 mt-1">líquido após taxa Voxa (10%)</p>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Vagas hoje</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Vagas hoje</p>
             <p className="text-2xl font-bold text-gray-800">{questionsLeft}<span className="text-sm text-gray-400 font-normal">/{profile.daily_limit}</span></p>
           </div>
         </div>

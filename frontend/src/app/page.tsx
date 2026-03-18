@@ -132,7 +132,7 @@ export default function HomePage() {
           Reembolso automático se não responder em 36h
         </div>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.08] text-[#111] mb-5">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight text-[#111] mb-5">
           Sua dúvida respondida por
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DD2A7B] via-[#F77737] to-[#FCAF45]">
@@ -157,7 +157,7 @@ export default function HomePage() {
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#DD2A7B] to-[#F77737] text-white text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#DD2A7B] to-[#F77737] text-white text-xs font-bold px-4 py-3 rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
           >
             Buscar
           </button>
@@ -213,17 +213,18 @@ export default function HomePage() {
                   <img
                     src={c.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.username}&backgroundColor=b6e3f4`}
                     alt={c.username}
+                    loading="lazy"
                     className="w-14 h-14 rounded-full object-cover bg-gray-100 border border-black/5"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-[#111] text-sm truncate">@{c.username}</p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{c.bio || 'Criador na VOXA'}</p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{c.bio || 'Criador na VOXA'}</p>
                   </div>
                 </div>
 
                 {/* Badge */}
                 <div className="flex items-center gap-2 mb-5">
-                  <span className="inline-flex items-center gap-1 bg-gray-50 border border-black/8 px-2.5 py-1 rounded-full text-xs font-medium text-gray-500">
+                  <span className="inline-flex items-center gap-1 bg-gray-50 border border-black/8 px-2.5 py-1 rounded-full text-xs font-medium text-gray-600">
                     <Shield className="w-3 h-3" />
                     Garantia VOXA
                   </span>
@@ -250,7 +251,7 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <p className="text-xs font-bold uppercase tracking-widest text-[#DD2A7B] mb-2">Amostras</p>
             <h2 className="text-2xl sm:text-3xl font-black text-[#111]">Veja como funciona</h2>
-            <p className="text-gray-400 text-sm mt-2">Respostas reais de criadores da plataforma.</p>
+            <p className="text-gray-500 text-sm mt-2">Respostas reais de criadores da plataforma.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -293,14 +294,14 @@ export default function HomePage() {
       <section className="px-6 py-14 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           {[
-            { icon: '⚡', titulo: 'Resposta garantida', desc: 'Em até 36h ou reembolso automático. Sem burocracia.' },
-            { icon: '🔒', titulo: 'Pagamento seguro', desc: 'PIX com confirmação instantânea. Seu dinheiro protegido.' },
-            { icon: '🎯', titulo: 'Personalizado para você', desc: 'Não é conteúdo genérico. É uma resposta feita para sua pergunta.' },
+            { icon: '⚡', ariaLabel: 'Rápido', titulo: 'Resposta garantida', desc: 'Em até 36h ou reembolso automático. Sem burocracia.' },
+            { icon: '🔒', ariaLabel: 'Seguro', titulo: 'Pagamento seguro', desc: 'PIX com confirmação instantânea. Seu dinheiro protegido.' },
+            { icon: '🎯', ariaLabel: 'Personalizado', titulo: 'Personalizado para você', desc: 'Não é conteúdo genérico. É uma resposta feita para sua pergunta.' },
           ].map((t, i) => (
             <div key={i} className="bg-white border border-black/8 rounded-2xl p-6 shadow-sm">
-              <div className="text-3xl mb-3">{t.icon}</div>
+              <div className="text-3xl mb-3" role="img" aria-label={t.ariaLabel}>{t.icon}</div>
               <h3 className="font-bold text-[#111] text-sm mb-2">{t.titulo}</h3>
-              <p className="text-xs text-gray-400 leading-relaxed">{t.desc}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{t.desc}</p>
             </div>
           ))}
         </div>

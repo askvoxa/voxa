@@ -112,7 +112,7 @@ export default function SetupPage() {
               maxLength={30}
               className="w-full bg-[#1a1a1a] border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
             />
-            {hint && <p className={`text-xs mt-1 ${hint.color}`}>{hint.text}</p>}
+            {hint && <p className={`text-xs mt-1 ${hint.color}`} aria-live="polite">{hint.text}</p>}
           </div>
 
           {/* Bio */}
@@ -135,6 +135,7 @@ export default function SetupPage() {
               Preço mínimo por pergunta: <span className="text-white font-bold">R$ {minPrice}</span>
             </label>
             <input
+              id="setup-min-price"
               type="range"
               min={5}
               max={100}
@@ -142,6 +143,7 @@ export default function SetupPage() {
               value={minPrice}
               onChange={e => setMinPrice(Number(e.target.value))}
               className="w-full accent-pink-500"
+              aria-label={`Preço mínimo: R$ ${minPrice}`}
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>R$ 5</span>
@@ -155,6 +157,7 @@ export default function SetupPage() {
               Limite de perguntas por dia: <span className="text-white font-bold">{dailyLimit}</span>
             </label>
             <input
+              id="setup-daily-limit"
               type="range"
               min={1}
               max={50}
@@ -162,6 +165,7 @@ export default function SetupPage() {
               value={dailyLimit}
               onChange={e => setDailyLimit(Number(e.target.value))}
               className="w-full accent-pink-500"
+              aria-label={`Limite diário: ${dailyLimit} perguntas`}
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>1</span>

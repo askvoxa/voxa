@@ -30,6 +30,12 @@ body {
   background-image: linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%);
 }
 
+/* Focus-visible global para acessibilidade de teclado */
+:focus-visible {
+  outline: 2px solid #DD2A7B;
+  outline-offset: 2px;
+}
+
 .text-gradient-instagram {
   background-image: linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%);
   -webkit-background-clip: text;

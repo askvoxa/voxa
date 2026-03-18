@@ -40,25 +40,25 @@ export default function VisibilityToggle({
       <button
         onClick={toggle}
         disabled={isUpdating}
-        title={isVisible ? 'Ocultar do perfil' : 'Mostrar no perfil'}
-        className={`text-xs px-2 py-1 rounded-lg font-semibold transition-all disabled:opacity-60 border ${
+        aria-label={isVisible ? 'Ocultar do perfil' : 'Mostrar no perfil'}
+        className={`text-xs px-3 py-2 rounded-lg font-semibold transition-all disabled:opacity-60 border cursor-pointer ${
           isVisible
             ? 'bg-green-50 text-green-600 border-green-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
             : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200'
         }`}
       >
         {isUpdating ? (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1" role="status" aria-label="Atualizando">
             <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             ...
           </span>
-        ) : isVisible ? '👁 Visível' : '🔒 Oculta'}
+        ) : isVisible ? <><span role="img" aria-hidden="true">👁</span> Visível</> : <><span role="img" aria-hidden="true">🔒</span> Oculta</>}
       </button>
       {error && (
-        <p className="text-xs text-red-500">Erro ao alterar. Tente novamente.</p>
+        <p className="text-sm text-red-500" role="alert">Erro ao alterar. Tente novamente.</p>
       )}
     </div>
   )

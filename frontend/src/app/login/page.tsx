@@ -47,14 +47,14 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleLogin}
           disabled={isLoading}
-          className="w-full relative flex items-center justify-center border border-white/20 bg-[#1a1a1a] rounded-xl py-3 px-4 text-white font-semibold hover:bg-white/5 hover:border-white/30 transition-all disabled:opacity-50"
+          className="w-full relative flex items-center justify-center border border-white/20 bg-[#1a1a1a] rounded-xl py-3 px-4 text-white font-semibold hover:bg-white/5 hover:border-white/30 transition-all disabled:opacity-50 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <span className="absolute left-4 w-6 h-6 flex items-center justify-center text-xs bg-white text-black rounded-full font-bold">G</span>
           {isLoading ? 'Redirecionando...' : 'Continuar com Google'}
         </button>
 
         {error && (
-          <p className="mt-4 text-sm text-red-400">{error}</p>
+          <p className="mt-4 text-sm text-red-400" role="alert">{error}</p>
         )}
 
         {/* Security Badge */}
