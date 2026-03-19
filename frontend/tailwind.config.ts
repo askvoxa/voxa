@@ -30,6 +30,8 @@ const config: Config = {
           "linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%)",
         "gradient-voxa":
           "linear-gradient(135deg, #7C3AED 0%, #0A0A0F 100%)",
+        "gradient-story":
+          "linear-gradient(45deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)",
       },
     },
   },
