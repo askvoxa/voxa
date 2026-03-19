@@ -11,19 +11,14 @@
 }
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 250, 250, 250;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 249, 250, 251;
+  --background-start-rgb: 10, 10, 15;
+  --background-end-rgb: 10, 10, 15;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-start-rgb));
 }
 
 .bg-gradient-instagram {
@@ -32,12 +27,19 @@ body {
 
 /* Focus-visible global para acessibilidade de teclado */
 :focus-visible {
-  outline: 2px solid #DD2A7B;
+  outline: 2px solid #7C3AED;
   outline-offset: 2px;
 }
 
 .text-gradient-instagram {
   background-image: linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-voxa {
+  background-image: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

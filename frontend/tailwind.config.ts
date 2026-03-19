@@ -14,10 +14,22 @@ const config: Config = {
           pink: "#DD2A7B",
           purple: "#8134AF",
         },
+        voxa: {
+          primary: "#0A0A0F",
+          card: "#12121A",
+          "card-hover": "#16161F",
+          accent: "#7C3AED",
+          "accent-hover": "#6D28D9",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-instagram":
           "linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%)",
+        "gradient-voxa":
+          "linear-gradient(135deg, #7C3AED 0%, #0A0A0F 100%)",
       },
     },
   },

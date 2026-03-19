@@ -71,7 +71,7 @@ export default function SearchBar() {
   return (
     <div className="relative max-w-lg mx-auto">
       <form onSubmit={handleSubmit}>
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
         <input
           type="text"
           value={busca}
@@ -81,11 +81,11 @@ export default function SearchBar() {
           }}
           onBlur={() => setMostraSugestoes(false)}
           placeholder="Para quem você tem uma pergunta?"
-          className="w-full bg-white border border-black/10 rounded-2xl py-4 pl-12 pr-32 text-[#111] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]/30 focus:border-[#DD2A7B]/40 transition-all text-sm shadow-sm"
+          className="w-full bg-[#12121A] border border-white/10 rounded-xl py-4 pl-12 pr-32 text-[#F9FAFB] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 transition-all duration-200 text-sm"
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#DD2A7B] to-[#F77737] text-white text-xs font-bold px-4 py-3 rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold px-4 py-3 rounded-xl transition-all duration-200 hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] cursor-pointer"
         >
           Buscar
         </button>
@@ -93,18 +93,18 @@ export default function SearchBar() {
 
       {/* Sugestões dropdown */}
       {mostraSugestoes && busca.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-black/10 rounded-2xl shadow-lg overflow-hidden z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-[#12121A] border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden z-50">
           {carregando ? (
-            <div className="p-4 text-center text-gray-500 text-sm">Carregando...</div>
+            <div className="p-4 text-center text-[#9CA3AF] text-sm">Carregando...</div>
           ) : sugestoes.length === 0 ? (
-            <div className="p-4 text-center text-gray-500 text-sm">Nenhum criador encontrado</div>
+            <div className="p-4 text-center text-[#9CA3AF] text-sm">Nenhum criador encontrado</div>
           ) : (
             <div className="max-h-64 overflow-y-auto">
               {sugestoes.map(creator => (
                 <Link
                   key={creator.username}
                   href={`/perfil/${creator.username}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-black/5 last:border-b-0"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-[#16161F] transition-colors border-b border-white/5 last:border-b-0"
                   onMouseDown={() => setMostraSugestoes(false)}
                 >
                   <img
@@ -113,10 +113,10 @@ export default function SearchBar() {
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#111] text-sm">@{creator.username}</p>
-                    <p className="text-xs text-gray-500 truncate">{creator.bio || 'Criador na VOXA'}</p>
+                    <p className="font-semibold text-[#F9FAFB] text-sm">@{creator.username}</p>
+                    <p className="text-xs text-[#9CA3AF] truncate">{creator.bio || 'Criador na VOXA'}</p>
                   </div>
-                  <span className="text-xs font-bold text-[#DD2A7B]">R$ {creator.min_price}</span>
+                  <span className="text-xs font-bold text-[#7C3AED]">R$ {creator.min_price}</span>
                 </Link>
               ))}
             </div>
