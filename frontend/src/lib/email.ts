@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const FROM_EMAIL = 'VOXA <noreply@voxa.com.br>'
+const FROM_EMAIL = 'VOXA <noreply@askvoxa.com>'
 
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) {
