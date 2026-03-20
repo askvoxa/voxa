@@ -1,12 +1,49 @@
+import React, { useRef } from 'react';
+import { StyleSheet, SafeAreaView, Linking, Platform, Alert } from 'react-native';
+import { WebView } from 'react-native-webview';
+import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+
+const VOXA_URL = 'https://achados-ai.onrender.com';
 
 export default function App() {
+  const webviewRef = useRef<WebView>(null);
+
+  const handleShouldStartLoadWithRequest = (request: any) => {
+    const { url } = request;
+    
+    // Intercept MercadoPago or Google OAuth auth links
+    if (url.includes('mercadopago.com') || url.includes('accounts.google.com') || url.includes('mercadolivre.com')) {
+       Linking.openURL(url).catch(err => {
+         console.error("Failed to open URL:", err);
+         Alert.alert("Erro", "Não foi possível abrir o link externo.");
+       });
+       return false;
+    }
+    return true;
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      <WebView
+        ref={webviewRef}
+        source={{ uri: VOXA_URL }}
+        style={styles.webview}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+        onPermissionRequest={(request) => {
+          if (Platform.OS === 'android') {
+            request.grant();
+          }
+        }}
+        // Needed for deep links
+        originWhitelist={['*']}
+      />
+    </SafeAreaView>
   );
 }
 
@@ -14,7 +51,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: Platform.OS === 'android' ? Constants.statusBarHeight : 0,
+  },
+  webview: {
+    flex: 1,
   },
 });
