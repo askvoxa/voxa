@@ -43,7 +43,7 @@ export default function SouCriadorPage() {
         </span>
         <Link
           href="/login"
-          className="text-sm font-semibold text-gray-400 hover:text-white transition-colors"
+          className="text-sm font-semibold text-gray-500 hover:text-white transition-colors"
         >
           Já tenho conta →
         </Link>
@@ -69,7 +69,7 @@ export default function SouCriadorPage() {
           faturamento real.
         </h1>
 
-        <p className="text-lg sm:text-xl text-gray-400 max-w-xl mb-10 leading-relaxed">
+        <p className="text-lg sm:text-xl text-gray-500 max-w-xl mb-10 leading-relaxed">
           A plataforma mais simples para criadores monetizarem dúvidas e mensagens de fãs —
           com <span className="text-white font-semibold">90% de repasse</span> em cada transação.
         </p>
@@ -188,7 +188,7 @@ export default function SouCriadorPage() {
             {/* Insight de vendas */}
             <div className="flex items-start gap-3 bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="text-lg shrink-0">💡</span>
-              <p className="text-xs text-gray-400 leading-relaxed">{insightVolume}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{insightVolume}</p>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function SouCriadorPage() {
             >
               <div className="text-4xl mb-5">{b.icon}</div>
               <h3 className="text-lg font-black text-white mb-3">{b.title}</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">{b.desc}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
             </div>
           ))}
         </div>
@@ -261,7 +261,7 @@ export default function SouCriadorPage() {
               </span>
               <div>
                 <h3 className="font-black text-white mb-1">{step.title}</h3>
-                <p className="text-sm text-gray-400">{step.desc}</p>
+                <p className="text-sm text-gray-500">{step.desc}</p>
               </div>
             </div>
           ))}
@@ -275,7 +275,7 @@ export default function SouCriadorPage() {
           <div className="relative z-10">
             <div className="text-4xl mb-4">🛡️</div>
             <h3 className="text-2xl font-black text-white mb-3">Garantia de reembolso automático</h3>
-            <p className="text-gray-400 max-w-md mx-auto text-sm leading-relaxed">
+            <p className="text-gray-500 max-w-md mx-auto text-sm leading-relaxed">
               Se você não responder em 36h, o fã é reembolsado 100% automaticamente. Isso cria confiança — e confiança gera mais perguntas.
             </p>
           </div>
@@ -293,7 +293,7 @@ export default function SouCriadorPage() {
               sua audiência?
             </span>
           </h2>
-          <p className="text-gray-400 mb-10 text-lg">
+          <p className="text-gray-500 mb-10 text-lg">
             Junte-se aos criadores que já transformam influência em renda.
           </p>
           <Link

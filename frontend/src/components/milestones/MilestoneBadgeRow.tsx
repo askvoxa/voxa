@@ -33,7 +33,7 @@ export default function MilestoneBadgeRow({ milestones, size = 'sm', maxVisible 
         />
       ))}
       {remaining > 0 && (
-        <span className="text-[10px] text-gray-400 font-medium ml-0.5">+{remaining}</span>
+        <span className="text-[10px] text-gray-500 font-medium ml-0.5">+{remaining}</span>
       )}
     </div>
   )

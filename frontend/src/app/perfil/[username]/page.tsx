@@ -141,7 +141,7 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
                   </p>
                 </div>
               </div>
-              <span className="text-green-400 font-bold bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg text-xs">
+              <span className="text-green-400 font-bold bg-[#16A34A]/10 border border-green-500/20 px-2 py-1 rounded-lg text-xs">
                 R$ {Number(item.price_paid).toFixed(2).replace('.', ',')}
               </span>
             </div>
@@ -155,7 +155,7 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
                 <div className="w-6 h-6 rounded-full bg-gradient-instagram p-[1px]">
                   <img className="w-full h-full rounded-full object-cover" src={avatarUrl} alt="Creator" />
                 </div>
-                <span className="text-xs font-bold text-gray-400">{displayName} respondeu:</span>
+                <span className="text-xs font-bold text-gray-500">{displayName} respondeu:</span>
               </div>
 
               {item.response_audio_url && (
@@ -198,8 +198,8 @@ export default async function PerfilPage({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </a>
         <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
-          <div className="h-32 bg-gradient-to-br from-[#7C3AED]/80 via-[#4C1D95]/60 to-[#12121A] relative">
+          <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#DD2A7B] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
+          <div className="h-32 bg-gradient-to-br from-[#DD2A7B]/80 via-[#4C1D95]/60 to-[#12121A] relative">
             <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 rounded-full p-1 bg-[#12121A] hover:scale-105 transition-transform duration-200">
               <img className="w-24 h-24 rounded-full border-4 border-[#12121A] object-cover" src={avatarUrl} alt={displayName} />
             </div>
@@ -213,7 +213,7 @@ export default async function PerfilPage({
             <div className="flex justify-center mb-3">
               <MilestoneBadgeRow milestones={demoMilestones} size="md" />
             </div>
-            <div className="inline-flex items-center gap-1.5 bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#A78BFA]">
+            <div className="inline-flex items-center gap-1.5 bg-[#DD2A7B]/10 border border-[#DD2A7B]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#F77737]">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               Aceitando perguntas hoje (17/20)
             </div>
@@ -291,10 +291,10 @@ export default async function PerfilPage({
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
       </a>
       <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
+        <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#DD2A7B] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
 
         {/* Header do criador */}
-        <div className="h-32 bg-gradient-to-br from-[#7C3AED]/80 via-[#4C1D95]/60 to-[#12121A] relative">
+        <div className="h-32 bg-gradient-to-br from-[#DD2A7B]/80 via-[#4C1D95]/60 to-[#12121A] relative">
           <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 rounded-full p-1 bg-[#12121A] hover:scale-105 transition-transform duration-200">
             <img
               className="w-24 h-24 rounded-full border-4 border-[#12121A] object-cover"
@@ -314,7 +314,7 @@ export default async function PerfilPage({
               <span className={responseRate >= 90 ? 'text-green-400' : responseRate >= 75 ? 'text-yellow-400' : 'text-red-400'}>
                 ●
               </span>
-              <span className="text-gray-400">Responde {responseRate}% das perguntas</span>
+              <span className="text-gray-500">Responde {responseRate}% das perguntas</span>
             </div>
           )}
           {milestones.some(m => m.tier !== null) && (
@@ -323,12 +323,12 @@ export default async function PerfilPage({
             </div>
           )}
           {questionsLeft > 0 ? (
-            <div className="inline-flex items-center gap-1.5 bg-[#7C3AED]/10 border border-[#7C3AED]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#A78BFA]">
+            <div className="inline-flex items-center gap-1.5 bg-[#DD2A7B]/10 border border-[#DD2A7B]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#F77737]">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               Aceitando perguntas hoje ({questionsLeft}/{profile.daily_limit})
             </div>
           ) : (
-            <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold text-gray-400">
+            <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold text-gray-500">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
               Limite diário atingido — volte amanhã
             </div>
@@ -337,21 +337,21 @@ export default async function PerfilPage({
 
         {/* Banner de retorno do Mercado Pago */}
         {paymentStatus === 'approved' && (
-          <div className="mx-6 mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
+          <div className="mx-6 mt-6 p-4 bg-[#16A34A]/10 border border-green-500/30 rounded-2xl text-center">
             <p className="text-green-400 font-bold text-sm">✓ Pagamento aprovado!</p>
-            <p className="text-gray-400 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até {RESPONSE_DEADLINE_HOURS} horas.</p>
+            <p className="text-gray-500 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até {RESPONSE_DEADLINE_HOURS} horas.</p>
           </div>
         )}
         {paymentStatus === 'pending' && (
           <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl text-center">
             <p className="text-yellow-400 font-bold text-sm">⏳ Pagamento em processamento</p>
-            <p className="text-gray-400 text-xs mt-1">Se pagou via PIX, pode levar até 5 minutos para confirmar. Sua pergunta será enviada automaticamente assim que o pagamento for aprovado.</p>
+            <p className="text-gray-500 text-xs mt-1">Se pagou via PIX, pode levar até 5 minutos para confirmar. Sua pergunta será enviada automaticamente assim que o pagamento for aprovado.</p>
           </div>
         )}
         {paymentStatus === 'failure' && (
           <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-center">
             <p className="text-red-400 font-bold text-sm">✗ Pagamento não aprovado</p>
-            <p className="text-gray-400 text-xs mt-1">Tente novamente com outro método de pagamento.</p>
+            <p className="text-gray-500 text-xs mt-1">Tente novamente com outro método de pagamento.</p>
           </div>
         )}
 

@@ -36,7 +36,7 @@ export default function BottomNav({ username }: BottomNavProps) {
                 key={item.name}
                 href={item.href}
                 className={`flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] select-none ${
-                  isActive ? 'text-[#7C3AED]' : 'text-gray-400 hover:text-gray-600'
+                  isActive ? 'text-[#DD2A7B]' : 'text-gray-500 hover:text-gray-600'
                 } transition-colors`}
               >
                 <Icon className={`w-6 h-6 mb-1 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />

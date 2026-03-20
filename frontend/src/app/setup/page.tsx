@@ -105,7 +105,7 @@ export default function SetupPage() {
 
   const usernameHint = () => {
     if (username.length > 0 && username.length < 3) return { text: 'Mínimo 3 caracteres', color: 'text-gray-500' }
-    if (usernameStatus === 'checking') return { text: 'Verificando...', color: 'text-gray-400' }
+    if (usernameStatus === 'checking') return { text: 'Verificando...', color: 'text-gray-500' }
     if (usernameStatus === 'taken') return { text: 'Username já em uso', color: 'text-red-400' }
     if (usernameStatus === 'available') return { text: '✓ Disponível', color: 'text-green-400' }
     return null
@@ -120,7 +120,7 @@ export default function SetupPage() {
 
       <div className="w-full max-w-md bg-[#111] rounded-[32px] border border-white/10 p-8 shadow-2xl relative z-10">
         <h1 className="text-2xl font-bold mb-1">Configure seu perfil</h1>
-        <p className="text-gray-400 text-sm mb-8">
+        <p className="text-gray-500 text-sm mb-8">
           Você vai compartilhar o link <span className="text-white font-medium">voxa.com/perfil/<span className="text-transparent bg-clip-text bg-gradient-instagram">{username || 'seuusername'}</span></span> com seus fãs.
         </p>
 
@@ -174,7 +174,7 @@ export default function SetupPage() {
               <span>R$ 5</span>
               <span>R$ 100</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1.5 italic">💡 {getPriceBenchmark(minPrice)}</p>
+            <p className="text-xs text-gray-500 mt-1.5 italic">💡 {getPriceBenchmark(minPrice)}</p>
             <p className="text-xs text-gray-600 mt-0.5">Criadores similares cobram entre R$20–R$50. Você pode alterar isso a qualquer momento.</p>
           </div>
 
@@ -202,7 +202,7 @@ export default function SetupPage() {
 
           {/* Ganhos estimados */}
           <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-            <p className="text-xs text-gray-400 mb-1">Estimativa mensal com essa configuração:</p>
+            <p className="text-xs text-gray-500 mb-1">Estimativa mensal com essa configuração:</p>
             <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-instagram">
               R$ {(minPrice * dailyLimit * 30 * CREATOR_NET_RATE).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>

@@ -79,7 +79,7 @@ export default function TopSupporters({ supporters }: Props) {
                 </div>
 
                 {/* Amount badge */}
-                <span className="text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-lg whitespace-nowrap">
+                <span className="text-xs font-semibold text-green-400 bg-[#16A34A]/10 border border-green-500/20 px-2.5 py-1 rounded-lg whitespace-nowrap">
                   {formatBRL(supporter.total_paid)}
                 </span>
               </div>

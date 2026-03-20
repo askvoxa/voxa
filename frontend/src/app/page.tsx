@@ -33,7 +33,7 @@ export default async function HomePage() {
 
       {/* HERO */}
       <section className="pt-20 pb-14 px-6 text-center max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 bg-gray-50/80 border border-black/5 px-4 py-1.5 rounded-full text-xs font-semibold text-gray-400 mb-8">
+        <div className="inline-flex items-center gap-2 bg-gray-50/80 border border-black/5 px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 mb-8">
           <Shield className="w-3.5 h-3.5 text-emerald-500" />
           Reembolso automático se não responder em 36h
         </div>
@@ -85,7 +85,7 @@ export default async function HomePage() {
                 <p className="text-sm font-black text-[#111]">
                   A partir de <span className="text-transparent bg-clip-text bg-gradient-story">R$ {c.min_price}</span>
                 </p>
-                <span className="text-xs font-semibold text-gray-400 group-hover:text-[#fd1d1d] group-hover:translate-x-0.5 transition-all">
+                <span className="text-xs font-semibold text-gray-500 group-hover:text-[#fd1d1d] group-hover:translate-x-0.5 transition-all">
                   Perguntar →
                 </span>
               </div>
@@ -125,8 +125,8 @@ export default async function HomePage() {
                     </div>
                   </div>
                   <div className="mt-auto pt-3 flex items-center gap-1.5">
-                    <Shield className="w-3 h-3 text-green-500" />
-                    <span className="text-[10px] text-gray-400 font-medium">Garantia VOXA</span>
+                    <Shield className="w-3 h-3 text-[#16A34A]" />
+                    <span className="text-[10px] text-gray-500 font-medium">Garantia VOXA</span>
                   </div>
                 </div>
               </div>
@@ -166,8 +166,8 @@ export default async function HomePage() {
                     </div>
                   </div>
                   <div className="mt-auto pt-3 flex items-center gap-1.5">
-                    <Shield className="w-3 h-3 text-green-500" />
-                    <span className="text-[10px] text-gray-400 font-medium">Garantia VOXA</span>
+                    <Shield className="w-3 h-3 text-[#16A34A]" />
+                    <span className="text-[10px] text-gray-500 font-medium">Garantia VOXA</span>
                   </div>
                 </div>
               </div>
@@ -205,8 +205,8 @@ export default async function HomePage() {
                     </div>
                   </div>
                   <div className="mt-auto pt-3 flex items-center gap-1.5">
-                    <Shield className="w-3 h-3 text-green-500" />
-                    <span className="text-[10px] text-gray-400 font-medium">Garantia VOXA</span>
+                    <Shield className="w-3 h-3 text-[#16A34A]" />
+                    <span className="text-[10px] text-gray-500 font-medium">Garantia VOXA</span>
                   </div>
                 </div>
               </div>
@@ -235,10 +235,10 @@ export default async function HomePage() {
       {/* FOOTER */}
       <footer className="border-t border-black/5 px-6 py-8 bg-white">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-6 text-xs text-gray-400">
+          <div className="flex items-center gap-6 text-xs text-gray-500">
             <span className="font-bold text-transparent bg-clip-text bg-gradient-story">VOXA</span>
           </div>
-          <Link href="/vender" className="text-xs text-gray-400 hover:text-[#fd1d1d] transition-colors font-medium">
+          <Link href="/vender" className="text-xs text-gray-500 hover:text-[#fd1d1d] transition-colors font-medium">
             Você é criador? Comece hoje →
           </Link>
         </div>

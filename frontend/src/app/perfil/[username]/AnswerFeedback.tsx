@@ -89,7 +89,7 @@ export default function AnswerFeedback({ answerId }: Props) {
         title="Útil"
         className={`flex items-center justify-center gap-1.5 px-4 min-h-[44px] min-w-[44px] rounded-full border text-xs font-medium transition-all cursor-pointer ${
           vote === 1
-            ? 'bg-green-500/15 border-green-500/40 text-green-400'
+            ? 'bg-[#16A34A]/15 border-green-500/40 text-green-400'
             : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300'
         }`}
       >

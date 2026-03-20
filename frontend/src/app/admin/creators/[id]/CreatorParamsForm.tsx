@@ -110,7 +110,7 @@ export default function CreatorParamsForm({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
       <h2 className="text-base font-bold text-gray-900 mb-1">Parâmetros Individuais</h2>
-      <p className="text-xs text-gray-400 mb-5">
+      <p className="text-xs text-gray-500 mb-5">
         Configurações negociadas com @{username}. Sobrepõem os padrões da plataforma.
       </p>
 
@@ -128,7 +128,7 @@ export default function CreatorParamsForm({
             <span className="text-sm text-gray-700">
               Padrão da plataforma —{' '}
               <span className="font-semibold text-green-600">{platFmtRate} para o criador</span>
-              <span className="text-gray-400"> / taxa {platFmtFee}</span>
+              <span className="text-gray-500"> / taxa {platFmtFee}</span>
             </span>
           </label>
           <label className="flex items-start gap-2 cursor-pointer">
@@ -152,9 +152,9 @@ export default function CreatorParamsForm({
                       onChange={e => setRateInput(e.target.value)}
                       className="w-24 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-right pr-7 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
                     />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
                   </div>
-                  <span className="text-xs text-gray-400">para o criador → taxa {effectiveFee}</span>
+                  <span className="text-xs text-gray-500">para o criador → taxa {effectiveFee}</span>
                 </div>
               )}
             </div>
@@ -197,9 +197,9 @@ export default function CreatorParamsForm({
                       onChange={e => setDeadlineInput(e.target.value)}
                       className="w-24 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-right pr-7 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">h</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">h</span>
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500">
                     ≈ {Math.round(parseFloat(deadlineInput || '0') / 24 * 10) / 10} dias
                   </span>
                 </div>

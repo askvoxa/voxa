@@ -268,7 +268,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
       <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
         <p className="text-4xl mb-4" role="img" aria-label="Celebração">🎉</p>
         <p className="text-xl font-bold text-gray-700">Tudo em dia!</p>
-        <p className="text-gray-400 mt-2">Nenhuma pergunta pendente no momento.</p>
+        <p className="text-gray-500 mt-2">Nenhuma pergunta pendente no momento.</p>
         <a
           href={`/perfil/${creatorUsername}`}
           className="inline-block mt-6 px-6 py-3 bg-gradient-instagram text-white font-bold rounded-xl text-sm"
@@ -377,7 +377,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                               onChange={handleAudioFileUpload}
                               className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#DD2A7B] file:text-white hover:file:opacity-90"
                             />
-                            <p className="text-xs text-gray-400 mt-1">Máximo 10MB (MP3, M4A, WAV)</p>
+                            <p className="text-xs text-gray-500 mt-1">Máximo 10MB (MP3, M4A, WAV)</p>
                           </div>
                         )}
                       </div>

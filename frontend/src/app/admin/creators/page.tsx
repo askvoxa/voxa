@@ -25,11 +25,11 @@ export default async function AdminCreatorsPage() {
         <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Criador</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Preço mínimo</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Respondidas hoje</th>
-              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Cadastro</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Criador</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Preço mínimo</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Respondidas hoje</th>
+              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cadastro</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -56,11 +56,11 @@ export default async function AdminCreatorsPage() {
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 border border-green-200 text-xs font-semibold px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> Ativo
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">{joinedAt}</td>
+                  <td className="px-6 py-4 text-gray-500">{joinedAt}</td>
                   <td className="px-6 py-4 text-right">
                     <Link href={`/admin/creators/${creator.id}`} className="text-[#DD2A7B] text-xs font-semibold hover:underline">
                       Ver detalhes
@@ -71,7 +71,7 @@ export default async function AdminCreatorsPage() {
             })}
             {(creators ?? []).length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400 text-sm">Nenhum criador cadastrado.</td>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 text-sm">Nenhum criador cadastrado.</td>
               </tr>
             )}
           </tbody>

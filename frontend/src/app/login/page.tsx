@@ -42,7 +42,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md bg-[#111] rounded-[32px] border border-white/10 p-8 shadow-2xl text-center relative z-10">
         <h1 className="text-3xl font-bold mb-2">Entrar na <span className="text-transparent bg-clip-text bg-gradient-instagram">VOXA</span></h1>
-        <p className="text-gray-400 mb-8">Faça login para gerenciar suas perguntas e respostas.</p>
+        <p className="text-gray-500 mb-8">Faça login para gerenciar suas perguntas e respostas.</p>
 
         <button
           onClick={handleGoogleLogin}
@@ -63,11 +63,11 @@ export default function LoginPage() {
             <ShieldCheck className="w-5 h-5 text-green-400" />
             <h3 className="font-bold text-sm text-white">Segurança Total</h3>
           </div>
-          <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+          <p className="text-xs text-gray-500 mb-4 leading-relaxed">
             Acesso via Google. A VOXA não solicita sua senha nem possui vínculo direto com o Instagram. Seus dados de rede social permanecem totalmente isolados.
           </p>
-          <div className="pt-3 border-t border-white/5 flex items-start gap-2 text-xs text-gray-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-green-500 mt-1 shrink-0"></span>
+          <div className="pt-3 border-t border-white/5 flex items-start gap-2 text-xs text-gray-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#16A34A] mt-1 shrink-0"></span>
             Verificado e Criptografado — Seus ganhos e dados estão protegidos.
           </div>
         </div>

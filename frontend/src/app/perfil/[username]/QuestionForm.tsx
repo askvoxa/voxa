@@ -77,7 +77,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
 
   const getPriceColorClass = (val: number, current: number) =>
     current === val
-      ? 'bg-[#7C3AED] text-white border-transparent shadow-[0_0_12px_rgba(124,58,237,0.3)]'
+      ? 'bg-[#DD2A7B] text-white border-transparent shadow-[0_0_12px_rgba(124,58,237,0.3)]'
       : 'bg-[#1a1a1a] text-gray-300 border-white/10 hover:border-white/20'
 
   const basePresets = Array.from(new Set([baseMin, baseMin * 2, 50, 100])).filter(v => v > 0).slice(0, 4)
@@ -180,7 +180,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   if (disabled) {
     return (
       <div className="p-8 text-center relative z-10">
-        <p className="text-gray-400">Este criador atingiu o limite de perguntas de hoje.</p>
+        <p className="text-gray-500">Este criador atingiu o limite de perguntas de hoje.</p>
         <p className="text-gray-500 text-sm mt-1">Volte amanhã para enviar sua pergunta.</p>
       </div>
     )
@@ -218,7 +218,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               : 'text-gray-500 hover:text-gray-300'
           }`}
         >
-          <Heart className={`w-4 h-4 ${isSupport ? 'text-[#7C3AED]' : ''}`} />
+          <Heart className={`w-4 h-4 ${isSupport ? 'text-[#DD2A7B]' : ''}`} />
           <span>Apenas Apoiar</span>
         </button>
       </div>
@@ -228,7 +228,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         {/* ── MODO APOIO ── */}
         {isSupport ? (
           <>
-            <div className="bg-[#7C3AED]/5 border border-[#7C3AED]/15 rounded-2xl p-4 text-center">
+            <div className="bg-[#DD2A7B]/5 border border-[#DD2A7B]/15 rounded-2xl p-4 text-center">
               <p className="text-sm text-gray-300 leading-relaxed">
                 Seu apoio vai direto para <span className="text-white font-semibold">{displayName}</span>.<br />
                 <span className="text-gray-500 text-xs">Sem obrigação de resposta — é só gratidão. ☕</span>
@@ -244,7 +244,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 value={supportMessage}
                 onChange={(e) => setSupportMessage(e.target.value.slice(0, 140))}
                 maxLength={140}
-                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-24 placeholder-gray-400"
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 focus:border-transparent outline-none transition-all resize-none h-24 placeholder-gray-400"
                 placeholder="Escreva algo legal para o criador... ✨"
               />
               <p className="text-xs text-gray-600 text-right mt-1">{supportMessage.length}/140</p>
@@ -265,14 +265,14 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 ))}
               </div>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">R$</span>
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">R$</span>
                 <input
                   type="number"
                   min={5}
                   max={10000}
                   value={supportAmount}
                   onChange={(e) => handleAmountChange(e.target.value, setSupportAmount, 5)}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 outline-none transition-all"
                 />
               </div>
             </div>
@@ -290,7 +290,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                   setActiveSuggestion(null)
                 }}
                 maxLength={500}
-                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-400"
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-400"
                 placeholder="O que você quer saber? Sua pergunta será destacada na tela do criador."
               />
               <p className="text-xs text-gray-600 text-right mt-1">{question.length}/500</p>
@@ -310,12 +310,12 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                           onClick={() => handleFastAsk(suggestion, index)}
                           className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 min-h-[44px] rounded-full border text-xs font-medium transition-all whitespace-nowrap ${
                             isActive
-                              ? 'bg-[#7C3AED]/15 border-[#7C3AED]/50 text-[#7C3AED]'
-                              : 'bg-[#1a1a1a] border-white/10 text-gray-400 hover:border-white/25 hover:text-gray-200 hover:bg-[#222]'
+                              ? 'bg-[#DD2A7B]/15 border-[#DD2A7B]/50 text-[#DD2A7B]'
+                              : 'bg-[#1a1a1a] border-white/10 text-gray-500 hover:border-white/25 hover:text-gray-200 hover:bg-[#222]'
                           }`}
                         >
                           <span>{suggestion.label}</span>
-                          <span className={isActive ? 'text-[#7C3AED]/70' : 'text-gray-600'}>
+                          <span className={isActive ? 'text-[#DD2A7B]/70' : 'text-gray-600'}>
                             · R$ {displayAmount}
                           </span>
                         </button>
@@ -336,22 +336,22 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 <button
                   type="button"
                   onClick={() => { setServiceType('base'); if (amount < baseMin) setAmount(baseMin) }}
-                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'base' ? 'border-[#7C3AED] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(124,58,237,0.2)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
+                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'base' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(124,58,237,0.2)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xl" role="img" aria-label="Mensagem">💬</span>
                       <span className={`font-semibold ${serviceType === 'base' ? 'text-white' : 'text-gray-300'}`}>Opção Base</span>
                     </div>
-                    <span className="text-sm font-bold text-gray-400">R$ {baseMin}</span>
+                    <span className="text-sm font-bold text-gray-500">R$ {baseMin}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Pergunta Direta — resposta em texto ou áudio</p>
+                  <p className="text-xs text-gray-500 mt-2">Pergunta Direta — resposta em texto ou áudio</p>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => { setServiceType('premium'); if (amount < premiumMin) setAmount(premiumMin) }}
-                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'premium' ? 'border-[#7C3AED] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(124,58,237,0.2)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
+                  className={`relative p-4 rounded-xl border text-left transition-all overflow-hidden cursor-pointer ${serviceType === 'premium' ? 'border-[#DD2A7B] bg-gradient-to-b from-[#DD2A7B]/10 to-transparent shadow-[0_0_15px_rgba(124,58,237,0.2)]' : 'border-white/10 bg-[#1a1a1a] hover:border-white/20'}`}
                 >
                   <div className="absolute top-0 right-0 bg-gradient-instagram text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">Premium</div>
                   <div className="flex items-center justify-between mb-1 mt-1">
@@ -359,9 +359,9 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                       <span className="text-xl" role="img" aria-label="Vídeo">🎥</span>
                       <span className={`font-semibold ${serviceType === 'premium' ? 'text-white' : 'text-gray-300'}`}>Vídeo Exclusivo</span>
                     </div>
-                    <span className="text-sm font-bold text-gray-400">R$ {premiumMin}</span>
+                    <span className="text-sm font-bold text-gray-500">R$ {premiumMin}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Mínimo 15s / Máximo 1min de vídeo exclusivo.</p>
+                  <p className="text-xs text-gray-500 mt-2">Mínimo 15s / Máximo 1min de vídeo exclusivo.</p>
                 </button>
               </div>
             </div>
@@ -383,14 +383,14 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 ))}
               </div>
               <div className="relative mb-6">
-                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">R$</span>
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">R$</span>
                 <input
                   type="number"
                   min={serviceType === 'premium' ? premiumMin : baseMin}
                   max={10000}
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value, setAmount, serviceType === 'premium' ? premiumMin : baseMin)}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 pl-12 font-bold text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 outline-none transition-all"
                 />
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-white/5">
           <div className="flex justify-between items-center">
             <span className="font-bold text-gray-300">{isSupport ? 'Valor do Apoio' : 'Total a Pagar'}</span>
-            <span className="font-bold text-lg text-[#A78BFA]">
+            <span className="font-bold text-lg text-[#F77737]">
               R$ {finalAmount.toFixed(2).replace('.', ',')}
             </span>
           </div>
@@ -444,7 +444,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-400"
+              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 outline-none transition-all placeholder-gray-400"
               placeholder="Joãozinho"
             />
           </div>
@@ -458,7 +458,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-400"
+            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 outline-none transition-all placeholder-gray-400"
             placeholder="para@exemplo.com"
           />
           <p className="text-xs text-gray-600 mt-1">Você receberá a resposta neste email.</p>
@@ -471,7 +471,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               type="checkbox"
               checked={isShareable}
               onChange={(e) => setIsShareable(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-600 bg-[#222] text-[#7C3AED] focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60"
+              className="w-5 h-5 rounded border-gray-600 bg-[#222] text-[#DD2A7B] focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60"
             />
             <span className="text-sm text-gray-300 font-medium flex-1">
               {isSupport
@@ -489,7 +489,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
           disabled={isSubmitting}
           className={`w-full text-white font-bold text-lg py-4 rounded-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center min-h-[60px] ${
             isSupport
-              ? 'bg-[#7C3AED] hover:bg-[#6D28D9] shadow-[0_0_24px_rgba(124,58,237,0.3)] hover:shadow-[0_0_32px_rgba(124,58,237,0.5)]'
+              ? 'bg-[#DD2A7B] hover:bg-[#6D28D9] shadow-[0_0_24px_rgba(124,58,237,0.3)] hover:shadow-[0_0_32px_rgba(124,58,237,0.5)]'
               : 'bg-gradient-instagram hover:opacity-90 shadow-[0_0_24px_rgba(221,42,123,0.3)] hover:shadow-[0_0_32px_rgba(221,42,123,0.5)]'
           }`}
         >
@@ -505,7 +505,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         </button>
 
         {!isSupport && (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400 bg-white/5 p-3 rounded-lg border border-white/5">
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 bg-white/5 p-3 rounded-lg border border-white/5">
             <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
             <p className="leading-snug">
               <strong className="text-gray-300">Garantia VOXA:</strong> Se o criador não responder em {RESPONSE_DEADLINE_HOURS}h, seu dinheiro é estornado 100% automaticamente.
@@ -514,8 +514,8 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         )}
 
         {isSupport && (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400 bg-white/5 p-3 rounded-lg border border-white/5">
-            <Heart className="w-4 h-4 text-[#7C3AED] shrink-0" />
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 bg-white/5 p-3 rounded-lg border border-white/5">
+            <Heart className="w-4 h-4 text-[#DD2A7B] shrink-0" />
             <p className="leading-snug">
               Apoios não exigem resposta do criador. Seu gesto vai diretamente para ele. 💙
             </p>

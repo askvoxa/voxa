@@ -109,7 +109,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4 px-4">
           <p className="text-gray-500 text-lg">Perfil não encontrado.</p>
-          <p className="text-gray-400 text-sm">Você precisa configurar seu perfil de criador primeiro.</p>
+          <p className="text-gray-500 text-sm">Você precisa configurar seu perfil de criador primeiro.</p>
           <a href="/setup" className="inline-block bg-gradient-instagram text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">
             Configurar perfil
           </a>
@@ -146,7 +146,7 @@ export default function DashboardPage() {
                 await supabase.auth.signOut()
                 router.push('/')
               }}
-              className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+              className="text-gray-500 hover:text-red-500 transition-colors cursor-pointer"
               aria-label="Sair da conta"
               title="Sair"
             >
@@ -172,7 +172,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Vagas hoje</p>
-            <p className="text-2xl font-bold text-gray-800">{questionsLeft}<span className="text-sm text-gray-400 font-normal">/{profile.daily_limit}</span></p>
+            <p className="text-2xl font-bold text-gray-800">{questionsLeft}<span className="text-sm text-gray-500 font-normal">/{profile.daily_limit}</span></p>
           </div>
         </div>
 

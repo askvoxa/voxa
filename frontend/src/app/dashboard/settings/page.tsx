@@ -238,7 +238,7 @@ export default function SettingsPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <a href="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <a href="/dashboard" className="text-gray-500 hover:text-gray-600 transition-colors p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setAvatarUrl('')}
-                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-xs text-gray-500 hover:text-red-500 transition-colors"
                 >
                   Remover foto (usar avatar gerado)
                 </button>
@@ -378,7 +378,7 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-start justify-between mb-1">
             <h2 className="font-bold text-lg">Perguntas Rápidas</h2>
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full font-medium">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium">
               {suggestions.length}/5
             </span>
           </div>
@@ -390,7 +390,7 @@ export default function SettingsPage() {
             {suggestions.map((s, index) => (
               <div key={index} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Sugestão {index + 1}
                   </span>
                   <button
@@ -407,7 +407,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
-                    Texto da pílula <span className="text-gray-400">(aparece no botão)</span>
+                    Texto da pílula <span className="text-gray-500">(aparece no botão)</span>
                   </label>
                   <input
                     type="text"
@@ -421,7 +421,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
-                    Pergunta completa <span className="text-gray-400">(preenche a textarea do fã)</span>
+                    Pergunta completa <span className="text-gray-500">(preenche a textarea do fã)</span>
                   </label>
                   <textarea
                     value={s.question}
@@ -431,16 +431,16 @@ export default function SettingsPage() {
                     placeholder="ex: Qual é a sua dica mais valiosa para quem está começando?"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#DD2A7B] resize-none"
                   />
-                  <p className="text-right text-xs text-gray-400 mt-0.5">{s.question.length}/200</p>
+                  <p className="text-right text-xs text-gray-500 mt-0.5">{s.question.length}/200</p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">
-                    Valor sugerido <span className="text-gray-400">(mínimo: R$ {minPrice})</span>
+                    Valor sugerido <span className="text-gray-500">(mínimo: R$ {minPrice})</span>
                   </label>
                   <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-gray-400">R$</span>
+                      <span className="text-sm font-bold text-gray-500">R$</span>
                       <input
                         type="number"
                         value={s.amount}
@@ -454,7 +454,7 @@ export default function SettingsPage() {
                     <div className="flex-1 min-w-0 flex justify-start sm:justify-end">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-500 bg-white max-w-full">
                         <span className="truncate">{s.label || '...'}</span>
-                        <span className="text-gray-400 shrink-0">· R$ {Math.max(Number(s.amount) || minPrice, minPrice)}</span>
+                        <span className="text-gray-500 shrink-0">· R$ {Math.max(Number(s.amount) || minPrice, minPrice)}</span>
                       </span>
                     </div>
                   </div>
@@ -467,7 +467,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={addSuggestion}
-              className="mt-4 w-full border-2 border-dashed border-gray-200 rounded-2xl py-3 text-sm text-gray-400 font-medium hover:border-[#DD2A7B] hover:text-[#DD2A7B] transition-colors flex items-center justify-center gap-2"
+              className="mt-4 w-full border-2 border-dashed border-gray-200 rounded-2xl py-3 text-sm text-gray-500 font-medium hover:border-[#DD2A7B] hover:text-[#DD2A7B] transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -480,7 +480,7 @@ export default function SettingsPage() {
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
         {successMessage && (
-          <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
+          <div className="p-4 bg-[#16A34A]/10 border border-green-500/30 rounded-2xl text-center">
             <p className="text-green-600 font-semibold text-sm">✓ {successMessage}</p>
           </div>
         )}
@@ -495,14 +495,14 @@ export default function SettingsPage() {
         </button>
 
         <div className="text-center space-y-3">
-          <a href="/dashboard" className="block text-sm text-gray-400 hover:text-gray-600">Voltar ao dashboard</a>
+          <a href="/dashboard" className="block text-sm text-gray-500 hover:text-gray-600">Voltar ao dashboard</a>
           <button
             onClick={async () => {
               const supabase = createClient()
               await supabase.auth.signOut()
               router.push('/')
             }}
-            className="text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+            className="text-sm text-gray-500 hover:text-red-500 transition-colors cursor-pointer"
           >
             Sair da conta
           </button>

@@ -54,7 +54,7 @@ export default function MilestoneProgress({ milestones }: Props) {
                 />
               </div>
 
-              <p className="text-[10px] text-gray-400 mt-1">
+              <p className="text-[10px] text-gray-500 mt-1">
                 {m.tier ? getMilestoneDescription(m.type, m.tier) : nextLabel}
               </p>
             </div>

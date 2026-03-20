@@ -130,7 +130,7 @@ export default async function HistoryPage({
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <a href="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <a href="/dashboard" className="text-gray-500 hover:text-gray-600 transition-colors p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -169,7 +169,7 @@ export default async function HistoryPage({
             <p className="text-2xl font-bold text-gray-900">
               R$ {monthProjection.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               Se mantiver o ritmo dos últimos 7 dias
             </p>
             {weekDiff !== 0 && (
@@ -191,7 +191,7 @@ export default async function HistoryPage({
               Voxa retém 10% (<span className="text-gray-600">R$ 1,00</span>) →
               Você recebe <span className="font-bold text-green-600">R$ 9,00</span>
             </p>
-            <p className="mt-1 text-xs text-gray-400">Todos os valores exibidos já são líquidos.</p>
+            <p className="mt-1 text-xs text-gray-500">Todos os valores exibidos já são líquidos.</p>
           </div>
         </details>
 
@@ -221,7 +221,7 @@ export default async function HistoryPage({
           <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
             <p className="text-4xl mb-4" role="img" aria-label="Caixa vazia">📭</p>
             <p className="text-xl font-bold text-gray-700">Nenhuma resposta {periodo !== 'tudo' ? 'neste período' : 'ainda'}</p>
-            <p className="text-gray-400 mt-2">
+            <p className="text-gray-500 mt-2">
               {periodo !== 'tudo'
                 ? <a href="/dashboard/history?periodo=tudo" className="text-[#DD2A7B] underline">Ver todo o histórico</a>
                 : 'Responda perguntas para ver seu histórico aqui.'}

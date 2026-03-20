@@ -91,7 +91,7 @@ export default function AdminSettingsPage() {
 
   if (!settings) {
     return (
-      <div className="p-4 md:p-8 text-gray-400 text-sm">Carregando...</div>
+      <div className="p-4 md:p-8 text-gray-500 text-sm">Carregando...</div>
     )
   }
 
@@ -103,7 +103,7 @@ export default function AdminSettingsPage() {
     <div className="p-4 md:p-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Parâmetros da Plataforma</h1>
       {lastUpdated && (
-        <p className="text-xs text-gray-400 mb-8">Última atualização: {lastUpdated}</p>
+        <p className="text-xs text-gray-500 mb-8">Última atualização: {lastUpdated}</p>
       )}
 
       <div className="space-y-6">
@@ -124,9 +124,9 @@ export default function AdminSettingsPage() {
                 onChange={e => setFeeInput(e.target.value)}
                 className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm text-right pr-7 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
             </div>
-            <span className="text-sm text-gray-400">→ criador recebe</span>
+            <span className="text-sm text-gray-500">→ criador recebe</span>
             <span className="font-bold text-green-600 text-base">{creatorPct()}</span>
           </div>
         </div>
@@ -148,9 +148,9 @@ export default function AdminSettingsPage() {
                 onChange={e => setDeadlineInput(e.target.value)}
                 className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm text-right pr-12 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">h</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">h</span>
             </div>
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-500">
               ≈ {Math.round(parseFloat(deadlineInput || '0') / 24 * 10) / 10} dias
             </span>
           </div>

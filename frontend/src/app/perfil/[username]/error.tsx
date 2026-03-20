@@ -11,7 +11,7 @@ export default function PerfilError({
       <div className="bg-[#111] rounded-[32px] p-10 border border-white/10 text-center max-w-md w-full">
         <p className="text-4xl mb-4">⚠️</p>
         <h2 className="text-xl font-bold text-white mb-2">Erro ao carregar perfil</h2>
-        <p className="text-gray-400 mb-6 text-sm">
+        <p className="text-gray-500 mb-6 text-sm">
           Não foi possível carregar este perfil. Verifique sua conexão e tente novamente.
         </p>
         <button

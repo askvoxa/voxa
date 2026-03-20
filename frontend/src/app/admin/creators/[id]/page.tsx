@@ -73,7 +73,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
 
   return (
     <div className="p-4 md:p-8">
-      <Link href="/admin/creators" className="text-sm text-gray-400 hover:text-gray-700 mb-6 inline-flex items-center gap-1">
+      <Link href="/admin/creators" className="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-flex items-center gap-1">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
@@ -87,7 +87,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
           <div>
             <h1 className="text-xl font-bold text-gray-900">@{profile.username}</h1>
             {profile.bio && <p className="text-sm text-gray-500 mt-0.5 max-w-md">{profile.bio}</p>}
-            <p className="text-xs text-gray-400 mt-1">Cadastro: {joinedAt}</p>
+            <p className="text-xs text-gray-500 mt-1">Cadastro: {joinedAt}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -97,7 +97,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-600 border border-green-200 text-xs font-semibold px-3 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span> Ativo
+              <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span> Ativo
             </span>
           )}
           <BanToggle creatorId={profile.id} isActive={profile.is_active !== false} username={profile.username} />
@@ -105,7 +105,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
             href={`/perfil/${profile.username}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
+            className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
           >
             Ver perfil público
           </a>
@@ -115,30 +115,30 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Receita Bruta</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Receita Bruta</p>
           <p className="text-xl font-bold text-gray-900">{fmt(totalGross)}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
             Líquido do Criador
             {customCreatorRate !== null && (
               <span className="ml-1 text-purple-600">(individual)</span>
             )}
           </p>
           <p className="text-xl font-bold text-green-600">{fmt(netEarnings)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-gray-500 mt-0.5">
             Taxa ({fmtPct(platformFeeRate)}): {fmt(platformFee)}
           </p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Taxa de Resposta</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Taxa de Resposta</p>
           <p className="text-xl font-bold text-gray-900">{answerRate}%</p>
-          <p className="text-xs text-gray-400 mt-0.5">{answeredCount} de {qs.length}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{answeredCount} de {qs.length}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Ticket Médio</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ticket Médio</p>
           <p className="text-xl font-bold text-gray-900">{fmt(avgPrice)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Hoje: {profile.questions_answered_today}/{profile.daily_limit}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Hoje: {profile.questions_answered_today}/{profile.daily_limit}</p>
         </div>
       </div>
 
@@ -158,11 +158,11 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
         <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Data</th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Fã</th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Pergunta</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Valor</th>
-              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Fã</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Pergunta</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Valor</th>
+              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -172,7 +172,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
               const fanName = q.is_anonymous ? 'Anônimo' : q.sender_name
               return (
                 <tr key={q.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-400 whitespace-nowrap">{date}</td>
+                  <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{date}</td>
                   <td className="px-6 py-4 text-gray-600">{fanName}</td>
                   <td className="px-6 py-4 text-gray-700 max-w-xs truncate">{q.content}</td>
                   <td className="px-6 py-4 text-right font-medium text-gray-900">
@@ -199,7 +199,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
             })}
             {qs.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400 text-sm">Nenhuma pergunta encontrada.</td>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 text-sm">Nenhuma pergunta encontrada.</td>
               </tr>
             )}
           </tbody>

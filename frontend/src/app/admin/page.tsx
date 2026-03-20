@@ -12,9 +12,9 @@ const supabaseAdmin = createClient(
 function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
       <p className="text-2xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   )
 }
@@ -86,7 +86,7 @@ export default async function AdminPage() {
       )}
 
       {/* Row 1: Financial */}
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Financeiro</h2>
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Financeiro</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <MetricCard label="GMV Total" value={fmt(gmv)} sub="Pagamentos aprovados" />
         <MetricCard label={`Receita da Plataforma (${feePct})`} value={fmt(fees)} />
@@ -94,7 +94,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Row 2: Activity */}
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Atividade</h2>
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Atividade</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <MetricCard label="Criadores" value={String(totalCreators ?? 0)} />
         <MetricCard label="Perguntas Totais" value={String(totalQuestions)} />
@@ -103,7 +103,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Row 3: Operational */}
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Saúde Operacional</h2>
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Saúde Operacional</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <MetricCard label="Fila de Reembolsos" value={String(refundQueueCount ?? 0)} sub="Aguardando processamento" />
         <MetricCard label="Perguntas Expiradas" value={String(expiredCount ?? 0)} sub={`Sem resposta em ${platformSettings.response_deadline_hours}h`} />
@@ -121,9 +121,9 @@ export default async function AdminPage() {
         <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Criador</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Respondidas hoje</th>
-              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Criador</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Respondidas hoje</th>
+              <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -146,7 +146,7 @@ export default async function AdminPage() {
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 border border-green-200 text-xs font-semibold px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span> Ativo
                       </span>
                     )}
                   </td>
@@ -160,7 +160,7 @@ export default async function AdminPage() {
             })}
             {(creators ?? []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-400 text-sm">Nenhum criador cadastrado.</td>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 text-sm">Nenhum criador cadastrado.</td>
               </tr>
             )}
           </tbody>

@@ -14,7 +14,7 @@ export default function AdminError({
         {error.message || 'Ocorreu um erro inesperado. Se o problema persistir, verifique se as migrações do banco de dados foram aplicadas.'}
       </p>
       {error.digest && (
-        <p className="text-xs text-gray-400 font-mono">ID: {error.digest}</p>
+        <p className="text-xs text-gray-500 font-mono">ID: {error.digest}</p>
       )}
       <button
         onClick={reset}

@@ -22,7 +22,7 @@ export default function VenderPage() {
           VOXA
         </h1>
         <div className="flex gap-4">
-          <Link href="/login" className="text-gray-400 hover:text-white font-medium py-2 px-4 transition-colors">
+          <Link href="/login" className="text-gray-500 hover:text-white font-medium py-2 px-4 transition-colors">
             Entrar
           </Link>
           <Link href="/login" className="bg-white text-black font-bold py-2 px-6 rounded-full hover:scale-105 transition-transform">
@@ -36,14 +36,14 @@ export default function VenderPage() {
         {/* HERO SECTION */}
         <section className="text-center max-w-4xl mx-auto mb-32">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6 text-sm text-gray-300">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
             Nova forma de monetizar sua audiência
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight leading-tight">
             Monetize com sua influência. <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-instagram">Pare de abrir caixinhas gratuitas no Instagram.</span>
           </h1>
-          <p className="text-xl text-gray-400 mb-6 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-500 mb-6 max-w-2xl mx-auto leading-relaxed">
             Dicas rápidas a partir de R$ 10. Conteúdo exclusivo em vídeo por R$ 50. Transforme seu tempo ocioso em faturamento real.
           </p>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 max-w-xl mx-auto mb-12 flex items-center gap-4">
@@ -81,7 +81,7 @@ export default function VenderPage() {
                 <Users className="text-emerald-400 w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Filtre sua audiência</h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-500 leading-relaxed">
                 Receba apenas perguntas de quem realmente valoriza seu tempo.
               </p>
             </div>
@@ -92,7 +92,7 @@ export default function VenderPage() {
                 <Mic className="text-[#DD2A7B] w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Respostas em Áudio</h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-500 leading-relaxed">
                 Responda rápido, de onde estiver, sem a pressão de gravar um vídeo perfeito.
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function VenderPage() {
                 <Settings className="text-cyan-400 w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Privacidade</h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-500 leading-relaxed">
                 Acabe com a bagunça das DMs e mantenha o foco no que importa.
               </p>
             </div>
@@ -117,7 +117,7 @@ export default function VenderPage() {
             <h2 className="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
               <ShieldCheck className="w-8 h-8 text-green-400" /> Segurança de Elite
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Proteção dupla para você e sua conta. Monetize com tranquilidade absoluta.
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function VenderPage() {
                 <span className="text-2xl" role="img" aria-label="Proteção">🛡️</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Zero Acesso à Conta</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
+              <p className="text-gray-500 leading-relaxed text-sm">
                 A VOXA não solicita sua senha do Instagram nem se conecta diretamente à sua conta. Seus dados de rede social permanecem 100% privados e seguros.
               </p>
             </div>
@@ -138,7 +138,7 @@ export default function VenderPage() {
                 <span className="text-2xl" role="img" aria-label="Login seguro">🔑</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Login Independente</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
+              <p className="text-gray-500 leading-relaxed text-sm">
                 Acesse a plataforma via Google. Sem vínculos de API com o Instagram, o que blinda sua conta contra Shadowbans ou Hacks.
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function VenderPage() {
                 <span className="text-2xl" role="img" aria-label="Inteligência artificial">🤖</span>
               </div>
               <h3 className="text-xl font-bold mb-3">Filtro Anti-Spam (IA)</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
+              <p className="text-gray-500 leading-relaxed text-sm">
                 Nossa Inteligência Artificial filtra 100% de conteúdos ofensivos, assédios ou links maliciosos antes mesmo de chegarem até você.
               </p>
             </div>
@@ -166,7 +166,7 @@ export default function VenderPage() {
             <div className="flex-1 w-full space-y-8">
               <div>
                 <h2 className="text-3xl font-bold mb-2">Simule seus Ganhos</h2>
-                <p className="text-gray-400">Descubra quanto você poderia estar ganhando todo mês respondendo algumas perguntas por dia.</p>
+                <p className="text-gray-500">Descubra quanto você poderia estar ganhando todo mês respondendo algumas perguntas por dia.</p>
               </div>
 
               <div className="space-y-6">
@@ -216,7 +216,7 @@ export default function VenderPage() {
 
             <div className="w-full md:w-80 bg-black/50 backdrop-blur-md rounded-[32px] p-8 border border-white/10 text-center shrink-0">
               <TrendingUp className="w-10 h-10 text-green-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm mb-2 font-medium">Ganho Estimado / Mês</p>
+              <p className="text-gray-500 text-sm mb-2 font-medium">Ganho Estimado / Mês</p>
               <p className="text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-green-400 to-emerald-600 mb-2">
                 R$ {monthlyEarnings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>

@@ -27,7 +27,7 @@ export default function AdminBottomNav() {
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center justify-center w-16 min-h-[44px] gap-1 transition-colors ${
-              isActive ? 'text-[#dd2a7b]' : 'text-gray-400 hover:text-gray-600'
+              isActive ? 'text-[#dd2a7b]' : 'text-gray-500 hover:text-gray-600'
             }`}
           >
             <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
