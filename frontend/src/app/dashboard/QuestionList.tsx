@@ -34,6 +34,8 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
 
   // Áudio
   const [recording, setRecording] = useState(false)
@@ -80,6 +82,28 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [selectedStory])
+
+  const handleReject = async (questionId: string) => {
+    setRejectingId(questionId)
+    try {
+      const res = await fetch(`/api/questions/${questionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Erro ao recusar pergunta')
+      }
+      setQuestions(prev => prev.filter(q => q.id !== questionId))
+      showSuccess('Pergunta recusada e reembolso iniciado.')
+    } catch {
+      alert('Erro ao recusar pergunta. Tente novamente.')
+    } finally {
+      setRejectingId(null)
+      setConfirmRejectId(null)
+    }
+  }
 
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg)
@@ -381,19 +405,29 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => openRespond(q.id, 'audio')}
-                      className="flex-1 font-bold py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-[#DD2A7B] text-white hover:opacity-90 transition-all flex justify-center items-center gap-2"
-                    >
-                      <span role="img" aria-label="Microfone">🎙️</span> Responder por Áudio
-                    </button>
-                    <button
-                      onClick={() => openRespond(q.id, 'text')}
-                      className="flex-1 font-bold py-3 px-4 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-all flex justify-center items-center gap-2"
-                    >
-                      <span role="img" aria-label="Mensagem">💬</span> Responder por Texto
-                    </button>
+                  <div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => openRespond(q.id, 'audio')}
+                        className="flex-1 font-bold py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-[#DD2A7B] text-white hover:opacity-90 transition-all flex justify-center items-center gap-2"
+                      >
+                        <span role="img" aria-label="Microfone">🎙️</span> Responder por Áudio
+                      </button>
+                      <button
+                        onClick={() => openRespond(q.id, 'text')}
+                        className="flex-1 font-bold py-3 px-4 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-all flex justify-center items-center gap-2"
+                      >
+                        <span role="img" aria-label="Mensagem">💬</span> Responder por Texto
+                      </button>
+                    </div>
+                    <div className="mt-3 text-center">
+                      <button
+                        onClick={() => setConfirmRejectId(q.id)}
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+                      >
+                        Recusar pergunta
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -415,6 +449,33 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
           })}
         </div>
       </div>
+
+      {/* Modal de confirmação de recusa */}
+      {confirmRejectId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Recusar esta pergunta?</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              O fã receberá reembolso automático. Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRejectId(null)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleReject(confirmRejectId)}
+                disabled={!!rejectingId}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+              >
+                {rejectingId ? 'Recusando...' : 'Recusar e reembolsar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Story */}
       {selectedStory && (

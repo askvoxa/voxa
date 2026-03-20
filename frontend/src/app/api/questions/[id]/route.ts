@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
 import { sendResponseNotification } from '@/lib/email'
 
 export async function PATCH(
@@ -30,12 +31,46 @@ export async function PATCH(
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
-    if (question.status === 'answered') {
+    if (question.status === 'answered' || question.status === 'rejected') {
       return NextResponse.json({ error: 'Pergunta já respondida' }, { status: 422 })
     }
 
     const body = await request.json()
-    const { response_text, response_audio_url } = body
+    const { response_text, response_audio_url, action } = body
+
+    if (action === 'reject') {
+      const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+
+      const { data: transaction } = await supabaseAdmin
+        .from('transactions')
+        .select('mp_payment_id, amount')
+        .eq('question_id', params.id)
+        .single()
+
+      if (transaction?.mp_payment_id) {
+        try {
+          const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN! })
+          const refundClient = new PaymentRefund(mp)
+          await refundClient.create({
+            payment_id: String(transaction.mp_payment_id),
+            body: { amount: transaction.amount },
+          })
+        } catch (err) {
+          console.error('[reject] erro no reembolso MP:', err)
+          return NextResponse.json({ error: 'Falha ao processar reembolso' }, { status: 500 })
+        }
+      }
+
+      await supabaseAdmin
+        .from('questions')
+        .update({ status: 'rejected' })
+        .eq('id', params.id)
+
+      return NextResponse.json({ ok: true })
+    }
 
     if (!response_text && !response_audio_url) {
       return NextResponse.json({ error: 'Informe a resposta' }, { status: 400 })

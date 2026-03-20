@@ -274,6 +274,10 @@ export default async function PerfilPage({
   ])
 
   const milestones = computeMilestones(statsData?.[0] ?? null)
+  const stats = statsData?.[0]
+  const responseRate = stats && stats.total_received >= 5
+    ? Math.round((stats.total_answered / stats.total_received) * 100)
+    : null
   const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today)
   const avatarUrl = profile.avatar_url ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`
   const displayName = `@${profile.username}`
@@ -298,6 +302,14 @@ export default async function PerfilPage({
           <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
           {profile.bio && (
             <p className="text-[#9CA3AF] text-sm mb-4 leading-relaxed">{profile.bio}</p>
+          )}
+          {responseRate !== null && (
+            <div className="flex items-center justify-center gap-1.5 text-sm mb-3">
+              <span className={responseRate >= 90 ? 'text-green-400' : responseRate >= 75 ? 'text-yellow-400' : 'text-red-400'}>
+                ●
+              </span>
+              <span className="text-gray-400">Responde {responseRate}% das perguntas</span>
+            </div>
           )}
           {milestones.some(m => m.tier !== null) && (
             <div className="flex justify-center mb-3">

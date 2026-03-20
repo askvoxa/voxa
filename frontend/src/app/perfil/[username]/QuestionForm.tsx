@@ -407,18 +407,47 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
           </div>
         </div>
 
-        {/* Nome */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Seu Nome (opcional)</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isAnonymous}
-            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-500"
-            placeholder="Joãozinho"
-          />
+        {/* Toggle de anonimato */}
+        <div className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-[#1a1a1a]">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{isAnonymous ? '👻' : '👤'}</span>
+            <div>
+              <p className="text-sm font-medium text-gray-200">
+                {isAnonymous ? 'Enviando como anônimo' : 'Enviar com meu nome'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {isAnonymous
+                  ? 'Sua identidade não será revelada ao criador'
+                  : 'O criador saberá quem perguntou'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAnonymous(!isAnonymous)}
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+              isAnonymous ? 'bg-purple-600' : 'bg-gray-600'
+            }`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              isAnonymous ? 'translate-x-5' : 'translate-x-0.5'
+            }`} />
+          </button>
         </div>
+
+        {/* Nome: ocultar quando anônimo */}
+        {!isAnonymous && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Seu Nome (opcional)</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-500"
+              placeholder="Joãozinho"
+            />
+          </div>
+        )}
 
         {/* Email */}
         <div>
@@ -435,17 +464,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         </div>
 
         {/* Opções */}
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAnonymous}
-              onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-600 bg-[#222] text-[#7C3AED] focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60"
-            />
-            <span className="text-sm text-gray-300 font-medium">Manter meu nome anônimo</span>
-          </label>
-
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
