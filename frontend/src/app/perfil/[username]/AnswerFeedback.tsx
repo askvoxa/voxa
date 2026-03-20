@@ -87,7 +87,7 @@ export default function AnswerFeedback({ answerId }: Props) {
         type="button"
         onClick={() => handleVote(1)}
         title="Útil"
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium transition-all ${
+        className={`flex items-center justify-center gap-1.5 px-4 min-h-[44px] min-w-[44px] rounded-full border text-xs font-medium transition-all cursor-pointer ${
           vote === 1
             ? 'bg-green-500/15 border-green-500/40 text-green-400'
             : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300'
@@ -103,7 +103,7 @@ export default function AnswerFeedback({ answerId }: Props) {
         type="button"
         onClick={() => handleVote(-1)}
         title="Não útil"
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium transition-all ${
+        className={`flex items-center justify-center gap-1.5 px-4 min-h-[44px] min-w-[44px] rounded-full border text-xs font-medium transition-all cursor-pointer ${
           vote === -1
             ? 'bg-red-500/15 border-red-500/40 text-red-400'
             : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300'

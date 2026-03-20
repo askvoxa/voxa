@@ -158,8 +158,8 @@ export default function VenderPage() {
         {/* SIMULADOR DE GANHOS */}
         <section className="max-w-4xl mx-auto bg-[#111] border border-white/10 rounded-[40px] p-8 md:p-12 mb-32 relative overflow-hidden">
           {/* Glow effects */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#DD2A7B] opacity-10 blur-[120px] rounded-full pointer-events-none -mt-32 -mr-32"></div>
-          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-purple-600 opacity-10 blur-[120px] rounded-full pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-[#DD2A7B] opacity-10 blur-[70px] md:blur-[120px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
+          <div className="absolute -bottom-16 sm:-bottom-32 -left-16 sm:-left-32 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-600 opacity-10 blur-[70px] md:blur-[120px] rounded-full pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row gap-12 items-center">
             

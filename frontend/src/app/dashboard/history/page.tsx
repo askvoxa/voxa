@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import VisibilityToggle from './VisibilityToggle'
+import BottomNav from '@/components/BottomNav'
 import { CREATOR_NET_RATE } from '@/lib/constants'
 
 // Revalidar dados a cada 30s — evita queries em cada request
@@ -129,7 +130,7 @@ export default async function HistoryPage({
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <a href="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors">
+            <a href="/dashboard" className="text-gray-400 hover:text-gray-600 transition-colors p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -295,6 +296,8 @@ export default async function HistoryPage({
           </div>
         )}
       </main>
+
+      <BottomNav username={profile.username} />
     </div>
   )
 }

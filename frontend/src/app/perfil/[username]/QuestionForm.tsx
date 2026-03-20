@@ -200,7 +200,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         <button
           type="button"
           onClick={() => handleModeSwitch('question')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             !isSupport
               ? 'bg-[#111] text-white shadow-sm border border-white/10'
               : 'text-gray-500 hover:text-gray-300'
@@ -212,7 +212,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         <button
           type="button"
           onClick={() => handleModeSwitch('support')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             isSupport
               ? 'bg-[#0A0A0F] text-white shadow-sm border border-white/10'
               : 'text-gray-500 hover:text-gray-300'
@@ -258,7 +258,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                     type="button"
                     key={val}
                     onClick={() => setSupportAmount(val)}
-                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all cursor-pointer ${getPriceColorClass(val, supportAmount)}`}
+                    className={`border rounded-xl min-h-[44px] py-2 px-1 font-bold text-sm transition-all cursor-pointer flex items-center justify-center ${getPriceColorClass(val, supportAmount)}`}
                   >
                     R$ {val}
                   </button>
@@ -308,7 +308,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                           type="button"
                           key={index}
                           onClick={() => handleFastAsk(suggestion, index)}
-                          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all whitespace-nowrap ${
+                          className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 min-h-[44px] rounded-full border text-xs font-medium transition-all whitespace-nowrap ${
                             isActive
                               ? 'bg-[#7C3AED]/15 border-[#7C3AED]/50 text-[#7C3AED]'
                               : 'bg-[#1a1a1a] border-white/10 text-gray-400 hover:border-white/25 hover:text-gray-200 hover:bg-[#222]'
@@ -376,7 +376,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                     type="button"
                     key={val}
                     onClick={() => setAmount(val)}
-                    className={`border rounded-xl py-2 px-1 font-bold text-sm transition-all cursor-pointer ${getPriceColorClass(val, amount)}`}
+                    className={`border rounded-xl min-h-[44px] py-2 px-1 font-bold text-sm transition-all cursor-pointer flex items-center justify-center ${getPriceColorClass(val, amount)}`}
                   >
                     R$ {val}
                   </button>
@@ -408,7 +408,10 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         </div>
 
         {/* Toggle de anonimato */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-[#1a1a1a]">
+        <div
+          onClick={() => setIsAnonymous(!isAnonymous)}
+          className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-[#1a1a1a] cursor-pointer min-h-[56px]"
+        >
           <div className="flex items-center gap-2">
             <span className="text-lg">{isAnonymous ? '👻' : '👤'}</span>
             <div>
@@ -422,17 +425,15 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsAnonymous(!isAnonymous)}
-            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 pointer-events-none ${
               isAnonymous ? 'bg-purple-600' : 'bg-gray-600'
             }`}
           >
             <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
               isAnonymous ? 'translate-x-5' : 'translate-x-0.5'
             }`} />
-          </button>
+          </div>
         </div>
 
         {/* Nome: ocultar quando anônimo */}
@@ -465,7 +466,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
 
         {/* Opções */}
         <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
             <input
               type="checkbox"
               checked={isShareable}

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import QuestionList from './QuestionList'
+import BottomNav from '@/components/BottomNav'
 import { CREATOR_NET_RATE } from '@/lib/constants'
 import { computeMilestones, CreatorStats, Milestone } from '@/lib/milestones'
 import MilestoneProgress from '@/components/milestones/MilestoneProgress'
@@ -128,15 +129,17 @@ export default function DashboardPage() {
             <h1 className="font-bold text-xl text-gradient-instagram">VOXA</h1>
           </div>
           <div className="flex items-center gap-4">
-            <a href={`/perfil/${profile.username}`} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-              Meu perfil
-            </a>
-            <a href="/dashboard/history" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-              Histórico
-            </a>
-            <a href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-              Configurações
-            </a>
+            <div className="hidden md:flex items-center gap-4">
+              <a href={`/perfil/${profile.username}`} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                Meu perfil
+              </a>
+              <a href="/dashboard/history" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                Histórico
+              </a>
+              <a href="/dashboard/settings" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                Configurações
+              </a>
+            </div>
             <button
               onClick={async () => {
                 const supabase = createClient()
@@ -183,6 +186,8 @@ export default function DashboardPage() {
           creatorId={profile.id}
         />
       </main>
+      
+      <BottomNav username={profile.username} />
     </div>
   )
 }

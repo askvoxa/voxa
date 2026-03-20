@@ -34,10 +34,10 @@ export default function AvatarCropModal({ imageSrc, onConfirm, onCancel }: Avata
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/70 flex justify-center p-0 md:p-4 items-end md:items-center"
       style={{ overscrollBehavior: 'contain' }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white w-full max-w-md overflow-hidden rounded-t-[32px] md:rounded-2xl shadow-2xl">
         <div className="px-5 pt-5 pb-3">
           <h2 className="font-bold text-lg text-gray-900">Ajustar foto</h2>
           <p className="text-sm text-gray-500 mt-0.5">Arraste para reposicionar e use o zoom para ajustar</p>
@@ -80,7 +80,7 @@ export default function AvatarCropModal({ imageSrc, onConfirm, onCancel }: Avata
         </div>
 
         {/* Botões */}
-        <div className="px-5 pb-5 pt-2 flex gap-3">
+        <div className="px-5 pt-2 flex gap-3 pb-10 md:pb-5">
           <button
             type="button"
             onClick={onCancel}

@@ -454,8 +454,8 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
       {/* Modal de confirmação de recusa */}
       {confirmRejectId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex justify-center z-50 p-0 md:p-4 items-end md:items-center">
+          <div className="bg-white w-full max-w-sm shadow-2xl rounded-t-[32px] md:rounded-2xl p-6 pb-12 md:pb-6 mx-0 md:mx-4">
             <h3 className="font-semibold text-gray-900 mb-2">Recusar esta pergunta?</h3>
             <p className="text-sm text-gray-500 mb-4">
               O fã receberá reembolso automático. Esta ação não pode ser desfeita.

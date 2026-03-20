@@ -34,6 +34,8 @@ export const viewport: Viewport = {
   themeColor: '#0A0A0F',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -43,7 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <body className="min-h-screen font-sans">{children}</body>
+      <body className="min-h-screen font-sans overflow-x-hidden antialiased">{children}</body>
     </html>
   )
 }

@@ -51,8 +51,8 @@ export default function SouCriadorPage() {
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#DD2A7B] opacity-[0.07] blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute top-1/4 right-0 w-[300px] h-[300px] bg-[#F77737] opacity-[0.05] blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] md:w-[600px] md:h-[600px] bg-[#DD2A7B] opacity-[0.07] blur-[70px] md:blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/4 right-0 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-[#F77737] opacity-[0.05] blur-[60px] md:blur-[100px] rounded-full pointer-events-none" />
 
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-semibold text-gray-300 mb-8">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />

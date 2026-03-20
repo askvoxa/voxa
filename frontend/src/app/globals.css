@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  img, a, button {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

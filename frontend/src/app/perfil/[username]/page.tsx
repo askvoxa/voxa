@@ -195,7 +195,7 @@ export default async function PerfilPage({
     return (
       <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6">
         <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#7C3AED] opacity-8 blur-[100px] rounded-full pointer-events-none -mt-32 -mr-32"></div>
+          <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
           <div className="h-32 bg-gradient-to-br from-[#7C3AED]/80 via-[#4C1D95]/60 to-[#12121A] relative">
             <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 rounded-full p-1 bg-[#12121A] hover:scale-105 transition-transform duration-200">
               <img className="w-24 h-24 rounded-full border-4 border-[#12121A] object-cover" src={avatarUrl} alt={displayName} />
@@ -247,7 +247,7 @@ export default async function PerfilPage({
           <p className="text-4xl mb-4" role="img" aria-label="Indisponível">🚫</p>
           <h1 className="text-xl font-bold text-white mb-2">Perfil indisponível</h1>
           <p className="text-[#9CA3AF] text-sm">Esta conta foi desativada.</p>
-          <a href="/" className="inline-block mt-6 text-sm text-[#6B7280] hover:text-white transition-colors">
+          <a href="/" className="inline-flex min-h-[44px] items-center p-2 mt-6 text-sm text-[#6B7280] hover:text-white transition-colors">
             ← Voltar para a página inicial
           </a>
         </div>
@@ -285,7 +285,7 @@ export default async function PerfilPage({
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6">
       <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#7C3AED] opacity-8 blur-[100px] rounded-full pointer-events-none -mt-32 -mr-32"></div>
+        <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
 
         {/* Header do criador */}
         <div className="h-32 bg-gradient-to-br from-[#7C3AED]/80 via-[#4C1D95]/60 to-[#12121A] relative">
