@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={inter.variable}>
       <body className="min-h-screen font-sans overflow-x-hidden antialiased bg-gray-50 text-gray-900 flex flex-col">
+        <GoogleAnalytics />
         {children}
       </body>
     </html>

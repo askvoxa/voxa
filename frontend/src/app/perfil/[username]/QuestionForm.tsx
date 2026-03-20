@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck, Heart } from 'lucide-react'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
+import { trackFormStart, trackPaymentInitiated } from '@/lib/analytics'
 
 type FastAskSuggestion = {
   label: string
@@ -38,6 +39,15 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const premiumMin = Math.max(50, baseMin)
 
   const [mode, setMode] = useState<Mode>('question')
+  const formStarted = useRef(false)
+
+  const fireFormStart = (currentMode: Mode) => {
+    if (formStarted.current) return
+    formStarted.current = true
+    const currentAmount = currentMode === 'support' ? supportAmount : amount
+    trackFormStart(username, currentMode, currentAmount)
+  }
+
   const [question, setQuestion] = useState('')
   const [supportMessage, setSupportMessage] = useState('')
   const [serviceType, setServiceType] = useState<'base' | 'premium'>('base')
@@ -95,6 +105,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const handleModeSwitch = (newMode: Mode) => {
     setMode(newMode)
     setError('')
+    fireFormStart(newMode)
   }
 
   // BUG FIX: handler seguro para input numérico que evita NaN e valores fora do range
@@ -168,6 +179,14 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         setIsSubmitting(false)
         return
       }
+
+      trackPaymentInitiated({
+        creatorUsername: username,
+        amount: finalAmount,
+        serviceType: isSupport ? 'support' : serviceType,
+        preferenceId: data.preference_id ?? '',
+        isAnonymous,
+      })
 
       router.push(data.init_point)
       // Não reseta isSubmitting aqui intencionalmente — o redirect vai desmontar o componente
@@ -288,6 +307,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 onChange={(e) => {
                   setQuestion(e.target.value)
                   setActiveSuggestion(null)
+                  if (e.target.value.length === 1) fireFormStart('question')
                 }}
                 maxLength={500}
                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#DD2A7B]/40 focus:border-[#DD2A7B]/60 focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-400"

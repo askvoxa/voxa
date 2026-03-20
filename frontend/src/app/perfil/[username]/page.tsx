@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import QuestionForm from './QuestionForm'
 import AnswerFeedback from './AnswerFeedback'
+import PerfilAnalytics from './PerfilAnalytics'
 import TopSupporters from './TopSupporters'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 import { computeMilestones, CreatorStats } from '@/lib/milestones'
@@ -181,9 +182,10 @@ export default async function PerfilPage({
   searchParams,
 }: {
   params: { username: string }
-  searchParams: { payment_status?: string }
+  searchParams: { payment_status?: string; payment_id?: string }
 }) {
-  const paymentStatus = searchParams.payment_status
+  const paymentStatus = searchParams.payment_status ?? null
+  const paymentId = searchParams.payment_id ?? null
 
   // Perfil de demonstração — não requer banco de dados
   if (params.username === 'exemplo') {
@@ -354,6 +356,13 @@ export default async function PerfilPage({
             <p className="text-gray-500 text-xs mt-1">Tente novamente com outro método de pagamento.</p>
           </div>
         )}
+
+        <PerfilAnalytics
+          creatorUsername={profile.username}
+          minPrice={profile.min_price}
+          paymentStatus={paymentStatus}
+          paymentId={paymentId}
+        />
 
         {/* Formulário interativo (Client Component) */}
         <QuestionForm
