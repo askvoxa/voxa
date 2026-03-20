@@ -36,6 +36,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const [successMessage, setSuccessMessage] = useState('')
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectError, setRejectError] = useState('')
 
   // Áudio
   const [recording, setRecording] = useState(false)
@@ -96,9 +97,10 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
         throw new Error(data.error ?? 'Erro ao recusar pergunta')
       }
       setQuestions(prev => prev.filter(q => q.id !== questionId))
+      setConfirmRejectId(null)
       showSuccess('Pergunta recusada e reembolso iniciado.')
-    } catch {
-      alert('Erro ao recusar pergunta. Tente novamente.')
+    } catch (err: any) {
+      setRejectError(err.message ?? 'Erro ao recusar pergunta. Tente novamente.')
     } finally {
       setRejectingId(null)
       setConfirmRejectId(null)
@@ -458,9 +460,12 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
             <p className="text-sm text-gray-500 mb-4">
               O fã receberá reembolso automático. Esta ação não pode ser desfeita.
             </p>
-            <div className="flex gap-3">
+            {rejectError && (
+            <p className="text-sm text-red-500 mb-3" role="alert">{rejectError}</p>
+          )}
+          <div className="flex gap-3">
               <button
-                onClick={() => setConfirmRejectId(null)}
+                onClick={() => { setConfirmRejectId(null); setRejectError('') }}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm"
               >
                 Cancelar

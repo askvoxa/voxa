@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const sanitizedQuestion = String(question).trim().slice(0, 1000)
     const sanitizedName = String(name || '').trim().slice(0, 100)
     const sanitizedEmail = String(email || '').trim().slice(0, 254)
-    if (sanitizedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+    if (sanitizedEmail && !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(sanitizedEmail)) {
       return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 })
     }
     const sanitizedServiceType: 'base' | 'premium' = VALID_SERVICE_TYPES.includes(serviceType) ? serviceType : 'base'

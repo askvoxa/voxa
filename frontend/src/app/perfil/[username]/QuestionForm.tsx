@@ -129,7 +129,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
       setError('Valor máximo é R$ 10.000.')
       return
     }
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!email.trim() || !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(email.trim())) {
       setError('Informe um e-mail válido para continuar.')
       return
     }

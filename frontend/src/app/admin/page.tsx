@@ -64,9 +64,26 @@ export default async function AdminPage() {
   const fmt = (n: number) =>
     `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+  const cronDisabled = process.env.FEATURE_REFUNDS_ENABLED !== 'true'
+
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Visão Geral da Plataforma</h1>
+
+      {/* Alerta operacional: cron jobs desabilitados */}
+      {cronDisabled && (
+        <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <span className="text-amber-500 text-lg leading-none mt-0.5">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800">Cron jobs desabilitados</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              O reset diário de limites (<code className="font-mono">questions_answered_today</code>) e a expiração automática de perguntas não estão rodando.
+              Criadores podem travar no limite diário após o primeiro dia.{' '}
+              <Link href="/admin/settings" className="underline font-medium">Configure pg_cron ou chame o endpoint manualmente.</Link>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Row 1: Financial */}
       <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Financeiro</h2>

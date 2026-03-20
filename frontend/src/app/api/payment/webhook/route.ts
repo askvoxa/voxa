@@ -20,18 +20,19 @@ const supabaseAdmin = createClient(
  * Formato do manifest: id:{data.id};request-id:{x-request-id};ts:{ts};
  * Onde data.id é o payment ID enviado como query param pelo MP.
  *
- * Se MP_WEBHOOK_SECRET não estiver configurado, loga um aviso e permite passar
- * (compatibilidade com ambientes de desenvolvimento sem secret configurado).
+ * Se MP_WEBHOOK_SECRET não estiver configurado, retorna null para indicar erro de configuração
+ * (diferente de assinatura inválida — o chamador deve retornar 500 para forçar retry do MP).
  */
 function verifyMPSignature(
   xSignature: string | null,
   xRequestId: string | null,
   dataId: string | null,
-): boolean {
+): boolean | null {
   const secret = process.env.MP_WEBHOOK_SECRET
   if (!secret) {
-    console.error('[webhook] MP_WEBHOOK_SECRET não configurado — rejeitar todas as requisições')
-    return false
+    // Retorna null (não false) para que o chamador distinga "sem secret" de "assinatura inválida"
+    // Sem secret: retornar 500 para que o MP retente (pagamento não deve ser silenciosamente descartado)
+    return null
   }
   if (!xSignature || !xRequestId || !dataId) return false
 
@@ -55,9 +56,16 @@ export async function POST(request: Request) {
     // MP envia o payment ID como query string ?data.id=XXX — necessário para o manifest HMAC
     const dataId = new URL(request.url).searchParams.get('data.id')
 
-    if (!verifyMPSignature(xSignature, xRequestId, dataId)) {
+    const signatureResult = verifyMPSignature(xSignature, xRequestId, dataId)
+    if (signatureResult === null) {
+      // MP_WEBHOOK_SECRET não configurado — erro de servidor, não de assinatura
+      // Retornar 500 para que o MP retente e o pagamento não seja perdido silenciosamente
+      console.error('[webhook] CRÍTICO: MP_WEBHOOK_SECRET não configurado — todos os webhooks serão rejeitados até que seja configurado')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    }
+    if (!signatureResult) {
       console.error('[webhook] Assinatura inválida — request rejeitado')
-      return NextResponse.json({ received: true }) // Retornar 200 para não revelar o motivo da rejeição
+      return NextResponse.json({ received: true }) // 200 para não revelar o motivo da rejeição
     }
 
     const body = await request.json()
@@ -188,8 +196,13 @@ export async function POST(request: Request) {
 
     if (transactionError) {
       // Rollback: deletar a question para manter consistência (sem question órfã sem transaction)
-      // O payment_intent é mantido para que o MP possa re-entregar o webhook e reprocessar
-      await supabaseAdmin.from('questions').delete().eq('id', question.id)
+      // O payment_intent é mantido intencionalmente para que o MP possa re-entregar e reprocessar
+      const { error: rollbackError } = await supabaseAdmin.from('questions').delete().eq('id', question.id)
+      if (rollbackError) {
+        // Question órfã — quando o MP retentar, a tentativa de inserir nova question pode gerar duplicata
+        // Admin deve verificar manualmente questions sem transaction correspondente para o payment: paymentId
+        console.error('[webhook] CRÍTICO: rollback da question falhou — question órfã criada. payment_id:', paymentId, 'question_id:', question.id, rollbackError)
+      }
       console.error('[webhook] Erro ao inserir transaction:', transactionError)
       return NextResponse.json({ error: 'Erro ao salvar transação' }, { status: 500 })
     }
