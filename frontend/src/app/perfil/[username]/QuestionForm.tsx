@@ -62,14 +62,19 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
   const [activeSuggestion, setActiveSuggestion] = useState<number | null>(null)
 
   // Avisa o usuário ao sair da página com dados preenchidos
+  const beforeUnloadRef = useRef<((e: BeforeUnloadEvent) => void) | null>(null)
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (beforeUnloadRef.current) {
+      window.removeEventListener('beforeunload', beforeUnloadRef.current)
+    }
+    const handler = (e: BeforeUnloadEvent) => {
       if (question.trim() || supportMessage.trim()) {
         e.preventDefault()
       }
     }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    beforeUnloadRef.current = handler
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
   }, [question, supportMessage])
 
   // Filtra sugestões inválidas e remove as que teriam o valor forçado acima do dobro do original
@@ -188,6 +193,11 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
         isAnonymous,
       })
 
+      // Remover beforeunload antes do redirect para não disparar "Sair do site?"
+      if (beforeUnloadRef.current) {
+        window.removeEventListener('beforeunload', beforeUnloadRef.current)
+        beforeUnloadRef.current = null
+      }
       router.push(data.init_point)
       // Não reseta isSubmitting aqui intencionalmente — o redirect vai desmontar o componente
     } catch {
