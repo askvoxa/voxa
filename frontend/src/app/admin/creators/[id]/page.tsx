@@ -72,7 +72,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
   const fmtPct = (r: number) => `${(r * 100).toFixed(1).replace(/\.0$/, '')}%`
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <Link href="/admin/creators" className="text-sm text-gray-400 hover:text-gray-700 mb-6 inline-flex items-center gap-1">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -155,7 +155,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
       <h2 className="text-lg font-bold text-gray-900 mb-4">Histórico de Perguntas ({qs.length})</h2>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Data</th>

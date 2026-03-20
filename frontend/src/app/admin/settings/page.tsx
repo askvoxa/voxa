@@ -91,7 +91,7 @@ export default function AdminSettingsPage() {
 
   if (!settings) {
     return (
-      <div className="p-8 text-gray-400 text-sm">Carregando...</div>
+      <div className="p-4 md:p-8 text-gray-400 text-sm">Carregando...</div>
     )
   }
 
@@ -100,8 +100,8 @@ export default function AdminSettingsPage() {
     : null
 
   return (
-    <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Parâmetros da Plataforma</h1>
+    <div className="p-4 md:p-8 max-w-2xl">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Parâmetros da Plataforma</h1>
       {lastUpdated && (
         <p className="text-xs text-gray-400 mb-8">Última atualização: {lastUpdated}</p>
       )}

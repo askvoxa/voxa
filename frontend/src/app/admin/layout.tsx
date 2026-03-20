@@ -1,10 +1,11 @@
 import Link from 'next/link'
+import AdminBottomNav from '@/components/AdminBottomNav'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row pb-20 md:pb-0">
       {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col shrink-0">
+      <aside className="hidden md:flex w-56 bg-white border-r border-gray-200 flex-col shrink-0">
         <div className="px-6 py-5 border-b border-gray-100">
           <span className="font-bold text-lg text-gradient-instagram">VOXA</span>
           <span className="ml-2 text-xs font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Admin</span>
@@ -56,6 +57,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+      
+      <AdminBottomNav />
     </div>
   )
 }

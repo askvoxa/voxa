@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [username, setUsername] = useState('')
   const [userId, setUserId] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -54,7 +55,7 @@ export default function SettingsPage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, bio, avatar_url, min_price, daily_limit, fast_ask_suggestions')
+        .select('username, bio, avatar_url, min_price, daily_limit, fast_ask_suggestions, is_admin')
         .eq('id', user.id)
         .single()
 
@@ -66,6 +67,7 @@ export default function SettingsPage() {
       setMinPrice(profile.min_price ?? 10)
       setDailyLimit(profile.daily_limit ?? 10)
       setAvatarUrl(profile.avatar_url ?? '')
+      setIsAdmin(!!profile.is_admin)
 
       // BUG FIX: fast_ask_suggestions pode vir null do Supabase antes da migration
       // Array.isArray garante que não quebra se a coluna ainda não existir
@@ -248,6 +250,17 @@ export default function SettingsPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+
+        {/* Admin Panel */}
+        {isAdmin && (
+          <div className="bg-amber-50 rounded-2xl p-6 shadow-sm border border-amber-200">
+            <h2 className="font-bold text-lg text-amber-900 mb-1">Administração</h2>
+            <p className="text-sm text-amber-700 mb-4">Você tem privilégios de administrador. Acesse o painel para gerenciar a plataforma.</p>
+            <a href="/admin" className="flex items-center justify-center w-full min-h-[44px] bg-amber-600 text-white font-bold py-3 rounded-xl hover:bg-amber-700 transition-colors">
+              Acessar Painel de Administração
+            </a>
+          </div>
+        )}
 
         {/* Avatar */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

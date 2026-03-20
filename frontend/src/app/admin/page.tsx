@@ -67,8 +67,8 @@ export default async function AdminPage() {
   const cronDisabled = process.env.FEATURE_REFUNDS_ENABLED !== 'true'
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Visão Geral da Plataforma</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6 md:mb-8">Visão Geral da Plataforma</h1>
 
       {/* Alerta operacional: cron jobs desabilitados */}
       {cronDisabled && (
@@ -117,8 +117,8 @@ export default async function AdminPage() {
           Ver todos
         </Link>
       </div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Criador</th>
