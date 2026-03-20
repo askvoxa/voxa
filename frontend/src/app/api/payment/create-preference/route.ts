@@ -117,6 +117,11 @@ export async function POST(request: Request) {
             surname: '',
             ...(sanitizedEmail && { email: sanitizedEmail }),
           },
+          payment_methods: {
+            default_payment_method_id: 'pix',
+            installments: 12,
+            default_installments: 1,
+          },
           statement_descriptor: 'VOXA',
           back_urls: {
             success: `${appUrl}/perfil/${username}?payment_status=approved&ref=${externalRef}`,
