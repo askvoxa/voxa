@@ -37,7 +37,7 @@ export default async function AdminPage() {
     { count: refundQueueCount },
     { data: creators },
   ] = await Promise.all([
-    supabaseAdmin.from('transactions').select('amount, processing_fee, creator_net').eq('status', 'approved'),
+    supabaseAdmin.from('transactions').select('amount, processing_fee, platform_fee, creator_net').eq('status', 'approved'),
     supabaseAdmin.from('transactions').select('amount').eq('status', 'refunded'),
     supabaseAdmin.from('questions').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabaseAdmin.from('questions').select('*', { count: 'exact', head: true }).eq('status', 'answered'),
@@ -54,12 +54,12 @@ export default async function AdminPage() {
 
   // Financial (still need row data for sum — transactions table is small)
   const gmv = (approvedTx ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
-  const fees = gmv * platformSettings.platform_fee_rate
-  const feePct = `${(platformSettings.platform_fee_rate * 100).toFixed(1).replace(/\.0$/, '')}%`
   const refundsTotal = (refundedTx ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
-  // Totais reais de taxas de processamento e repasse — apenas transações pós-migração (demais terão NULL → 0)
+  // Totais reais de taxas de processamento, receita da plataforma e repasse
   const totalProcessingFee = (approvedTx ?? []).reduce((sum, t) => sum + Number((t as any).processing_fee ?? 0), 0)
+  const totalPlatformFee = (approvedTx ?? []).reduce((sum, t) => sum + Number((t as any).platform_fee ?? 0), 0)
   const totalCreatorNet = (approvedTx ?? []).reduce((sum, t) => sum + Number((t as any).creator_net ?? 0), 0)
+  const feePct = `${(platformSettings.platform_fee_rate * 100).toFixed(1).replace(/\.0$/, '')}%`
 
   const totalQuestions = (pendingCount ?? 0) + (answeredCount ?? 0) + (expiredCount ?? 0)
   const answerRate = totalQuestions > 0 ? Math.round(((answeredCount ?? 0) / totalQuestions) * 100) : 0
@@ -92,7 +92,7 @@ export default async function AdminPage() {
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Financeiro</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <MetricCard label="GMV Total" value={fmt(gmv)} sub="Pagamentos aprovados" />
-        <MetricCard label={`Receita da Plataforma (${feePct})`} value={fmt(fees)} />
+        <MetricCard label={`Receita da Plataforma (${feePct})`} value={fmt(totalPlatformFee)} />
         <MetricCard label="Reembolsos Processados" value={fmt(refundsTotal)} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
