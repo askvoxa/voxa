@@ -244,7 +244,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                 value={supportMessage}
                 onChange={(e) => setSupportMessage(e.target.value.slice(0, 140))}
                 maxLength={140}
-                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-24 placeholder-gray-500"
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-24 placeholder-gray-400"
                 placeholder="Escreva algo legal para o criador... ✨"
               />
               <p className="text-xs text-gray-600 text-right mt-1">{supportMessage.length}/140</p>
@@ -290,7 +290,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
                   setActiveSuggestion(null)
                 }}
                 maxLength={500}
-                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-500"
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 focus:border-transparent outline-none transition-all resize-none h-32 placeholder-gray-400"
                 placeholder="O que você quer saber? Sua pergunta será destacada na tela do criador."
               />
               <p className="text-xs text-gray-600 text-right mt-1">{question.length}/500</p>
@@ -444,7 +444,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-500"
+              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-400"
               placeholder="Joãozinho"
             />
           </div>
@@ -458,7 +458,7 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-500"
+            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-[#7C3AED]/40 focus:border-[#7C3AED]/60 outline-none transition-all placeholder-gray-400"
             placeholder="para@exemplo.com"
           />
           <p className="text-xs text-gray-600 mt-1">Você receberá a resposta neste email.</p>
@@ -487,7 +487,11 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-lg py-4 rounded-xl shadow-[0_0_24px_rgba(124,58,237,0.3)] hover:shadow-[0_0_32px_rgba(124,58,237,0.5)] transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center min-h-[60px]"
+          className={`w-full text-white font-bold text-lg py-4 rounded-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center min-h-[60px] ${
+            isSupport
+              ? 'bg-[#7C3AED] hover:bg-[#6D28D9] shadow-[0_0_24px_rgba(124,58,237,0.3)] hover:shadow-[0_0_32px_rgba(124,58,237,0.5)]'
+              : 'bg-gradient-instagram hover:opacity-90 shadow-[0_0_24px_rgba(221,42,123,0.3)] hover:shadow-[0_0_32px_rgba(221,42,123,0.5)]'
+          }`}
         >
           {isSubmitting ? (
             <span className="flex items-center gap-3">

@@ -25,7 +25,7 @@ export default async function HomePage() {
           <span className="text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-story">
             VOXA
           </span>
-          <Link href="/login" className="text-sm font-semibold text-gray-500 hover:text-[#111] transition-colors">
+          <Link href="/login" className="text-sm font-semibold text-gray-500 hover:text-[#111] transition-colors px-4 py-2 rounded-full border border-black/5 hover:border-black/15 bg-white/50 hover:bg-white">
             Entrar →
           </Link>
         </div>
