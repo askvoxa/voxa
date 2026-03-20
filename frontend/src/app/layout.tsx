@@ -45,7 +45,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <body className="min-h-screen font-sans overflow-x-hidden antialiased">{children}</body>
+      <body className="font-sans overflow-x-hidden antialiased bg-[#0e0e0e] sm:bg-[#080808] flex justify-center text-gray-900 min-h-screen">
+        <div className="hidden sm:block fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[10%] w-[40vw] h-[40vh] bg-pink-600/10 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[10%] w-[40vw] h-[40vh] bg-orange-500/10 blur-[120px] rounded-full" />
+        </div>
+        
+        <main className="w-full sm:max-w-[480px] min-h-screen bg-white relative z-10 shadow-2xl flex flex-col">
+          {children}
+        </main>
+      </body>
     </html>
   )
 }
