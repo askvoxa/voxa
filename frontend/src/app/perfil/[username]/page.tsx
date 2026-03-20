@@ -193,7 +193,10 @@ export default async function PerfilPage({
     const demoMilestones = computeMilestones(DEMO_STATS)
 
     return (
-      <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6">
+      <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6 relative">
+        <a href="/dashboard" className="fixed top-4 left-4 z-50 p-2 md:p-3 bg-white/10 backdrop-blur-md border border-white/10 rounded-full text-white hover:bg-white/20 transition-colors flex items-center justify-center min-h-[44px] min-w-[44px]" style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </a>
         <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
           <div className="h-32 bg-gradient-to-br from-[#7C3AED]/80 via-[#4C1D95]/60 to-[#12121A] relative">
@@ -283,7 +286,10 @@ export default async function PerfilPage({
   const displayName = `@${profile.username}`
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6">
+    <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center py-12 px-4 sm:px-6 relative">
+      <a href="/dashboard" className="fixed top-4 left-4 z-50 p-2 md:p-3 bg-white/10 backdrop-blur-md border border-white/10 rounded-full text-white hover:bg-white/20 transition-colors flex items-center justify-center min-h-[44px] min-w-[44px]" style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      </a>
       <div className="w-full max-w-lg bg-[#12121A] rounded-[14px] shadow-2xl border border-white/7 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-[250px] h-[250px] md:w-[400px] md:h-[400px] bg-[#7C3AED] opacity-8 blur-[60px] md:blur-[100px] rounded-full pointer-events-none -mt-16 sm:-mt-32 -mr-16 sm:-mr-32"></div>
 

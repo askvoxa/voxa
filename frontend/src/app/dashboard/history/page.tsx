@@ -137,7 +137,7 @@ export default async function HistoryPage({
             </a>
             <h1 className="font-bold text-xl text-gradient-instagram">VOXA</h1>
           </div>
-          <span className="text-sm text-gray-500">Histórico de Respostas</span>
+          <span className="text-sm text-gray-500 hidden md:block">Histórico de Respostas</span>
         </div>
       </header>
 

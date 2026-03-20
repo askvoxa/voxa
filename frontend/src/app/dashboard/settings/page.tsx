@@ -243,7 +243,7 @@ export default function SettingsPage() {
             </a>
             <h1 className="font-bold text-xl text-gradient-instagram">VOXA</h1>
           </div>
-          <span className="text-sm text-gray-500">Configurações</span>
+          <span className="text-sm text-gray-500 hidden md:block">Configurações</span>
         </div>
       </header>
 

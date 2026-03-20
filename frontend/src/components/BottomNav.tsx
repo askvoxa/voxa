@@ -15,7 +15,7 @@ export default function BottomNav({ username }: BottomNavProps) {
     { name: 'Início', href: '/dashboard', icon: Home },
     { name: 'Histórico', href: '/dashboard/history', icon: Clock },
     { name: 'Perfil', href: `/perfil/${username}`, icon: User },
-    { name: 'Ajustes', href: '/dashboard/settings', icon: Settings },
+    { name: 'Configurações', href: '/dashboard/settings', icon: Settings },
   ]
 
   return (

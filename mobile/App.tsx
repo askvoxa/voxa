@@ -36,6 +36,8 @@ export default function App() {
         style={styles.webview}
         userAgent={customUserAgent}
         allowsInlineMediaPlayback={true}
+        cacheEnabled={false}
+        cacheMode="LOAD_NO_CACHE"
         mediaPlaybackRequiresUserAction={false}
         javaScriptEnabled={true}
         domStorageEnabled={true}
