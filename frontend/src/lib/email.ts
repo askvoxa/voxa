@@ -93,7 +93,7 @@ export async function sendExpirationNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `Sua pergunta para @${creatorUsername} expirou — reembolso em andamento`,
+    subject: `Sua pergunta para @${creatorUsername} expirou - reembolso em andamento`,
     html: html(`
       <p style="font-size:16px;color:#333;margin-bottom:8px">Olá, <strong>${fanName}</strong>!</p>
       <p style="font-size:16px;color:#333;margin-bottom:8px">
@@ -220,8 +220,8 @@ export async function sendUrgencyReminder({
 
   const urgencyMap: Record<number, { borderColor: string; bgColor: string; textColor: string; msg: string }> = {
     24: { borderColor: '#DD6B20', bgColor: '#fffaf0', textColor: '#c05621', msg: 'Prazo vencendo em breve' },
-    12: { borderColor: '#E53E3E', bgColor: '#fff5f5', textColor: '#c53030', msg: 'Ultima chance — reembolso automatico em 12h' },
-    6:  { borderColor: '#C53030', bgColor: '#fff5f5', textColor: '#9b2c2c', msg: 'URGENTE — reembolso automatico em 6h' },
+    12: { borderColor: '#E53E3E', bgColor: '#fff5f5', textColor: '#c53030', msg: 'Ultima chance - reembolso automatico em 12h' },
+    6:  { borderColor: '#C53030', bgColor: '#fff5f5', textColor: '#9b2c2c', msg: 'URGENTE - reembolso automatico em 6h' },
   }
 
   const level = urgencyMap[hoursUntilExpiry] ?? {
@@ -234,7 +234,7 @@ export async function sendUrgencyReminder({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: creatorEmail,
-    subject: `[VOXA] ${pendingCount} pergunta(s) aguardando — ${level.msg}`,
+    subject: `[VOXA] ${pendingCount} pergunta(s) aguardando - ${level.msg}`,
     html: html(`
       <div style="background:${level.bgColor};border-left:4px solid ${level.borderColor};border-radius:8px;padding:16px;margin-bottom:20px">
         <p style="margin:0;color:${level.textColor};font-weight:700;font-size:16px">${level.msg}</p>
