@@ -21,7 +21,7 @@ const UNSUBSCRIBE_HEADERS = {
 
 function emailLayout(content: string, preheader?: string): string {
   const preheaderHtml = preheader
-    ? `<span style="display:none;font-size:1px;color:#111111;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">${preheader}</span>`
+    ? `<span style="display:none;font-size:1px;color:#FCF9F8;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">${preheader}</span>`
     : ''
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -31,50 +31,46 @@ function emailLayout(content: string, preheader?: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VOXA</title>
 </head>
-<body style="margin:0;padding:0;background-color:#111111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<body style="margin:0;padding:0;background-color:#FCF9F8;font-family:'Plus Jakarta Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased">
   ${preheaderHtml}
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FCF9F8">
     <tr>
       <td align="center" style="padding:40px 16px">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#1a1a1a;border-radius:16px;overflow:hidden">
-          <!-- Header gradient bar -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#FFFFFF;border-radius:24px;border:1px solid rgba(233, 188, 182, 0.4);overflow:hidden;box-shadow:0px 20px 40px rgba(28,27,27,0.06)">
+          
+          <!-- Header -->
           <tr>
-            <td style="height:4px;background:linear-gradient(90deg,#F58529 0%,#DD2A7B 50%,#8134AF 100%);font-size:0;line-height:0">&nbsp;</td>
-          </tr>
-          <!-- Logo -->
-          <tr>
-            <td align="center" style="padding:32px 32px 0">
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);padding:6px 20px;border-radius:10px">
-                    <span style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:3px;text-decoration:none">VOXA</span>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="padding:32px 32px 0;border-bottom:1px solid #F0EDEC;padding-bottom:32px">
+              <span style="font-size:28px;font-weight:900;color:#BC000A;letter-spacing:-1px;text-decoration:none">
+                VOXA
+              </span>
             </td>
           </tr>
+          
           <!-- Content -->
           <tr>
-            <td style="padding:28px 32px 32px">
+            <td style="padding:48px 32px">
               ${content}
             </td>
           </tr>
+          
           <!-- Footer -->
           <tr>
-            <td style="padding:0 32px 28px">
+            <td style="padding:0;background-color:#F6F3F2">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="border-top:1px solid #2a2a2a;padding-top:20px">
-                    <p style="margin:0;font-size:12px;color:#666;text-align:center;line-height:18px">
-                      Este email foi enviado automaticamente pela
-                      <span style="color:#DD2A7B;font-weight:600">VOXA</span>
-                      — plataforma de perguntas pagas para criadores.
+                  <td align="center" style="padding:40px 32px">
+                    <p style="margin:0 0 16px;font-size:11px;font-weight:700;color:#5F3F3A;opacity:0.6;letter-spacing:1.5px;text-transform:uppercase">
+                      <span style="margin:0 12px">PRIVACY</span>
+                      <span style="margin:0 12px">SUPPORT</span>
+                      <span style="margin:0 12px">TERMS</span>
                     </p>
-                    <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
-                      askvoxa.com
+                    <p style="margin:0 0 12px;font-size:10px;color:#5F3F3A;opacity:0.4;letter-spacing:2px;text-transform:uppercase;line-height:1.6">
+                      © 2024 VOXA Platform. Curated Excellence.<br/>
+                      Este e-mail foi enviado automaticamente.
                     </p>
-                    <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
-                      <a href="${UNSUBSCRIBE_EMAIL}" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                    <p style="margin:0;font-size:11px;color:#5F3F3A;opacity:0.6">
+                      <a href="${UNSUBSCRIBE_EMAIL}" style="color:#5F3F3A;text-decoration:underline">Cancelar inscrição</a>
                     </p>
                   </td>
                 </tr>
@@ -89,18 +85,19 @@ function emailLayout(content: string, preheader?: string): string {
 </html>`
 }
 
-/** Botão CTA padronizado com gradiente VOXA */
+/** Botão CTA padronizado com gradiente vibrante VOXA */
 function ctaButton(href: string, label: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td align="center" style="padding:8px 0">
+    <td align="center" style="padding:16px 0">
       <!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${href}" style="height:48px;v-text-anchor:middle;width:260px;" arcsize="21%" fillcolor="#DD2A7B" stroke="f">
-        <v:textbox><center style="color:#ffffff;font-family:sans-serif;font-size:15px;font-weight:bold;">${label}</center></v:textbox>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:56px;v-text-anchor:middle;width:240px;" arcsize="50%" fillcolor="#FD1D1D" stroke="f">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">${label}</center>
       </v:roundrect>
       <![endif]-->
       <!--[if !mso]><!-->
-      <a href="${href}" target="_blank" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;line-height:20px;text-align:center;min-width:180px">
+      <a href="${href}" target="_blank" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#FD1D1D,#FCB045);background-color:#FD1D1D;color:#ffffff;text-decoration:none;border-radius:9999px;font-weight:700;font-size:16px;line-height:24px;text-align:center;box-shadow:0px 8px 16px rgba(253,29,29,0.2)">
         ${label}
       </a>
       <!--<![endif]-->
@@ -147,61 +144,56 @@ export async function sendNewQuestionNotification(
     subject: `Nova pergunta de ${brl(price)} aguardando resposta`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">@${creatorUsername}</span></p>
-      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#ffffff">Nova pergunta recebida!</h1>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Você recebeu uma nova pergunta!</h1>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. <strong style="color:#1C1B1B">${displayName}</strong> enviou uma pergunta e aguarda sua resposta editorial.</p>
 
-      <!-- Info row -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
-        <tr>
-          <td style="background:#222;border-radius:10px;padding:16px">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding-bottom:8px">
-                  <span style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px">Enviado por</span><br>
-                  <span style="font-size:15px;color:#eee;font-weight:600">${displayName}</span>
-                </td>
-                <td align="right" style="padding-bottom:8px">
-                  <span style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px">Valor pago</span><br>
-                  <span style="font-size:15px;color:#DD2A7B;font-weight:700">${brl(price)}</span>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+        <!-- Price/Value Highlight -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:16px;padding:24px 32px;min-width:280px">
+                <tr>
+                  <td align="center">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;display:block;margin-bottom:8px;opacity:0.8">VALOR DA RESPOSTA</span>
+                    <span style="font-size:36px;font-weight:900;color:#BC000A">${brl(price)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-      <!-- Question content -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
-        <tr>
-          <td style="border-left:3px solid #DD2A7B;padding:14px 16px;background:#222;border-radius:0 8px 8px 0">
-            <p style="margin:0;font-size:15px;color:#ddd;line-height:22px;font-style:italic">"${question.substring(0, 300)}${question.length > 300 ? '...' : ''}"</p>
-          </td>
-        </tr>
-      </table>
+        <!-- User Detail and Question Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;background-color:#F6F3F2;border-radius:16px;padding:24px;text-align:left">
+          <tr>
+            <td>
+              <div style="margin-bottom:16px;font-size:15px;font-weight:700;color:#1C1B1B">
+                Enviado por: ${displayName}
+              </div>
+              <div style="background-color:#FFFFFF;padding:20px;border-radius:12px;border:1px solid rgba(233,188,182,0.3);font-style:italic;color:#1C1B1B;line-height:1.6;font-size:15px">
+                "${question.substring(0, 300)}${question.length > 300 ? '...' : ''}"
+              </div>
+            </td>
+          </tr>
+        </table>
 
-      <!-- Net earnings -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
-        <tr>
-          <td style="background:linear-gradient(135deg,rgba(129,52,175,0.15),rgba(221,42,123,0.15));border:1px solid #333;border-radius:10px;padding:14px 16px;text-align:center">
-            <span style="font-size:13px;color:#aaa">Você receberá</span><br>
-            <span style="font-size:22px;font-weight:800;color:#ffffff">${brl(creatorNet)}</span>
-            <span style="font-size:13px;color:#aaa"> líquido</span>
-          </td>
-        </tr>
-      </table>
+        <!-- Net Earnings -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+          <tr>
+            <td align="center">
+               <span style="font-size:14px;color:#5F3F3A">Você receberá <strong style="color:#1C1B1B">${brl(creatorNet)}</strong> líquido.</span>
+            </td>
+          </tr>
+        </table>
 
-      ${ctaButton(`${appUrl}/dashboard`, 'Responder agora')}
+        ${ctaButton(`${appUrl}/dashboard`, 'Responder agora')}
 
-      <!-- Deadline warning -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">
-        <tr>
-          <td style="background:rgba(197,48,48,0.1);border:1px solid rgba(197,48,48,0.3);border-radius:8px;padding:12px 14px;text-align:center">
-            <p style="margin:0;font-size:13px;color:#f87171;font-weight:600;line-height:18px">
-              ⏰ Prazo: ${deadlineHours} horas — após isso, o fã recebe reembolso automático.
-            </p>
-          </td>
-        </tr>
-      </table>
+        <!-- Deadline warning -->
+        <p style="margin:24px 0 0;font-size:13px;color:#ba1a1a;font-weight:600">
+          ⏰ Prazo: ${deadlineHours} horas — após isso, o fã recebe reembolso automático.
+        </p>
+      </div>
     `, `Nova pergunta de ${brl(price)} — responda em até ${deadlineHours}h`),
   })
 }
@@ -235,24 +227,39 @@ export async function sendSupportNotification({
     subject: `Você recebeu um apoio de ${brl(amount)}!`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">@${creatorUsername}</span></p>
-      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#ffffff">Novo apoio recebido!</h1>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 12px;font-size:32px;font-weight:800;color:#1C1B1B;letter-spacing:-1px">Novo apoio recebido!</h1>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. Sua curadoria está fazendo a diferença e alguém acabou de valorizar seu trabalho editorial.</p>
 
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
-        <tr>
-          <td style="background:linear-gradient(135deg,rgba(129,52,175,0.15),rgba(221,42,123,0.15));border:1px solid #333;border-radius:10px;padding:20px 16px;text-align:center">
-            <span style="font-size:13px;color:#aaa">Apoio de</span><br>
-            <span style="font-size:15px;color:#eee;font-weight:600">${displayName}</span><br>
-            <span style="font-size:28px;font-weight:800;color:#DD2A7B;display:inline-block;margin-top:8px">${brl(amount)}</span>
-          </td>
-        </tr>
-      </table>
+        <!-- Value Highlight Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;border:1px solid rgba(233,188,182,0.4);border-radius:24px;padding:40px 32px;width:100%;max-width:320px;box-shadow:0px 10px 30px rgba(0,0,0,0.03)">
+                <tr>
+                  <td align="center" style="padding-bottom:24px">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#888888;font-weight:700;display:block;margin-bottom:12px">VALOR APOIADO</span>
+                    <span style="font-size:48px;font-weight:900;color:#BC000A;line-height:1">${brl(amount)}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:999px;padding:12px 24px">
+                      <tr>
+                        <td style="font-size:14px;font-weight:700;color:#1C1B1B">
+                          Enviado por <span style="color:#5F3F3A">${displayName}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px;text-align:center">
-        Seu trabalho está sendo valorizado! Continue criando conteúdo incrível.
-      </p>
-
-      ${ctaButton(`${appUrl}/dashboard`, 'Ver no dashboard')}
+        ${ctaButton(`${appUrl}/dashboard`, 'Ver no dashboard')}
+      </div>
     `, `${displayName} enviou ${brl(amount)} de apoio para você`),
   })
 }
@@ -277,14 +284,15 @@ export async function sendUrgencyReminder({
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
 
-  const urgencyMap: Record<number, { color: string; msg: string }> = {
-    24: { color: '#DD6B20', msg: 'Prazo vencendo em breve' },
-    12: { color: '#E53E3E', msg: 'Última chance — reembolso automático em 12h' },
-    6:  { color: '#C53030', msg: 'URGENTE — reembolso automático em 6h' },
+  const urgencyMap: Record<number, { color: string; bg: string; msg: string }> = {
+    24: { color: '#BC000A', bg: '#fef2f2', msg: 'Prazo vencendo em breve' },
+    12: { color: '#b91c1c', bg: '#fef2f2', msg: 'Última chance — reembolso em 12h' },
+    6:  { color: '#991b1b', bg: '#fef2f2', msg: 'URGENTE — reembolso automático em 6h' },
   }
 
   const level = urgencyMap[hoursUntilExpiry] ?? {
-    color: '#8134AF',
+    color: '#8138b2',
+    bg: '#f3e8ff',
     msg: `${hoursUntilExpiry}h para expirar`,
   }
 
@@ -296,24 +304,26 @@ export async function sendUrgencyReminder({
     subject: `[VOXA] ${pendingCount} ${plural} aguardando — ${level.msg}`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <!-- Urgency banner -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
-        <tr>
-          <td style="background:rgba(197,48,48,0.12);border-left:4px solid ${level.color};border-radius:0 8px 8px 0;padding:14px 16px">
-            <p style="margin:0;font-size:16px;color:${level.color};font-weight:700">${level.msg}</p>
-          </td>
-        </tr>
-      </table>
+      <div style="text-align:center">
+        <!-- Urgency banner -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;background-color:${level.bg};border-radius:12px;border:1px solid rgba(188,0,10,0.1)">
+          <tr>
+            <td style="padding:16px;text-align:center">
+              <p style="margin:0;font-size:15px;color:${level.color};font-weight:700;letter-spacing:0.5px">${level.msg}</p>
+            </td>
+          </tr>
+        </table>
 
-      <p style="margin:0 0 8px;font-size:15px;color:#ccc">Olá, <span style="color:#fff;font-weight:600">@${creatorUsername}</span></p>
-      <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-        Você tem <strong style="color:#fff">${pendingCount} ${plural}</strong> pendente${pendingCount > 1 ? 's' : ''} no dashboard.
-      </p>
-      <p style="margin:0 0 24px;font-size:14px;color:#999;line-height:20px">
-        Se não responder no prazo, o fã recebe reembolso automático e sua taxa de resposta cai.
-      </p>
+        <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Atenção, @${creatorUsername}!</h1>
+        <p style="margin:0 0 16px;font-size:16px;color:#5F3F3A;line-height:1.5">
+          Você tem <strong style="color:#1C1B1B;font-size:18px">${pendingCount} ${plural}</strong> pendente${pendingCount > 1 ? 's' : ''} no dashboard.
+        </p>
+        <p style="margin:0 auto 40px;font-size:14px;color:#888888;line-height:1.6;max-width:85%">
+          Se não responder no prazo, o fã recebe reembolso automático e a sua taxa de resposta na plataforma será prejudicada.
+        </p>
 
-      ${ctaButton(`${appUrl}/dashboard`, 'Ir para o dashboard')}
+        ${ctaButton(`${appUrl}/dashboard`, 'Ir para o dashboard')}
+      </div>
     `, `${pendingCount} ${plural} pendente${pendingCount > 1 ? 's' : ''} — ${level.msg}`),
   })
 }
@@ -346,17 +356,18 @@ export async function sendResponseNotification({
     subject: `@${creatorUsername} respondeu sua pergunta!`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
-      <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Sua pergunta foi respondida!</h1>
-      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
-        <strong style="color:#DD2A7B">@${creatorUsername}</strong> acabou de responder sua pergunta na VOXA.
-      </p>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Sua pergunta foi respondida!</h1>
+        <p style="margin:0 auto 36px;font-size:16px;line-height:1.6;color:#5F3F3A;max-width:90%">
+          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. <strong style="color:#BC000A">@${creatorUsername}</strong> acabou de responder à sua pergunta na VOXA. Entre para conferir o conteúdo exclusivo!
+        </p>
 
-      ${ctaButton(`${appUrl}/perfil/${creatorUsername}?q=${questionId}`, 'Ver resposta')}
+        ${ctaButton(`${appUrl}/perfil/${creatorUsername}?q=${questionId}`, 'Ver resposta')}
 
-      <p style="margin:20px 0 0;font-size:12px;color:#666;text-align:center">
-        Se você não fez essa pergunta, pode ignorar este email.
-      </p>
+        <p style="margin:40px 0 0;font-size:12px;color:#A1A1AA">
+          Se você não fez essa pergunta, pode ignorar este e-mail.
+        </p>
+      </div>
     `, `@${creatorUsername} respondeu — clique para ver`),
   })
 }
@@ -387,27 +398,33 @@ export async function sendExpirationNotification({
     subject: `Sua pergunta para @${creatorUsername} expirou — reembolso de ${brl(amount)} em andamento`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
-      <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Pergunta expirada</h1>
-      <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-        Infelizmente, <strong style="color:#DD2A7B">@${creatorUsername}</strong> não respondeu sua pergunta dentro do prazo.
-      </p>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Pergunta expirada</h1>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">
+          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. Infelizmente, <strong style="color:#BC000A">@${creatorUsername}</strong> não teve a oportunidade de responder sua pergunta dentro do prazo.
+        </p>
 
-      <!-- Refund amount -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
-        <tr>
-          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
-            <span style="font-size:13px;color:#aaa">Valor a ser reembolsado</span><br>
-            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
-          </td>
-        </tr>
-      </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:16px;padding:24px 32px;min-width:280px">
+                <tr>
+                  <td align="center">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;display:block;margin-bottom:8px;opacity:0.8">VALOR A SER REEMBOLSADO</span>
+                    <span style="font-size:36px;font-weight:900;color:#16a34a">${brl(amount)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
-        O valor será devolvido integralmente ao método de pagamento original. Dependendo do seu banco, pode levar alguns dias úteis.
-      </p>
+        <p style="margin:0 auto 36px;font-size:14px;color:#5F3F3A;line-height:1.6;max-width:90%">
+          O valor será devolvido integralmente ao método de pagamento original. Dependendo do seu banco ou administradora do cartão, pode levar alguns dias úteis para aparecer.
+        </p>
 
-      ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+        ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+      </div>
     `, `Reembolso de ${brl(amount)} em processamento — pergunta para @${creatorUsername} expirou`),
   })
 }
@@ -437,27 +454,33 @@ export async function sendRejectionNotification({
     subject: `Sua pergunta para @${creatorUsername} foi recusada — reembolso de ${brl(amount)}`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
-      <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Pergunta recusada</h1>
-      <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-        <strong style="color:#DD2A7B">@${creatorUsername}</strong> optou por não responder sua pergunta.
-      </p>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Pergunta recusada</h1>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">
+          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. <strong style="color:#BC000A">@${creatorUsername}</strong> optou por não responder sua pergunta neste momento.
+        </p>
 
-      <!-- Refund amount -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
-        <tr>
-          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
-            <span style="font-size:13px;color:#aaa">Valor do reembolso</span><br>
-            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
-          </td>
-        </tr>
-      </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:16px;padding:24px 32px;min-width:280px">
+                <tr>
+                  <td align="center">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;display:block;margin-bottom:8px;opacity:0.8">VALOR DO REEMBOLSO</span>
+                    <span style="font-size:36px;font-weight:900;color:#16a34a">${brl(amount)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
-        O reembolso será processado automaticamente. Dependendo do seu banco ou operadora, pode levar alguns dias úteis para aparecer.
-      </p>
+        <p style="margin:0 auto 36px;font-size:14px;color:#5F3F3A;line-height:1.6;max-width:90%">
+          O reembolso será processado automaticamente para o seu método de pagamento original. Dependendo da sua bandeira, pode levar alguns dias úteis para crédito na fatura.
+        </p>
 
-      ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+        ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+      </div>
     `, `Reembolso de ${brl(amount)} — sua pergunta para @${creatorUsername} foi recusada`),
   })
 }
@@ -486,35 +509,36 @@ export async function sendRefundConfirmation({
     subject: `Reembolso de ${brl(amount)} confirmado — VOXA`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
-      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
-      <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Reembolso confirmado</h1>
+      <div style="text-align:center">
+        <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Reembolso confirmado</h1>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">Olá, <strong style="color:#1C1B1B">${fanName}</strong>.</p>
 
-      <!-- Refund amount -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
-        <tr>
-          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
-            <span style="font-size:13px;color:#aaa">Valor reembolsado</span><br>
-            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
-          </td>
-        </tr>
-      </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:16px;padding:24px 32px;min-width:280px">
+                <tr>
+                  <td align="center">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;display:block;margin-bottom:8px;opacity:0.8">VALOR REEMBOLSADO</span>
+                    <span style="font-size:36px;font-weight:900;color:#16a34a">${brl(amount)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
 
-      <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-        Seu reembolso referente à pergunta para <strong style="color:#DD2A7B">@${creatorUsername}</strong> foi confirmado com sucesso.
-      </p>
-      <p style="margin:0 0 0;font-size:15px;color:#ccc;line-height:22px">
-        O valor será devolvido ao método de pagamento original. Dependendo do seu banco ou operadora, pode levar alguns dias úteis para aparecer.
-      </p>
+        <p style="margin:0 auto 16px;font-size:15px;color:#5F3F3A;line-height:1.6;max-width:90%">
+          Seu reembolso referente à pergunta para <strong style="color:#BC000A">@${creatorUsername}</strong> foi processado com sucesso.
+        </p>
+        <p style="margin:0 auto 36px;font-size:14px;color:#888888;line-height:1.6;max-width:90%">
+          Os fundos já foram devolvidos ao seu método de pagamento. Para pagamentos em PIX é instantâneo, para cartão de crédito pode levar até 2 faturas.
+        </p>
 
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px">
-        <tr>
-          <td style="text-align:center">
-            <p style="margin:0;font-size:13px;color:#888">
-              Obrigado por usar a VOXA. Esperamos vê-lo novamente!
-            </p>
-          </td>
-        </tr>
-      </table>
+        <p style="margin:0;font-size:13px;color:#A1A1AA">
+          Obrigado por usar a VOXA. Esperamos vê-lo novamente!
+        </p>
+      </div>
     `, `Reembolso de ${brl(amount)} confirmado para sua pergunta`),
   })
 }
