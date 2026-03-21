@@ -29,6 +29,9 @@ Thumbs.db
 **/__pycache__/
 **/*.pyc
 
+# TypeScript build cache
+frontend/tsconfig.tsbuildinfo
+
 # Prisma (gerado automaticamente)
 frontend/node_modules/.prisma/
 
