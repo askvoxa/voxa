@@ -66,7 +66,7 @@ function emailLayout(content: string, preheader?: string): string {
                       <span style="margin:0 12px">TERMS</span>
                     </p>
                     <p style="margin:0 0 12px;font-size:10px;color:#5F3F3A;opacity:0.4;letter-spacing:2px;text-transform:uppercase;line-height:1.6">
-                      © 2024 VOXA Platform. Curated Excellence.<br/>
+                      © 2026 VOXA Platform. Curated Excellence.<br/>
                       Este e-mail foi enviado automaticamente.
                     </p>
                     <p style="margin:0;font-size:11px;color:#5F3F3A;opacity:0.6">
@@ -141,12 +141,12 @@ export async function sendNewQuestionNotification(
   await resend.emails.send({
     from: FROM_EMAIL,
     to: creatorEmail,
-    subject: `Nova pergunta de ${brl(price)} aguardando resposta`,
+    subject: `[VOXA] Nova pergunta de ${brl(price)} aguardando resposta`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
         <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Você recebeu uma nova pergunta!</h1>
-        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. <strong style="color:#1C1B1B">${displayName}</strong> enviou uma pergunta e aguarda sua resposta editorial.</p>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. <strong style="color:#1C1B1B">${displayName}</strong> enviou uma pergunta e está aguardando sua resposta.</p>
 
         <!-- Price/Value Highlight -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
@@ -224,12 +224,12 @@ export async function sendSupportNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: creatorEmail,
-    subject: `Você recebeu um apoio de ${brl(amount)}!`,
+    subject: `[VOXA] Você recebeu um apoio de ${brl(amount)}!`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
         <h1 style="margin:0 0 12px;font-size:32px;font-weight:800;color:#1C1B1B;letter-spacing:-1px">Novo apoio recebido!</h1>
-        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. Sua curadoria está fazendo a diferença e alguém acabou de valorizar seu trabalho editorial.</p>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. Alguém valoriza o seu conteúdo e acabou de enviar um apoio financeiro direto pra você.</p>
 
         <!-- Value Highlight Card -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px">
@@ -287,7 +287,7 @@ export async function sendUrgencyReminder({
   const urgencyMap: Record<number, { color: string; bg: string; msg: string }> = {
     24: { color: '#BC000A', bg: '#fef2f2', msg: 'Prazo vencendo em breve' },
     12: { color: '#b91c1c', bg: '#fef2f2', msg: 'Última chance — reembolso em 12h' },
-    6:  { color: '#991b1b', bg: '#fef2f2', msg: 'URGENTE — reembolso automático em 6h' },
+    6:  { color: '#991b1b', bg: '#fef2f2', msg: 'URGENTE — Reembolso automático em 6h' },
   }
 
   const level = urgencyMap[hoursUntilExpiry] ?? {
@@ -353,7 +353,7 @@ export async function sendResponseNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `@${creatorUsername} respondeu sua pergunta!`,
+    subject: `[VOXA] @${creatorUsername} respondeu sua pergunta!`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
@@ -395,7 +395,7 @@ export async function sendExpirationNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `Sua pergunta para @${creatorUsername} expirou — reembolso de ${brl(amount)} em andamento`,
+    subject: `[VOXA] Sua pergunta para @${creatorUsername} expirou — Reembolso de ${brl(amount)} em andamento`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
@@ -451,7 +451,7 @@ export async function sendRejectionNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `Sua pergunta para @${creatorUsername} foi recusada — reembolso de ${brl(amount)}`,
+    subject: `[VOXA] Sua pergunta para @${creatorUsername} foi recusada — Reembolso de ${brl(amount)}`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
@@ -506,7 +506,7 @@ export async function sendRefundConfirmation({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `Reembolso de ${brl(amount)} confirmado — VOXA`,
+    subject: `[VOXA] Reembolso de ${brl(amount)} confirmado`,
     headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <div style="text-align:center">
