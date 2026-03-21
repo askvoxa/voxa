@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ShieldCheck, Heart, X } from 'lucide-react'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 import { trackFormStart, trackPaymentInitiated } from '@/lib/analytics'
+import { createClient } from '@/lib/supabase/client'
 
 type FastAskSuggestion = {
   label: string
@@ -270,13 +271,32 @@ export default function QuestionForm({ username, minPrice, displayName, disabled
             <p className="text-sm text-gray-400 mb-6">
               Você precisa estar cadastrado para enviar {isSupport ? 'um apoio' : 'uma pergunta'}.
             </p>
-            <a
-              href={`/login?returnUrl=${encodeURIComponent(`/perfil/${username}`)}`}
-              className="w-full relative flex items-center justify-center border border-white/20 bg-[#1a1a1a] rounded-xl py-3 px-4 text-white font-semibold hover:bg-white/5 hover:border-white/30 transition-all"
+            <button
+              type="button"
+              onClick={async () => {
+                // Remover beforeunload antes de redirecionar (evita "Sair do site?")
+                if (beforeUnloadRef.current) {
+                  window.removeEventListener('beforeunload', beforeUnloadRef.current)
+                  beforeUnloadRef.current = null
+                }
+                // Iniciar OAuth direto — sem passar pela página /login
+                const supabase = createClient()
+                const returnPath = `/perfil/${username}`
+                const callbackUrl = `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(returnPath)}`
+                const { error } = await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: { redirectTo: callbackUrl },
+                })
+                if (error) {
+                  setError('Erro ao conectar com Google. Tente novamente.')
+                  setShowLoginModal(false)
+                }
+              }}
+              className="w-full relative flex items-center justify-center border border-white/20 bg-[#1a1a1a] rounded-xl py-3 px-4 text-white font-semibold hover:bg-white/5 hover:border-white/30 transition-all cursor-pointer"
             >
               <span className="absolute left-4 w-6 h-6 flex items-center justify-center text-xs bg-white text-black rounded-full font-bold">G</span>
               Continuar com Google
-            </a>
+            </button>
             <p className="text-xs text-gray-500 text-center mt-4">
               Seus dados do formulário serão preservados.
             </p>

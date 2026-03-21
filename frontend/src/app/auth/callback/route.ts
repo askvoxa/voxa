@@ -39,8 +39,8 @@ export async function GET(request: Request) {
 
           // Se tem returnUrl, redirecionar para lá
           if (returnUrl) {
-            // Validar que returnUrl é um path relativo (segurança contra open redirect)
-            const safeReturnUrl = returnUrl.startsWith('/') ? returnUrl : '/dashboard'
+            // Validar que returnUrl é um path relativo seguro (bloqueia open redirect via //)
+            const safeReturnUrl = (returnUrl.startsWith('/') && !returnUrl.startsWith('//')) ? returnUrl : '/dashboard'
             return NextResponse.redirect(`${origin}${safeReturnUrl}`)
           }
 
