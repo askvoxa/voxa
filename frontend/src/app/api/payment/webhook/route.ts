@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { Payment, PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 import { createHmac } from 'crypto'
-import { sendNewQuestionNotification } from '@/lib/email'
+import { sendNewQuestionNotification, sendSupportNotification } from '@/lib/email'
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -235,13 +235,21 @@ export async function POST(request: Request) {
     // Limpar o payment_intent (já foi processado com sucesso)
     await supabaseAdmin.from('payment_intents').delete().eq('id', externalRef)
 
-    // Notificar criador quando pergunta real chega (fire-and-forget — não bloqueia o webhook)
-    if (!isSupportOnly) {
-      try {
-        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(qd.creator_id)
-        const creatorEmail = userData?.user?.email
+    // Notificar criador (fire-and-forget — não bloqueia o webhook)
+    try {
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(qd.creator_id)
+      const creatorEmail = userData?.user?.email
 
-        if (creatorEmail && creatorProfileData?.username) {
+      if (creatorEmail && creatorProfileData?.username) {
+        if (isSupportOnly) {
+          sendSupportNotification({
+            creatorEmail,
+            creatorUsername: creatorProfileData.username,
+            senderName: qd.sender_name,
+            amount: qd.price_paid,
+            isAnonymous: qd.is_anonymous,
+          }).catch((e) => console.error('[webhook] erro ao notificar apoio:', e))
+        } else {
           sendNewQuestionNotification(
             creatorEmail,
             creatorProfileData.username,
@@ -252,9 +260,9 @@ export async function POST(request: Request) {
             creatorNet
           ).catch((e) => console.error('[webhook] erro ao notificar criador:', e))
         }
-      } catch (e) {
-        console.error('[webhook] erro ao buscar dados do criador para notificação:', e)
       }
+    } catch (e) {
+      console.error('[webhook] erro ao buscar dados do criador para notificação:', e)
     }
 
     return NextResponse.json({ received: true })

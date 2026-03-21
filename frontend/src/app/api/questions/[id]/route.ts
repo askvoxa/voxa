@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
-import { sendResponseNotification } from '@/lib/email'
+import { sendResponseNotification, sendRejectionNotification } from '@/lib/email'
 
 export async function PATCH(
   request: Request,
@@ -69,6 +69,24 @@ export async function PATCH(
         .update({ status: 'rejected' })
         .eq('id', params.id)
 
+      // Notificar fã sobre rejeição e reembolso (fire-and-forget)
+      if (question.sender_email) {
+        const { data: creatorProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single()
+
+        if (creatorProfile) {
+          sendRejectionNotification({
+            fanEmail: question.sender_email,
+            fanName: question.sender_name ?? 'Fã',
+            creatorUsername: creatorProfile.username,
+            amount: transaction?.amount ?? 0,
+          }).catch(err => console.error('[email] Erro ao notificar rejeição:', err))
+        }
+      }
+
       return NextResponse.json({ ok: true })
     }
 
@@ -126,6 +144,7 @@ export async function PATCH(
           fanEmail: question.sender_email,
           fanName: question.sender_name ?? 'Fã',
           creatorUsername: creatorProfile.username,
+          questionId: params.id,
         }).catch(err => console.error('[email] Erro ao notificar fã:', err))
       }
     }

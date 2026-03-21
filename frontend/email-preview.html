@@ -22,11 +22,13 @@
 
 <div class="preview-nav">
   <h1>VOXA Email Templates</h1>
-  <button class="active" onclick="show('new-question')">Nova Pergunta</button>
-  <button onclick="show('urgency')">Urgência</button>
-  <button onclick="show('response')">Resposta ao Fã</button>
-  <button onclick="show('expiration')">Expiração</button>
-  <button onclick="show('refund')">Reembolso</button>
+  <button class="active" onclick="show('new-question', this)">Nova Pergunta</button>
+  <button onclick="show('support', this)">Apoio</button>
+  <button onclick="show('urgency', this)">Urgência</button>
+  <button onclick="show('response', this)">Resposta</button>
+  <button onclick="show('expiration', this)">Expiração</button>
+  <button onclick="show('rejection', this)">Rejeição</button>
+  <button onclick="show('refund', this)">Reembolso</button>
 </div>
 
 <div class="preview-container">
@@ -121,6 +123,9 @@
                         — plataforma de perguntas pagas para criadores.
                       </p>
                       <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -133,7 +138,80 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- 2. URGÊNCIA (para o Criador)                                  -->
+  <!-- 2. APOIO FINANCEIRO (para o Criador)                          -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="support" class="email-frame">
+    <p class="email-label">Email para o Criador — Apoio Recebido</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111">
+      <tr>
+        <td align="center" style="padding:40px 16px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#1a1a1a;border-radius:16px;overflow:hidden">
+            <tr><td style="height:4px;background:linear-gradient(90deg,#F58529 0%,#DD2A7B 50%,#8134AF 100%);font-size:0;line-height:0">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding:32px 32px 0">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);padding:6px 20px;border-radius:10px">
+                      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:3px">VOXA</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">@jefersonkollenz</span></p>
+                <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#ffffff">Novo apoio recebido!</h1>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,rgba(129,52,175,0.15),rgba(221,42,123,0.15));border:1px solid #333;border-radius:10px;padding:20px 16px;text-align:center">
+                      <span style="font-size:13px;color:#aaa">Apoio de</span><br>
+                      <span style="font-size:15px;color:#eee;font-weight:600">Henrique</span><br>
+                      <span style="font-size:28px;font-weight:800;color:#DD2A7B;display:inline-block;margin-top:8px">R$&nbsp;25,00</span>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px;text-align:center">
+                  Seu trabalho está sendo valorizado! Continue criando conteúdo incrível.
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="padding:8px 0">
+                      <a href="#" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;line-height:20px;text-align:center;min-width:180px">
+                        Ver no dashboard
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-top:1px solid #2a2a2a;padding-top:20px">
+                      <p style="margin:0;font-size:12px;color:#666;text-align:center;line-height:18px">
+                        Este email foi enviado automaticamente pela
+                        <span style="color:#DD2A7B;font-weight:600">VOXA</span>
+                        — plataforma de perguntas pagas para criadores.
+                      </p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 3. URGÊNCIA (para o Criador)                                  -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <div id="urgency" class="email-frame">
     <p class="email-label">Email para o Criador — Lembrete de Urgência (6h)</p>
@@ -164,7 +242,7 @@
                 </table>
                 <p style="margin:0 0 8px;font-size:15px;color:#ccc">Olá, <span style="color:#fff;font-weight:600">@jefersonkollenz</span></p>
                 <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-                  Você tem <strong style="color:#fff">3 pergunta(s)</strong> pendente(s) no dashboard.
+                  Você tem <strong style="color:#fff">3 perguntas</strong> pendentes no dashboard.
                 </p>
                 <p style="margin:0 0 24px;font-size:14px;color:#999;line-height:20px">
                   Se não responder no prazo, o fã recebe reembolso automático e sua taxa de resposta cai.
@@ -191,6 +269,9 @@
                         — plataforma de perguntas pagas para criadores.
                       </p>
                       <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -203,7 +284,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- 3. RESPOSTA AO FÃ                                            -->
+  <!-- 4. RESPOSTA AO FÃ                                            -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <div id="response" class="email-frame">
     <p class="email-label">Email para o Fã — Pergunta Respondida</p>
@@ -255,6 +336,9 @@
                         — plataforma de perguntas pagas para criadores.
                       </p>
                       <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -267,7 +351,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- 4. EXPIRAÇÃO (para o Fã)                                     -->
+  <!-- 5. EXPIRAÇÃO (para o Fã)                                     -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <div id="expiration" class="email-frame">
     <p class="email-label">Email para o Fã — Pergunta Expirada</p>
@@ -294,8 +378,16 @@
                 <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
                   Infelizmente, <strong style="color:#DD2A7B">@jefersonkollenz</strong> não respondeu sua pergunta dentro do prazo.
                 </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
+                  <tr>
+                    <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+                      <span style="font-size:13px;color:#aaa">Valor a ser reembolsado</span><br>
+                      <span style="font-size:22px;font-weight:800;color:#4ade80">R$&nbsp;10,00</span>
+                    </td>
+                  </tr>
+                </table>
                 <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
-                  Estamos processando seu reembolso. O valor será devolvido integralmente ao método de pagamento original.
+                  O valor será devolvido integralmente ao método de pagamento original. Dependendo do seu banco, pode levar alguns dias úteis.
                 </p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
@@ -306,9 +398,6 @@
                     </td>
                   </tr>
                 </table>
-                <p style="margin:20px 0 0;font-size:12px;color:#666;text-align:center">
-                  Você receberá outro email quando o reembolso for confirmado.
-                </p>
               </td>
             </tr>
             <tr>
@@ -322,6 +411,9 @@
                         — plataforma de perguntas pagas para criadores.
                       </p>
                       <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -334,7 +426,82 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- 5. REEMBOLSO CONFIRMADO (para o Fã)                           -->
+  <!-- 6. REJEIÇÃO (para o Fã)                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="rejection" class="email-frame">
+    <p class="email-label">Email para o Fã — Pergunta Recusada</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111">
+      <tr>
+        <td align="center" style="padding:40px 16px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#1a1a1a;border-radius:16px;overflow:hidden">
+            <tr><td style="height:4px;background:linear-gradient(90deg,#F58529 0%,#DD2A7B 50%,#8134AF 100%);font-size:0;line-height:0">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding:32px 32px 0">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);padding:6px 20px;border-radius:10px">
+                      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:3px">VOXA</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">Henrique</span></p>
+                <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Pergunta recusada</h1>
+                <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
+                  <strong style="color:#DD2A7B">@jefersonkollenz</strong> optou por não responder sua pergunta.
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
+                  <tr>
+                    <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+                      <span style="font-size:13px;color:#aaa">Valor do reembolso</span><br>
+                      <span style="font-size:22px;font-weight:800;color:#4ade80">R$&nbsp;10,00</span>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
+                  O reembolso será processado automaticamente. Dependendo do seu banco ou operadora, pode levar alguns dias úteis para aparecer.
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="padding:8px 0">
+                      <a href="#" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;line-height:20px;text-align:center;min-width:180px">
+                        Explorar outros criadores
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-top:1px solid #2a2a2a;padding-top:20px">
+                      <p style="margin:0;font-size:12px;color:#666;text-align:center;line-height:18px">
+                        Este email foi enviado automaticamente pela
+                        <span style="color:#DD2A7B;font-weight:600">VOXA</span>
+                        — plataforma de perguntas pagas para criadores.
+                      </p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 7. REEMBOLSO CONFIRMADO (para o Fã)                           -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <div id="refund" class="email-frame">
     <p class="email-label">Email para o Fã — Reembolso Confirmado</p>
@@ -358,6 +525,14 @@
               <td style="padding:28px 32px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
                 <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">Henrique</span></p>
                 <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Reembolso confirmado</h1>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+                  <tr>
+                    <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+                      <span style="font-size:13px;color:#aaa">Valor reembolsado</span><br>
+                      <span style="font-size:22px;font-weight:800;color:#4ade80">R$&nbsp;10,00</span>
+                    </td>
+                  </tr>
+                </table>
                 <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
                   Seu reembolso referente à pergunta para <strong style="color:#DD2A7B">@jefersonkollenz</strong> foi confirmado com sucesso.
                 </p>
@@ -386,6 +561,9 @@
                         — plataforma de perguntas pagas para criadores.
                       </p>
                       <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">askvoxa.com</p>
+                      <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                        <a href="mailto:unsubscribe@askvoxa.com" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -400,11 +578,11 @@
 </div>
 
 <script>
-  function show(id) {
+  function show(id, btn) {
     document.querySelectorAll('.email-frame').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.preview-nav button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.preview-nav button').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    event.target.classList.add('active');
+    btn.classList.add('active');
   }
 </script>
 

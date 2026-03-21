@@ -116,7 +116,7 @@ const DEMO_ANSWERS: PublicAnswer[] = [
   },
 ]
 
-function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: PublicAnswer[], avatarUrl: string, displayName: string }) {
+function AnswerFeed({ publicAnswers, avatarUrl, displayName, highlightId }: { publicAnswers: PublicAnswer[], avatarUrl: string, displayName: string, highlightId?: string }) {
   return (
     <div className="w-full max-w-2xl mt-16 px-2">
       <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
@@ -127,7 +127,7 @@ function AnswerFeed({ publicAnswers, avatarUrl, displayName }: { publicAnswers: 
       </h3>
       <div className="space-y-6">
         {publicAnswers.map((item) => (
-          <div key={item.id} className="bg-[#111] rounded-[24px] p-6 border border-white/5 shadow-sm hover:border-white/10 transition-colors">
+          <div key={item.id} id={`answer-${item.id}`} className={`bg-[#111] rounded-[24px] p-6 border shadow-sm hover:border-white/10 transition-colors ${highlightId === item.id ? 'border-[#DD2A7B]/50 ring-1 ring-[#DD2A7B]/30' : 'border-white/5'}`}>
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center text-lg shadow-inner">
@@ -182,10 +182,11 @@ export default async function PerfilPage({
   searchParams,
 }: {
   params: { username: string }
-  searchParams: { payment_status?: string; payment_id?: string }
+  searchParams: { payment_status?: string; payment_id?: string; q?: string }
 }) {
   const paymentStatus = searchParams.payment_status ?? null
   const paymentId = searchParams.payment_id ?? null
+  const highlightQuestionId = searchParams.q ?? null
 
   // Perfil de demonstração — não requer banco de dados
   if (params.username === 'exemplo') {
@@ -429,11 +430,20 @@ export default async function PerfilPage({
 
       {/* Feed de respostas públicas */}
       {publicAnswers && publicAnswers.length > 0 ? (
-        <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} />
+        <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} highlightId={highlightQuestionId ?? undefined} />
       ) : (
         <div className="w-full max-w-2xl mt-12 px-4 text-center">
           <p className="text-[#6B7280] text-sm">Ainda não há respostas públicas neste perfil.</p>
         </div>
+      )}
+
+      {highlightQuestionId && (
+        <script dangerouslySetInnerHTML={{ __html: `
+          document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('answer-${highlightQuestionId.replace(/[^a-zA-Z0-9-]/g, '')}');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        `}} />
       )}
     </div>
   )

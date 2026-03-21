@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 
 const FROM_EMAIL = 'VOXA <noreply@askvoxa.com>'
+const UNSUBSCRIBE_EMAIL = 'mailto:unsubscribe@askvoxa.com'
 
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) {
@@ -10,9 +11,19 @@ function getResend(): Resend | null {
   return new Resend(process.env.RESEND_API_KEY)
 }
 
+/** Headers padrão incluindo List-Unsubscribe para compliance */
+const UNSUBSCRIBE_HEADERS = {
+  'List-Unsubscribe': `<${UNSUBSCRIBE_EMAIL}>`,
+  'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+}
+
 /* ─── Layout base ────────────────────────────────────────────────────────── */
 
-function emailLayout(content: string): string {
+function emailLayout(content: string, preheader?: string): string {
+  const preheaderHtml = preheader
+    ? `<span style="display:none;font-size:1px;color:#111111;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">${preheader}</span>`
+    : ''
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
 <head>
@@ -21,6 +32,7 @@ function emailLayout(content: string): string {
   <title>VOXA</title>
 </head>
 <body style="margin:0;padding:0;background-color:#111111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+  ${preheaderHtml}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111">
     <tr>
       <td align="center" style="padding:40px 16px">
@@ -61,6 +73,9 @@ function emailLayout(content: string): string {
                     <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
                       askvoxa.com
                     </p>
+                    <p style="margin:8px 0 0;font-size:11px;color:#555;text-align:center">
+                      <a href="${UNSUBSCRIBE_EMAIL}" style="color:#555;text-decoration:underline">Cancelar inscrição</a>
+                    </p>
                   </td>
                 </tr>
               </table>
@@ -99,6 +114,11 @@ function brl(n: number): string {
   return `R$\u00A0${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+/** Retorna "pergunta" ou "perguntas" conforme a contagem */
+function pluralPerguntas(n: number): string {
+  return n === 1 ? 'pergunta' : 'perguntas'
+}
+
 /* ─── Emails para Criadores ─────────────────────────────────────────────── */
 
 /**
@@ -125,6 +145,7 @@ export async function sendNewQuestionNotification(
     from: FROM_EMAIL,
     to: creatorEmail,
     subject: `Nova pergunta de ${brl(price)} aguardando resposta`,
+    headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">@${creatorUsername}</span></p>
       <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#ffffff">Nova pergunta recebida!</h1>
@@ -181,7 +202,58 @@ export async function sendNewQuestionNotification(
           </td>
         </tr>
       </table>
-    `),
+    `, `Nova pergunta de ${brl(price)} — responda em até ${deadlineHours}h`),
+  })
+}
+
+/**
+ * Notifica o criador que recebeu um apoio financeiro (tip).
+ * Fire-and-forget — não deve bloquear o webhook de pagamento.
+ */
+export async function sendSupportNotification({
+  creatorEmail,
+  creatorUsername,
+  senderName,
+  amount,
+  isAnonymous,
+}: {
+  creatorEmail: string
+  creatorUsername: string
+  senderName: string
+  amount: number
+  isAnonymous: boolean
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
+  const displayName = isAnonymous ? 'Alguém (anônimo)' : senderName
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: creatorEmail,
+    subject: `Você recebeu um apoio de ${brl(amount)}!`,
+    headers: UNSUBSCRIBE_HEADERS,
+    html: emailLayout(`
+      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">@${creatorUsername}</span></p>
+      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#ffffff">Novo apoio recebido!</h1>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+        <tr>
+          <td style="background:linear-gradient(135deg,rgba(129,52,175,0.15),rgba(221,42,123,0.15));border:1px solid #333;border-radius:10px;padding:20px 16px;text-align:center">
+            <span style="font-size:13px;color:#aaa">Apoio de</span><br>
+            <span style="font-size:15px;color:#eee;font-weight:600">${displayName}</span><br>
+            <span style="font-size:28px;font-weight:800;color:#DD2A7B;display:inline-block;margin-top:8px">${brl(amount)}</span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px;text-align:center">
+        Seu trabalho está sendo valorizado! Continue criando conteúdo incrível.
+      </p>
+
+      ${ctaButton(`${appUrl}/dashboard`, 'Ver no dashboard')}
+    `, `${displayName} enviou ${brl(amount)} de apoio para você`),
   })
 }
 
@@ -216,10 +288,13 @@ export async function sendUrgencyReminder({
     msg: `${hoursUntilExpiry}h para expirar`,
   }
 
+  const plural = pluralPerguntas(pendingCount)
+
   await resend.emails.send({
     from: FROM_EMAIL,
     to: creatorEmail,
-    subject: `[VOXA] ${pendingCount} pergunta(s) aguardando — ${level.msg}`,
+    subject: `[VOXA] ${pendingCount} ${plural} aguardando — ${level.msg}`,
+    headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <!-- Urgency banner -->
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
@@ -232,14 +307,14 @@ export async function sendUrgencyReminder({
 
       <p style="margin:0 0 8px;font-size:15px;color:#ccc">Olá, <span style="color:#fff;font-weight:600">@${creatorUsername}</span></p>
       <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
-        Você tem <strong style="color:#fff">${pendingCount} pergunta(s)</strong> pendente(s) no dashboard.
+        Você tem <strong style="color:#fff">${pendingCount} ${plural}</strong> pendente${pendingCount > 1 ? 's' : ''} no dashboard.
       </p>
       <p style="margin:0 0 24px;font-size:14px;color:#999;line-height:20px">
         Se não responder no prazo, o fã recebe reembolso automático e sua taxa de resposta cai.
       </p>
 
       ${ctaButton(`${appUrl}/dashboard`, 'Ir para o dashboard')}
-    `),
+    `, `${pendingCount} ${plural} pendente${pendingCount > 1 ? 's' : ''} — ${level.msg}`),
   })
 }
 
@@ -253,10 +328,12 @@ export async function sendResponseNotification({
   fanEmail,
   fanName,
   creatorUsername,
+  questionId,
 }: {
   fanEmail: string
   fanName: string
   creatorUsername: string
+  questionId: string
 }) {
   const resend = getResend()
   if (!resend) return
@@ -267,6 +344,7 @@ export async function sendResponseNotification({
     from: FROM_EMAIL,
     to: fanEmail,
     subject: `@${creatorUsername} respondeu sua pergunta!`,
+    headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
       <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Sua pergunta foi respondida!</h1>
@@ -274,12 +352,12 @@ export async function sendResponseNotification({
         <strong style="color:#DD2A7B">@${creatorUsername}</strong> acabou de responder sua pergunta na VOXA.
       </p>
 
-      ${ctaButton(`${appUrl}/perfil/${creatorUsername}`, 'Ver resposta')}
+      ${ctaButton(`${appUrl}/perfil/${creatorUsername}?q=${questionId}`, 'Ver resposta')}
 
       <p style="margin:20px 0 0;font-size:12px;color:#666;text-align:center">
         Se você não fez essa pergunta, pode ignorar este email.
       </p>
-    `),
+    `, `@${creatorUsername} respondeu — clique para ver`),
   })
 }
 
@@ -291,10 +369,12 @@ export async function sendExpirationNotification({
   fanEmail,
   fanName,
   creatorUsername,
+  amount,
 }: {
   fanEmail: string
   fanName: string
   creatorUsername: string
+  amount: number
 }) {
   const resend = getResend()
   if (!resend) return
@@ -304,23 +384,81 @@ export async function sendExpirationNotification({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: `Sua pergunta para @${creatorUsername} expirou — reembolso em andamento`,
+    subject: `Sua pergunta para @${creatorUsername} expirou — reembolso de ${brl(amount)} em andamento`,
+    headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
       <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Pergunta expirada</h1>
       <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
         Infelizmente, <strong style="color:#DD2A7B">@${creatorUsername}</strong> não respondeu sua pergunta dentro do prazo.
       </p>
+
+      <!-- Refund amount -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
+        <tr>
+          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+            <span style="font-size:13px;color:#aaa">Valor a ser reembolsado</span><br>
+            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
+          </td>
+        </tr>
+      </table>
+
       <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
-        Estamos processando seu reembolso. O valor será devolvido integralmente ao método de pagamento original.
+        O valor será devolvido integralmente ao método de pagamento original. Dependendo do seu banco, pode levar alguns dias úteis.
       </p>
 
       ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+    `, `Reembolso de ${brl(amount)} em processamento — pergunta para @${creatorUsername} expirou`),
+  })
+}
 
-      <p style="margin:20px 0 0;font-size:12px;color:#666;text-align:center">
-        Você receberá outro email quando o reembolso for confirmado.
+/**
+ * Notifica o fã que sua pergunta foi rejeitada pelo criador e o reembolso está sendo processado.
+ */
+export async function sendRejectionNotification({
+  fanEmail,
+  fanName,
+  creatorUsername,
+  amount,
+}: {
+  fanEmail: string
+  fanName: string
+  creatorUsername: string
+  amount: number
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: fanEmail,
+    subject: `Sua pergunta para @${creatorUsername} foi recusada — reembolso de ${brl(amount)}`,
+    headers: UNSUBSCRIBE_HEADERS,
+    html: emailLayout(`
+      <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
+      <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Pergunta recusada</h1>
+      <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
+        <strong style="color:#DD2A7B">@${creatorUsername}</strong> optou por não responder sua pergunta.
       </p>
-    `),
+
+      <!-- Refund amount -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px">
+        <tr>
+          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+            <span style="font-size:13px;color:#aaa">Valor do reembolso</span><br>
+            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:22px">
+        O reembolso será processado automaticamente. Dependendo do seu banco ou operadora, pode levar alguns dias úteis para aparecer.
+      </p>
+
+      ${ctaButton(`${appUrl}`, 'Explorar outros criadores')}
+    `, `Reembolso de ${brl(amount)} — sua pergunta para @${creatorUsername} foi recusada`),
   })
 }
 
@@ -332,10 +470,12 @@ export async function sendRefundConfirmation({
   fanEmail,
   fanName,
   creatorUsername,
+  amount,
 }: {
   fanEmail: string
   fanName: string
   creatorUsername: string
+  amount: number
 }) {
   const resend = getResend()
   if (!resend) return
@@ -343,10 +483,22 @@ export async function sendRefundConfirmation({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: fanEmail,
-    subject: 'Reembolso confirmado — VOXA',
+    subject: `Reembolso de ${brl(amount)} confirmado — VOXA`,
+    headers: UNSUBSCRIBE_HEADERS,
     html: emailLayout(`
       <p style="margin:0 0 4px;font-size:14px;color:#999">Olá, <span style="color:#ccc;font-weight:600">${fanName}</span></p>
       <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff">Reembolso confirmado</h1>
+
+      <!-- Refund amount -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+        <tr>
+          <td style="background:#222;border-radius:10px;padding:16px;text-align:center">
+            <span style="font-size:13px;color:#aaa">Valor reembolsado</span><br>
+            <span style="font-size:22px;font-weight:800;color:#4ade80">${brl(amount)}</span>
+          </td>
+        </tr>
+      </table>
+
       <p style="margin:0 0 8px;font-size:15px;color:#ccc;line-height:22px">
         Seu reembolso referente à pergunta para <strong style="color:#DD2A7B">@${creatorUsername}</strong> foi confirmado com sucesso.
       </p>
@@ -363,6 +515,6 @@ export async function sendRefundConfirmation({
           </td>
         </tr>
       </table>
-    `),
+    `, `Reembolso de ${brl(amount)} confirmado para sua pergunta`),
   })
 }

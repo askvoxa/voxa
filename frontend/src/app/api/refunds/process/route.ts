@@ -100,6 +100,7 @@ export async function GET(request: Request) {
             fanEmail: question.sender_email,
             fanName: question.sender_name ?? 'Fã',
             creatorUsername: creator.username,
+            amount: transaction?.amount ?? 0,
           }).catch(err => console.error('[email] Erro ao notificar expiração:', err))
         }
       }
@@ -157,6 +158,7 @@ export async function GET(request: Request) {
               fanEmail: questionData.sender_email,
               fanName: questionData.sender_name ?? 'Fã',
               creatorUsername: creator.username,
+              amount: item.amount ?? 0,
             }).catch(err => console.error('[email] Erro ao confirmar reembolso:', err))
           }
         }

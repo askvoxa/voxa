@@ -9,11 +9,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const featureEnabled = process.env.FEATURE_REFUNDS_ENABLED === 'true'
+  const refundsEnabled = process.env.FEATURE_REFUNDS_ENABLED === 'true'
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Se refunds/process está ativo, pular expiração aqui (evita duplicação de emails)
+  // Apenas enviar nudges de urgência ao criador
+  if (refundsEnabled) {
+    await sendUrgencyNudges(supabase)
+    return NextResponse.json({ ok: true, expired: 0, skipped: 'refunds/process handles expiration' })
+  }
 
   const deadlineHours = parseInt(process.env.RESPONSE_DEADLINE_HOURS || '36')
   const cutoff = new Date(Date.now() - deadlineHours * 60 * 60 * 1000).toISOString()
@@ -32,6 +39,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (!expired || expired.length === 0) {
+    // Ainda precisa enviar nudges mesmo sem expiradas
+    await sendUrgencyNudges(supabase)
     return NextResponse.json({ ok: true, expired: 0 })
   }
 
@@ -47,7 +56,7 @@ export async function POST(req: NextRequest) {
 
       const tx = Array.isArray(q.transactions) ? q.transactions[0] : q.transactions
 
-      if (featureEnabled && tx?.mp_payment_id) {
+      if (tx?.mp_payment_id) {
         try {
           await refundClient.create({
             payment_id: String(tx.mp_payment_id),
@@ -72,6 +81,7 @@ export async function POST(req: NextRequest) {
           fanEmail: q.sender_email,
           fanName: q.sender_name ?? 'Fã',
           creatorUsername: profile?.username ?? '',
+          amount: q.price_paid ?? 0,
         }).catch((e) => console.error('[cron/expire-questions] erro ao notificar fã:', e))
       }
     } catch (err) {
