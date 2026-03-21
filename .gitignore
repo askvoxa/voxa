@@ -36,6 +36,7 @@ frontend/node_modules/.prisma/
 plans/
 .agent/
 .claude/
+docs/
 
 # Playwright — artefatos de teste gerados automaticamente
 frontend/test-results/
@@ -43,4 +44,4 @@ frontend/playwright-report/
 frontend/.playwright/
 
 # Worktrees
-.worktrees/
+.worktrees/
