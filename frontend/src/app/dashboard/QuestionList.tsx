@@ -592,7 +592,7 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
         </div>
       )}
 
-      {/* Modal de Story */}
+      {/* Modal de Story — Caixinha VOXA */}
       {selectedStory && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Pré-visualização de Story">
           <div className="relative w-full max-w-[400px] max-h-full overflow-auto flex flex-col items-center">
@@ -608,32 +608,29 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
               </button>
             </div>
 
+            {/* Story 9:16 — fundo transparente, só a caixinha centralizada */}
             <div
               ref={storyRef}
-              className="w-[360px] max-w-full aspect-[9/16] bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F56040] rounded-[32px] p-8 flex flex-col justify-center relative overflow-hidden shadow-2xl"
+              className="w-[360px] max-w-full aspect-[9/16] flex items-center justify-center relative"
+              style={{ backgroundColor: '#1a1a2e' }}
             >
-              <div data-html2canvas-ignore className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-              <div data-html2canvas-ignore className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-400 opacity-20 rounded-full blur-3xl -ml-20 -mb-20"></div>
-
-              <div className="bg-white rounded-3xl p-6 shadow-xl relative z-10 w-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">
-                    <span role="img" aria-label={selectedStory.is_anonymous ? 'Anônimo' : 'Usuário'}>{selectedStory.is_anonymous ? '👻' : '👤'}</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">
-                      {selectedStory.is_anonymous ? 'Anônimo' : selectedStory.sender_name}
-                    </p>
-                    <p className="text-xs text-gray-500">enviou uma pergunta</p>
-                  </div>
+              {/* Caixinha estilo Instagram */}
+              <div className="w-[85%] rounded-2xl overflow-hidden shadow-2xl" style={{ border: '3px solid #4C1D95' }}>
+                {/* Parte superior — preta com pergunta */}
+                <div className="bg-black px-6 pt-6 pb-5">
+                  <p className="text-white font-extrabold text-lg leading-snug">
+                    {selectedStory.content}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-3 font-medium">
+                    askvoxa.com/{creatorUsername}
+                  </p>
                 </div>
-                <p className="text-gray-800 text-xl font-medium leading-relaxed mb-6">
-                  &ldquo;{selectedStory.content}&rdquo;
-                </p>
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4"></div>
-                <p className="text-center font-bold text-transparent bg-clip-text bg-gradient-instagram text-sm">
-                  voxa.com/perfil/{creatorUsername}
-                </p>
+                {/* Parte inferior — branca placeholder */}
+                <div className="bg-white px-6 py-5">
+                  <p className="text-gray-400 font-bold text-base">
+                    digite algo...
+                  </p>
+                </div>
               </div>
             </div>
           </div>
