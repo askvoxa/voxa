@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import html2canvas from 'html2canvas'
 import { createClient } from '@/lib/supabase/client'
 
 type Question = {
@@ -81,7 +80,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
   // Story modal
   const [selectedStory, setSelectedStory] = useState<Question | null>(null)
-  const storyRef = useRef<HTMLDivElement>(null)
 
   // Fechar modal com ESC
   useEffect(() => {
@@ -259,15 +257,106 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     }
   }
 
-  // ── Story ──────────────────────────────────────────────────────
+  // ── Story (Canvas nativo — funciona no iOS/Android) ────────────
   const downloadStory = async () => {
-    if (!storyRef.current) return
+    if (!selectedStory) return
     try {
-      const canvas = await html2canvas(storyRef.current, {
-        useCORS: true,
-        scale: 3,
-        backgroundColor: null,
-      } as any)
+      const scale = 3
+      const W = 320 * scale
+      const pad = 18 * scale
+      const fontSize = 17 * scale
+      const ctaFontSize = 13 * scale
+      const linkFontSize = 11 * scale
+      const radius = 16 * scale
+      const borderW = 3 * scale
+
+      // Medir altura do texto da pergunta
+      const canvas = document.createElement('canvas')
+      canvas.width = W
+      const ctx = canvas.getContext('2d')!
+      ctx.font = `800 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+      const maxTextW = W - pad * 2
+      const words = selectedStory.content.split(' ')
+      const lines: string[] = []
+      let currentLine = ''
+      for (const word of words) {
+        const test = currentLine ? `${currentLine} ${word}` : word
+        if (ctx.measureText(test).width > maxTextW) {
+          if (currentLine) lines.push(currentLine)
+          currentLine = word
+        } else {
+          currentLine = test
+        }
+      }
+      if (currentLine) lines.push(currentLine)
+
+      const lineHeight = fontSize * 1.3
+      const topH = pad + lines.length * lineHeight + pad
+      const bottomH = pad + ctaFontSize + 6 * scale + linkFontSize + pad
+      const H = topH + bottomH
+
+      canvas.height = H
+
+      // Fundo transparente
+      ctx.clearRect(0, 0, W, H)
+
+      // Card com borda roxa arredondada
+      const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath()
+        ctx.moveTo(x + r, y)
+        ctx.lineTo(x + w - r, y)
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+        ctx.lineTo(x + w, y + h - r)
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+        ctx.lineTo(x + r, y + h)
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+        ctx.lineTo(x, y + r)
+        ctx.quadraticCurveTo(x, y, x + r, y)
+        ctx.closePath()
+      }
+
+      // Borda roxa
+      drawRoundRect(0, 0, W, H, radius)
+      ctx.fillStyle = '#4C1D95'
+      ctx.fill()
+
+      // Parte branca (pergunta)
+      drawRoundRect(borderW, borderW, W - borderW * 2, topH - borderW, radius - borderW)
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fill()
+
+      // Parte preta (CTA)
+      ctx.beginPath()
+      ctx.moveTo(borderW, topH)
+      ctx.lineTo(W - borderW, topH)
+      ctx.lineTo(W - borderW, H - radius)
+      ctx.quadraticCurveTo(W - borderW, H - borderW, W - radius, H - borderW)
+      ctx.lineTo(radius, H - borderW)
+      ctx.quadraticCurveTo(borderW, H - borderW, borderW, H - radius)
+      ctx.lineTo(borderW, topH)
+      ctx.closePath()
+      ctx.fillStyle = '#000000'
+      ctx.fill()
+
+      // Texto da pergunta (branco, centralizado)
+      ctx.fillStyle = '#111827'
+      ctx.font = `800 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+      ctx.textAlign = 'center'
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], W / 2, borderW + pad + (i + 1) * lineHeight - fontSize * 0.15)
+      }
+
+      // CTA
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = `700 ${ctaFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+      ctx.fillText('Faça uma pergunta sob demanda em:', W / 2, topH + pad + ctaFontSize)
+
+      // Link
+      ctx.fillStyle = '#9CA3AF'
+      ctx.font = `500 ${linkFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+      ctx.fillText(`askvoxa.com/${creatorUsername}`, W / 2, topH + pad + ctaFontSize + 6 * scale + linkFontSize)
+
+      // Exportar
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, 'image/png')
       )
@@ -275,13 +364,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
       const file = new File([blob], 'voxa-story.png', { type: 'image/png' })
 
-      // Mobile: usa Web Share API para salvar/compartilhar nativamente
+      // Mobile: Web Share API
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] })
         return
       }
 
-      // Desktop fallback: download direto
+      // Desktop: download direto
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -291,7 +380,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (err: any) {
-      // Usuário cancelou o share — não é erro
       if (err?.name === 'AbortError') return
       alert('Não foi possível gerar a imagem.')
     }
@@ -620,7 +708,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
             {/* Caixinha — só o card, sem fundo (figurinha) */}
             <div
-              ref={storyRef}
               className="w-[320px] max-w-full rounded-2xl overflow-hidden shadow-2xl"
               style={{ border: '3px solid #4C1D95' }}
             >
