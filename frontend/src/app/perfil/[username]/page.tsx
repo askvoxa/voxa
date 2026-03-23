@@ -4,11 +4,11 @@ import QuestionForm from './QuestionForm'
 import AnswerFeedback from './AnswerFeedback'
 import PerfilAnalytics from './PerfilAnalytics'
 import TopSupporters from './TopSupporters'
+import ProfileTabs from './ProfileTabs'
 import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
 import { computeMilestones, CreatorStats } from '@/lib/milestones'
 import { SupporterRow } from '@/lib/supporters'
 import MilestoneBadgeRow from '@/components/milestones/MilestoneBadgeRow'
-import MilestoneSection from '@/components/milestones/MilestoneSection'
 import VerifiedBadge from '@/components/VerifiedBadge'
 import FounderBadge from '@/components/FounderBadge'
 
@@ -124,14 +124,8 @@ const DEMO_ANSWERS: PublicAnswer[] = [
 
 function AnswerFeed({ publicAnswers, avatarUrl, displayName, highlightId, isVerified, isFounder }: { publicAnswers: PublicAnswer[], avatarUrl: string, displayName: string, highlightId?: string, isVerified?: boolean, isFounder?: boolean }) {
   return (
-    <div className="w-full max-w-2xl mt-16 px-2">
-      <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-        <svg className="w-6 h-6 text-[#DD2A7B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-        </svg>
-        Respostas Recentes
-      </h3>
-      <div className="space-y-6">
+    <div className="px-4 py-6">
+      <div className="space-y-4">
         {publicAnswers.map((item) => (
           <div key={item.id} id={`answer-${item.id}`} className={`bg-[#111] rounded-[24px] p-6 border shadow-sm hover:border-white/10 transition-colors ${highlightId === item.id ? 'border-[#DD2A7B]/50 ring-1 ring-[#DD2A7B]/30' : 'border-white/5'}`}>
             <div className="flex items-start justify-between mb-4">
@@ -213,12 +207,12 @@ export default async function PerfilPage({
               <img className="w-24 h-24 rounded-full border-4 border-[#12121A] object-cover" src={avatarUrl} alt={displayName} />
             </div>
           </div>
-          <div className="pt-16 pb-8 px-8 text-center border-b border-white/5 relative z-10">
+          <div className="pt-16 pb-6 px-8 text-center relative z-10">
             <div className="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full text-xs text-yellow-400 font-semibold mb-3">
               ✨ Perfil de demonstração
             </div>
             <h1 className="text-2xl font-bold text-white mb-1">{displayName}</h1>
-            {profile.bio && <p className="text-[#9CA3AF] text-sm mb-4 leading-relaxed">{profile.bio}</p>}
+            {profile.bio && <p className="text-[#9CA3AF] text-sm mb-3 leading-relaxed">{profile.bio}</p>}
             <div className="flex justify-center mb-3">
               <MilestoneBadgeRow milestones={demoMilestones} size="md" />
             </div>
@@ -227,19 +221,29 @@ export default async function PerfilPage({
               Aceitando perguntas hoje (17/20)
             </div>
           </div>
-          <QuestionForm
-            username={profile.username}
-            minPrice={profile.min_price}
-            avatarUrl={avatarUrl}
-            displayName={displayName}
-            disabled={true}
-            isAuthenticated={false}
-            userProfile={null}
+          <ProfileTabs
+            answersCount={DEMO_ANSWERS.length}
+            askContent={
+              <QuestionForm
+                username={profile.username}
+                minPrice={profile.min_price}
+                avatarUrl={avatarUrl}
+                displayName={displayName}
+                disabled={true}
+                isAuthenticated={false}
+                userProfile={null}
+              />
+            }
+            answersContent={
+              <>
+                <AnswerFeed publicAnswers={DEMO_ANSWERS} avatarUrl={avatarUrl} displayName={displayName} />
+                <div className="px-4 pb-6">
+                  <TopSupporters supporters={DEMO_SUPPORTERS} inline />
+                </div>
+              </>
+            }
           />
         </div>
-        <MilestoneSection milestones={demoMilestones} />
-        <TopSupporters supporters={DEMO_SUPPORTERS} />
-        <AnswerFeed publicAnswers={DEMO_ANSWERS} avatarUrl={avatarUrl} displayName={displayName} />
       </div>
     )
   }
@@ -382,14 +386,14 @@ export default async function PerfilPage({
           </div>
         </div>
 
-        <div className="pt-16 pb-8 px-8 text-center border-b border-white/5 relative z-10">
+        <div className="pt-16 pb-6 px-8 text-center relative z-10">
           <h1 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-1.5">
             {displayName}
             <VerifiedBadge isVerified={!!profile.is_verified} size="md" />
             <FounderBadge isFounder={!!profile.is_founder} size="md" />
           </h1>
           {profile.bio && (
-            <p className="text-[#9CA3AF] text-sm mb-4 leading-relaxed">{profile.bio}</p>
+            <p className="text-[#9CA3AF] text-sm mb-3 leading-relaxed">{profile.bio}</p>
           )}
           {responseRate !== null && (
             <div className="flex items-center justify-center gap-1.5 text-sm mb-3">
@@ -424,61 +428,67 @@ export default async function PerfilPage({
           )}
         </div>
 
-        {/* Banner de retorno do Mercado Pago */}
-        {paymentStatus === 'approved' && (
-          <div className="mx-6 mt-6 p-4 bg-[#16A34A]/10 border border-green-500/30 rounded-2xl text-center">
-            <p className="text-green-400 font-bold text-sm">✓ Pagamento aprovado!</p>
-            <p className="text-gray-500 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até {RESPONSE_DEADLINE_HOURS} horas.</p>
-          </div>
-        )}
-        {paymentStatus === 'pending' && (
-          <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl text-center">
-            <p className="text-yellow-400 font-bold text-sm">⏳ Pagamento em processamento</p>
-            <p className="text-gray-500 text-xs mt-1">Se pagou via PIX, pode levar até 5 minutos para confirmar. Sua pergunta será enviada automaticamente assim que o pagamento for aprovado.</p>
-          </div>
-        )}
-        {paymentStatus === 'failure' && (
-          <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-center">
-            <p className="text-red-400 font-bold text-sm">✗ Pagamento não aprovado</p>
-            <p className="text-gray-500 text-xs mt-1">Tente novamente com outro método de pagamento.</p>
-          </div>
-        )}
+        {/* Tabs: Perguntar / Respostas */}
+        <ProfileTabs
+          answersCount={publicAnswers?.length ?? 0}
+          askContent={
+            <>
+              {/* Banner de retorno do Mercado Pago */}
+              {paymentStatus === 'approved' && (
+                <div className="mx-6 mt-6 p-4 bg-[#16A34A]/10 border border-green-500/30 rounded-2xl text-center">
+                  <p className="text-green-400 font-bold text-sm">✓ Pagamento aprovado!</p>
+                  <p className="text-gray-500 text-xs mt-1">Sua pergunta foi enviada para o criador. Você receberá a resposta em até {RESPONSE_DEADLINE_HOURS} horas.</p>
+                </div>
+              )}
+              {paymentStatus === 'pending' && (
+                <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl text-center">
+                  <p className="text-yellow-400 font-bold text-sm">⏳ Pagamento em processamento</p>
+                  <p className="text-gray-500 text-xs mt-1">Se pagou via PIX, pode levar até 5 minutos para confirmar. Sua pergunta será enviada automaticamente assim que o pagamento for aprovado.</p>
+                </div>
+              )}
+              {paymentStatus === 'failure' && (
+                <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-center">
+                  <p className="text-red-400 font-bold text-sm">✗ Pagamento não aprovado</p>
+                  <p className="text-gray-500 text-xs mt-1">Tente novamente com outro método de pagamento.</p>
+                </div>
+              )}
 
-        <PerfilAnalytics
-          creatorUsername={profile.username}
-          minPrice={profile.min_price}
-          paymentStatus={paymentStatus}
-          paymentId={paymentId}
-        />
+              <PerfilAnalytics
+                creatorUsername={profile.username}
+                minPrice={profile.min_price}
+                paymentStatus={paymentStatus}
+                paymentId={paymentId}
+              />
 
-        {/* Formulário interativo (Client Component) */}
-        <QuestionForm
-          username={profile.username}
-          minPrice={profile.min_price}
-          avatarUrl={avatarUrl}
-          displayName={displayName}
-          disabled={creatorIsPaused || questionsLeft === 0}
-          disabledReason={creatorIsPaused ? 'paused' : 'limit'}
-          fastAskSuggestions={profile.fast_ask_suggestions}
-          isAuthenticated={!!currentUserProfile}
-          userProfile={currentUserProfile}
+              <QuestionForm
+                username={profile.username}
+                minPrice={profile.min_price}
+                avatarUrl={avatarUrl}
+                displayName={displayName}
+                disabled={creatorIsPaused || questionsLeft === 0}
+                disabledReason={creatorIsPaused ? 'paused' : 'limit'}
+                fastAskSuggestions={profile.fast_ask_suggestions}
+                isAuthenticated={!!currentUserProfile}
+                userProfile={currentUserProfile}
+              />
+            </>
+          }
+          answersContent={
+            <>
+              {publicAnswers && publicAnswers.length > 0 ? (
+                <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} highlightId={highlightQuestionId ?? undefined} isVerified={!!profile.is_verified} isFounder={!!profile.is_founder} />
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="text-[#6B7280] text-sm">Ainda não há respostas públicas.</p>
+                </div>
+              )}
+              <div className="px-4 pb-6">
+                <TopSupporters supporters={(topSupporters as SupporterRow[]) ?? []} inline />
+              </div>
+            </>
+          }
         />
       </div>
-
-      {/* Conquistas */}
-      <MilestoneSection milestones={milestones} />
-
-      {/* Top Apoiadores do Mês */}
-      <TopSupporters supporters={(topSupporters as SupporterRow[]) ?? []} />
-
-      {/* Feed de respostas públicas */}
-      {publicAnswers && publicAnswers.length > 0 ? (
-        <AnswerFeed publicAnswers={publicAnswers} avatarUrl={avatarUrl} displayName={displayName} highlightId={highlightQuestionId ?? undefined} isVerified={!!profile.is_verified} isFounder={!!profile.is_founder} />
-      ) : (
-        <div className="w-full max-w-2xl mt-12 px-4 text-center">
-          <p className="text-[#6B7280] text-sm">Ainda não há respostas públicas neste perfil.</p>
-        </div>
-      )}
 
       {highlightQuestionId && (
         <script dangerouslySetInnerHTML={{ __html: `

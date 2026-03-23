@@ -2,9 +2,10 @@ import { generatePseudonym, formatBRL, SupporterRow } from '@/lib/supporters'
 
 type Props = {
   supporters: SupporterRow[]
+  inline?: boolean
 }
 
-export default function TopSupporters({ supporters }: Props) {
+export default function TopSupporters({ supporters, inline }: Props) {
   // Don't render if no supporters this month
   if (!supporters || supporters.length === 0) {
     return null
@@ -14,7 +15,7 @@ export default function TopSupporters({ supporters }: Props) {
   const MEDAL_COLORS = ['border-yellow-500/30', 'border-gray-400/30', 'border-orange-400/30']
 
   return (
-    <section className="w-full max-w-2xl mt-10 px-4 md:px-0">
+    <section className={inline ? 'mt-2' : 'w-full max-w-2xl mt-10 px-4 md:px-0'}>
       <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
         👑 Top Apoiadores do Mês
       </h2>
