@@ -625,13 +625,13 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
               style={{ border: '3px solid #4C1D95' }}
             >
               {/* Parte superior — branca com a pergunta do fã */}
-              <div className="bg-white px-6 pt-6 pb-5">
+              <div className="bg-white px-6 pt-6 pb-5 text-center">
                 <p className="text-gray-900 font-extrabold text-lg leading-snug">
                   {selectedStory.content}
                 </p>
               </div>
               {/* Parte inferior — preta com CTA */}
-              <div className="bg-black px-6 py-5">
+              <div className="bg-black px-6 py-5 text-center">
                 <p className="text-white font-bold text-sm leading-snug">
                   Faça uma pergunta sob demanda em:
                 </p>
