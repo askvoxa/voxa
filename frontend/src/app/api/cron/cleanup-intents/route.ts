@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { timingSafeEqual } from 'crypto'
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-cron-secret')
-  if (secret !== process.env.CRON_SECRET) {
+  const cronSecret = process.env.CRON_SECRET
+  // Previne bypass quando ambos são undefined e usa comparação timing-safe
+  if (!cronSecret || !secret || secret.length !== cronSecret.length
+      || !timingSafeEqual(Buffer.from(secret), Buffer.from(cronSecret))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

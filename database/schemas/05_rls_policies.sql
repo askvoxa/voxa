@@ -27,7 +27,8 @@ CREATE POLICY "Criador atualiza próprio perfil" ON profiles FOR UPDATE USING (a
 CREATE POLICY "Criador vê suas perguntas" ON questions FOR SELECT USING (creator_id IN (SELECT id FROM profiles WHERE id = auth.uid()));
 CREATE POLICY "Fã vê suas perguntas enviadas" ON questions FOR SELECT USING (sender_id = auth.uid());
 CREATE POLICY "Respostas públicas visíveis" ON questions FOR SELECT USING (status = 'answered' AND is_shareable = true);
-CREATE POLICY "Webhook insere perguntas" ON questions FOR INSERT WITH CHECK (true);
+-- INSERT de perguntas é feito exclusivamente via webhook (service_role), que ignora RLS.
+-- Política aberta removida para impedir inserção direta por usuários autenticados.
 CREATE POLICY "Criador responde pergunta" ON questions FOR UPDATE USING (creator_id IN (SELECT id FROM profiles WHERE id = auth.uid()));
 
 -- Invite Links:
@@ -37,10 +38,16 @@ CREATE POLICY "Usuário usa convite" ON invite_links FOR UPDATE USING (used_by I
 
 -- Transactions:
 CREATE POLICY "Criador vê suas transações" ON transactions FOR SELECT USING (question_id IN (SELECT id FROM questions WHERE creator_id IN (SELECT id FROM profiles WHERE id = auth.uid())));
-CREATE POLICY "Webhook insere transações" ON transactions FOR INSERT WITH CHECK (true);
+-- INSERT de transações é feito exclusivamente via webhook (service_role), que ignora RLS.
+-- Política aberta removida para impedir inserção direta por usuários autenticados.
 
 -- Platform Settings:
-CREATE POLICY "Service role manages platform_settings" ON platform_settings USING (true) WITH CHECK (true);
+-- Leitura pública (necessária para calcular taxas no frontend e webhook)
+CREATE POLICY "Leitura pública de platform_settings" ON platform_settings FOR SELECT USING (true);
+-- Escrita restrita a admins (impede alteração de taxas por usuários comuns)
+CREATE POLICY "Apenas admins alteram platform_settings" ON platform_settings FOR UPDATE
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+-- INSERT/DELETE bloqueados — tabela singleton gerenciada apenas via service_role ou admin UPDATE
 
 -- Daily Activity & Stats:
 CREATE POLICY "Atividade diária é pública" ON daily_activity FOR SELECT USING (true);

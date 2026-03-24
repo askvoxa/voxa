@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { Payment, PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { sendNewQuestionNotification, sendSupportNotification } from '@/lib/email'
 
 const mp = new MercadoPagoConfig({
@@ -46,7 +46,11 @@ function verifyMPSignature(
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`
   const hash = createHmac('sha256', secret).update(manifest).digest('hex')
 
-  return hash === v1
+  // Comparação timing-safe para prevenir ataques de timing na validação HMAC
+  const hashBuffer = Buffer.from(hash)
+  const v1Buffer = Buffer.from(v1)
+  if (hashBuffer.length !== v1Buffer.length) return false
+  return timingSafeEqual(hashBuffer, v1Buffer)
 }
 
 export async function POST(request: Request) {

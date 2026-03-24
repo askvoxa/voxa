@@ -44,6 +44,19 @@ export async function PATCH(
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
 
+      // Atualizar status ANTES do refund — evita que pergunta fique 'pending' se o update falhar
+      // Guard .eq('status', 'pending') previne race condition (TOCTOU)
+      const { data: updated, error: rejectError } = await supabaseAdmin
+        .from('questions')
+        .update({ status: 'rejected' })
+        .eq('id', params.id)
+        .eq('status', 'pending')
+        .select('id')
+
+      if (rejectError || !updated || updated.length === 0) {
+        return NextResponse.json({ error: 'Pergunta já foi processada ou não está pendente' }, { status: 422 })
+      }
+
       const { data: transaction } = await supabaseAdmin
         .from('transactions')
         .select('mp_payment_id, amount')
@@ -59,15 +72,12 @@ export async function PATCH(
             body: { amount: transaction.amount },
           })
         } catch (err) {
+          // Reverter status se refund falhar — pergunta volta para fila do criador
+          await supabaseAdmin.from('questions').update({ status: 'pending' }).eq('id', params.id)
           console.error('[reject] erro no reembolso MP:', err)
           return NextResponse.json({ error: 'Falha ao processar reembolso' }, { status: 500 })
         }
       }
-
-      await supabaseAdmin
-        .from('questions')
-        .update({ status: 'rejected' })
-        .eq('id', params.id)
 
       // Notificar fã sobre rejeição e reembolso (fire-and-forget)
       if (question.sender_email) {

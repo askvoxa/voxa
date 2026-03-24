@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
 import { sendExpirationNotification, sendUrgencyReminder } from '@/lib/email'
+import { timingSafeEqual } from 'crypto'
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-cron-secret')
-  if (secret !== process.env.CRON_SECRET) {
+  const cronSecret = process.env.CRON_SECRET
+  // Previne bypass quando ambos são undefined e usa comparação timing-safe
+  if (!cronSecret || !secret || secret.length !== cronSecret.length
+      || !timingSafeEqual(Buffer.from(secret), Buffer.from(cronSecret))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -22,23 +26,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, expired: 0, skipped: 'refunds/process handles expiration' })
   }
 
-  const deadlineHours = parseInt(process.env.RESPONSE_DEADLINE_HOURS || '36')
-  const cutoff = new Date(Date.now() - deadlineHours * 60 * 60 * 1000).toISOString()
+  // Buscar deadline padrão da plataforma
+  const { data: platformSettings } = await supabase
+    .from('platform_settings')
+    .select('response_deadline_hours')
+    .eq('id', 1)
+    .single()
+  const defaultDeadlineHours = platformSettings?.response_deadline_hours ?? 36
 
-  // 1. Buscar perguntas expiradas com suas transactions (mp_payment_id fica em transactions)
+  // 1. Buscar perguntas pendentes com deadline do criador (custom_deadline_hours) ou padrão da plataforma
   const { data: expired, error: fetchError } = await supabase
     .from('questions')
-    .select('id, creator_id, price_paid, sender_email, sender_name, profiles!inner(username), transactions(mp_payment_id, amount)')
+    .select('id, creator_id, price_paid, sender_email, sender_name, created_at, profiles!inner(username, custom_deadline_hours), transactions(mp_payment_id, amount)')
     .eq('status', 'pending')
     .eq('is_support_only', false)
-    .lt('created_at', cutoff)
+
+  // Filtrar no app-level respeitando deadline customizado de cada criador
+  const now = Date.now()
+  const expiredFiltered = (expired ?? []).filter(q => {
+    const profile = Array.isArray(q.profiles) ? q.profiles[0] : q.profiles
+    const deadlineHours = (profile as any)?.custom_deadline_hours ?? defaultDeadlineHours
+    const cutoff = now - deadlineHours * 60 * 60 * 1000
+    return new Date(q.created_at).getTime() < cutoff
+  })
 
   if (fetchError) {
     console.error('[cron/expire-questions] erro ao buscar expiradas:', fetchError)
     return NextResponse.json({ error: fetchError.message }, { status: 500 })
   }
 
-  if (!expired || expired.length === 0) {
+  if (expiredFiltered.length === 0) {
     // Ainda precisa enviar nudges mesmo sem expiradas
     await sendUrgencyNudges(supabase)
     return NextResponse.json({ ok: true, expired: 0 })
@@ -49,10 +66,17 @@ export async function POST(req: NextRequest) {
   let refunded = 0
   let failed = 0
 
-  for (const q of expired) {
+  for (const q of expiredFiltered) {
     try {
-      // Marcar como expired primeiro (para não reprocessar em rodadas futuras)
-      await supabase.from('questions').update({ status: 'expired' }).eq('id', q.id)
+      // Guard .eq('status', 'pending') previne race condition TOCTOU (criador pode ter respondido)
+      const { data: updated } = await supabase
+        .from('questions')
+        .update({ status: 'expired' })
+        .eq('id', q.id)
+        .eq('status', 'pending')
+        .select('id')
+
+      if (!updated || updated.length === 0) continue // Já foi processada por outro caminho
 
       const tx = Array.isArray(q.transactions) ? q.transactions[0] : q.transactions
 
@@ -93,7 +117,7 @@ export async function POST(req: NextRequest) {
   // 2. Disparar nudges de urgência ao criador para perguntas próximas de expirar
   await sendUrgencyNudges(supabase)
 
-  return NextResponse.json({ ok: true, expired: expired.length, refunded, failed })
+  return NextResponse.json({ ok: true, expired: expiredFiltered.length, refunded, failed })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

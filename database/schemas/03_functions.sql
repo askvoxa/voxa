@@ -46,16 +46,27 @@ CREATE OR REPLACE FUNCTION expire_pending_questions()
 RETURNS void AS $$
 DECLARE
     expired_question RECORD;
+    v_default_deadline INTEGER;
 BEGIN
+    -- Buscar deadline padrão da plataforma (fallback 36h)
+    SELECT COALESCE(response_deadline_hours, 36) INTO v_default_deadline
+    FROM platform_settings WHERE id = 1;
+
     FOR expired_question IN
         SELECT q.id, t.mp_payment_id, t.amount
         FROM questions q
         JOIN transactions t ON t.question_id = q.id
-        WHERE q.status = 'pending' AND q.created_at < NOW() - INTERVAL '36 hours'
+        JOIN profiles p ON p.id = q.creator_id
+        WHERE q.status = 'pending'
+          -- Respeitar deadline customizado do criador, senão usar o da plataforma
+          AND q.created_at < NOW() - INTERVAL '1 hour' * COALESCE(p.custom_deadline_hours, v_default_deadline)
     LOOP
-        UPDATE questions SET status = 'expired' WHERE id = expired_question.id;
-        INSERT INTO refund_queue (question_id, mp_payment_id, amount)
-        VALUES (expired_question.id, expired_question.mp_payment_id, expired_question.amount);
+        -- Guard contra race condition: só expirar se ainda estiver pending
+        UPDATE questions SET status = 'expired' WHERE id = expired_question.id AND status = 'pending';
+        IF FOUND THEN
+            INSERT INTO refund_queue (question_id, mp_payment_id, amount)
+            VALUES (expired_question.id, expired_question.mp_payment_id, expired_question.amount);
+        END IF;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
