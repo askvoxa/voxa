@@ -60,10 +60,10 @@ export async function POST(request: Request) {
       min_price: sanitizedPrice,
       daily_limit: sanitizedLimit,
       social_link: String(social_link).trim(),
-      accepted_terms_at,
+      accepted_terms_at: new Date().toISOString(), // Timestamp do servidor para compliance legal
       approval_status: 'pending_review',
       rejection_reason: null,
-      creator_setup_completed: true,
+      creator_setup_completed: false, // Só será true após aprovação do admin
     })
     .eq('id', user.id)
 

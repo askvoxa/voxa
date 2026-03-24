@@ -168,32 +168,6 @@ export async function POST(request: Request) {
     const isSupportOnly = Boolean(qd.is_support_only)
     const now = new Date().toISOString()
 
-    // Inserir a pergunta no banco
-    const { data: question, error: questionError } = await supabaseAdmin
-      .from('questions')
-      .insert({
-        creator_id: qd.creator_id,
-        sender_id: qd.sender_id ?? null,
-        sender_name: qd.sender_name,
-        sender_email: qd.sender_email ?? null,
-        content: qd.content,
-        price_paid: qd.price_paid,
-        service_type: qd.service_type,
-        is_anonymous: qd.is_anonymous,
-        // Apoios nunca aparecem no feed público — is_shareable é ignorado para evitar confusão
-        is_shareable: isSupportOnly ? false : qd.is_shareable,
-        is_support_only: isSupportOnly,
-        status: isSupportOnly ? 'answered' : 'pending',
-        ...(isSupportOnly && { answered_at: now, response_text: '❤️ Apoio recebido!' }),
-      })
-      .select('id')
-      .single()
-
-    if (questionError || !question) {
-      console.error('[webhook] Erro ao inserir question:', questionError)
-      return NextResponse.json({ error: 'Erro ao salvar pergunta' }, { status: 500 })
-    }
-
     // Calcular taxa da plataforma e valor líquido do criador
     // Busca username junto para reutilizar na notificação por email (evita segunda query)
     const [{ data: platformSettings }, { data: creatorProfileData }] = await Promise.all([
@@ -210,30 +184,39 @@ export async function POST(request: Request) {
     const creatorNet = Math.round(netBeforePlatform * creatorRate * 100) / 100
     const platformFee = Math.round((netBeforePlatform - creatorNet) * 100) / 100
 
-    // Inserir a transação
-    const { error: transactionError } = await supabaseAdmin.from('transactions').insert({
-      question_id: question.id,
-      amount: intent.amount,
-      processing_fee: processingFee,
-      platform_fee: platformFee,
-      creator_net: creatorNet,
-      status: 'approved',
-      payment_method: payment.payment_type_id ?? 'unknown',
-      mp_payment_id: String(paymentId),
-      mp_preference_id: intent.mp_preference_id,
+    // Inserção atômica via RPC — garante que question e transaction são criadas juntas ou nenhuma
+    const { data: questionId, error: rpcError } = await supabaseAdmin.rpc('insert_question_and_transaction', {
+      p_question: {
+        creator_id: qd.creator_id,
+        sender_id: qd.sender_id ?? '',
+        sender_name: qd.sender_name,
+        sender_email: qd.sender_email ?? '',
+        content: qd.content,
+        price_paid: qd.price_paid,
+        service_type: qd.service_type,
+        is_anonymous: qd.is_anonymous,
+        is_shareable: isSupportOnly ? false : qd.is_shareable,
+        is_support_only: isSupportOnly,
+        status: isSupportOnly ? 'answered' : 'pending',
+        answered_at: isSupportOnly ? now : '',
+        response_text: isSupportOnly ? '❤️ Apoio recebido!' : '',
+      },
+      p_transaction: {
+        amount: intent.amount,
+        processing_fee: processingFee,
+        platform_fee: platformFee,
+        creator_net: creatorNet,
+        status: 'approved',
+        payment_method: payment.payment_type_id ?? 'unknown',
+        mp_payment_id: String(paymentId),
+        mp_preference_id: intent.mp_preference_id ?? '',
+      },
     })
 
-    if (transactionError) {
-      // Rollback: deletar a question para manter consistência (sem question órfã sem transaction)
-      // O payment_intent é mantido intencionalmente para que o MP possa re-entregar e reprocessar
-      const { error: rollbackError } = await supabaseAdmin.from('questions').delete().eq('id', question.id)
-      if (rollbackError) {
-        // Question órfã — quando o MP retentar, a tentativa de inserir nova question pode gerar duplicata
-        // Admin deve verificar manualmente questions sem transaction correspondente para o payment: paymentId
-        console.error('[webhook] CRÍTICO: rollback da question falhou — question órfã criada. payment_id:', paymentId, 'question_id:', question.id, rollbackError)
-      }
-      console.error('[webhook] Erro ao inserir transaction:', transactionError)
-      return NextResponse.json({ error: 'Erro ao salvar transação' }, { status: 500 })
+    if (rpcError || !questionId) {
+      console.error('[webhook] Erro ao inserir question+transaction via RPC:', rpcError)
+      // Retornar 500 para que o MP retente — payment_intent é mantido para reprocessar
+      return NextResponse.json({ error: 'Erro ao salvar pergunta e transação' }, { status: 500 })
     }
 
     // Limpar o payment_intent (já foi processado com sucesso)

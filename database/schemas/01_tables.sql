@@ -16,6 +16,8 @@ CREATE TABLE profiles (
     is_admin BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     account_type TEXT DEFAULT 'fan' CHECK (account_type IN ('fan', 'influencer', 'admin')),
+    -- Garante consistência: is_admin=true <-> account_type='admin'
+    CONSTRAINT chk_admin_consistency CHECK ((account_type = 'admin') = is_admin),
     creator_setup_completed BOOLEAN DEFAULT FALSE,
     custom_creator_rate DECIMAL(5, 4),
     custom_deadline_hours INTEGER,
@@ -72,7 +74,7 @@ CREATE TABLE transactions (
     processing_fee DECIMAL(10, 2),
     platform_fee DECIMAL(10, 2),
     creator_net DECIMAL(10, 2),
-    status TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'refunded', 'cancelled')),
     payment_method TEXT NOT NULL,
     mp_payment_id TEXT UNIQUE,
     mp_preference_id TEXT,

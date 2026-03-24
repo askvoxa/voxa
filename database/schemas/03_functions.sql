@@ -74,7 +74,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION cleanup_stale_payment_intents()
 RETURNS void AS $$
 BEGIN
-  DELETE FROM payment_intents WHERE created_at < NOW() - INTERVAL '1 day';
+  -- Mercado Pago pode retentar webhooks por até 48h — manter intents compatíveis
+  DELETE FROM payment_intents WHERE created_at < NOW() - INTERVAL '2 days';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -124,6 +125,7 @@ DECLARE
     v_day_answered INTEGER;
     v_total_answered BIGINT;
     v_total_expired BIGINT;
+    v_total_received BIGINT;
     v_avg_seconds BIGINT;
     v_streak INTEGER;
     v_max_streak INTEGER;
@@ -148,6 +150,8 @@ BEGIN
 
     SELECT COUNT(*) INTO v_total_answered FROM questions WHERE creator_id = NEW.creator_id AND status = 'answered';
     SELECT COUNT(*) INTO v_total_expired FROM questions WHERE creator_id = NEW.creator_id AND status = 'expired';
+    -- total_received = TODAS as perguntas (pending, answered, expired, reported, rejected)
+    SELECT COUNT(*) INTO v_total_received FROM questions WHERE creator_id = NEW.creator_id;
     SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (answered_at - created_at)))::BIGINT, 0) INTO v_avg_seconds FROM questions WHERE creator_id = NEW.creator_id AND status = 'answered';
 
     SELECT current_streak, max_streak, last_active_date INTO v_streak, v_max_streak, v_last_date FROM creator_stats WHERE creator_id = NEW.creator_id;
@@ -165,7 +169,7 @@ BEGIN
     INSERT INTO creator_stats (
         creator_id, total_answered, total_received, total_expired, current_streak, max_streak, last_active_date, avg_response_seconds, soldout_days_last30, marathon_count, updated_at
     ) VALUES (
-        NEW.creator_id, v_total_answered, v_total_answered + v_total_expired, v_total_expired, v_streak, v_max_streak, v_today, v_avg_seconds, v_soldout_days, v_marathon_count, NOW()
+        NEW.creator_id, v_total_answered, v_total_received, v_total_expired, v_streak, v_max_streak, v_today, v_avg_seconds, v_soldout_days, v_marathon_count, NOW()
     )
     ON CONFLICT (creator_id) DO UPDATE SET
         total_answered = EXCLUDED.total_answered,
@@ -188,18 +192,69 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_total_answered BIGINT;
     v_total_expired BIGINT;
+    v_total_received BIGINT;
 BEGIN
     IF NEW.status <> 'expired' OR OLD.status = 'expired' THEN RETURN NEW; END IF;
     SELECT COUNT(*) INTO v_total_answered FROM questions WHERE creator_id = NEW.creator_id AND status = 'answered';
     SELECT COUNT(*) INTO v_total_expired FROM questions WHERE creator_id = NEW.creator_id AND status = 'expired';
+    -- total_received = TODAS as perguntas (não apenas answered + expired)
+    SELECT COUNT(*) INTO v_total_received FROM questions WHERE creator_id = NEW.creator_id;
 
     INSERT INTO creator_stats (creator_id, total_answered, total_received, total_expired, updated_at)
-    VALUES (NEW.creator_id, v_total_answered, v_total_answered + v_total_expired, v_total_expired, NOW())
+    VALUES (NEW.creator_id, v_total_answered, v_total_received, v_total_expired, NOW())
     ON CONFLICT (creator_id) DO UPDATE SET total_expired = EXCLUDED.total_expired, total_received = EXCLUDED.total_received, updated_at = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+
+-- Inserção atômica de pergunta + transação (chamada pelo webhook de pagamento)
+-- Garante que não existe question órfã sem transaction
+CREATE OR REPLACE FUNCTION insert_question_and_transaction(
+    p_question JSONB,
+    p_transaction JSONB
+) RETURNS UUID AS $$
+DECLARE
+    v_question_id UUID;
+BEGIN
+    INSERT INTO questions (
+        creator_id, sender_id, sender_name, sender_email, content,
+        price_paid, service_type, is_anonymous, is_shareable, is_support_only,
+        status, answered_at, response_text
+    ) VALUES (
+        (p_question->>'creator_id')::UUID,
+        NULLIF(p_question->>'sender_id', '')::UUID,
+        p_question->>'sender_name',
+        NULLIF(p_question->>'sender_email', ''),
+        p_question->>'content',
+        (p_question->>'price_paid')::DECIMAL,
+        COALESCE(p_question->>'service_type', 'base'),
+        COALESCE((p_question->>'is_anonymous')::BOOLEAN, FALSE),
+        COALESCE((p_question->>'is_shareable')::BOOLEAN, FALSE),
+        COALESCE((p_question->>'is_support_only')::BOOLEAN, FALSE),
+        COALESCE(p_question->>'status', 'pending'),
+        NULLIF(p_question->>'answered_at', '')::TIMESTAMPTZ,
+        NULLIF(p_question->>'response_text', '')
+    ) RETURNING id INTO v_question_id;
+
+    INSERT INTO transactions (
+        question_id, amount, processing_fee, platform_fee, creator_net,
+        status, payment_method, mp_payment_id, mp_preference_id
+    ) VALUES (
+        v_question_id,
+        (p_transaction->>'amount')::DECIMAL,
+        (p_transaction->>'processing_fee')::DECIMAL,
+        (p_transaction->>'platform_fee')::DECIMAL,
+        (p_transaction->>'creator_net')::DECIMAL,
+        p_transaction->>'status',
+        p_transaction->>'payment_method',
+        p_transaction->>'mp_payment_id',
+        NULLIF(p_transaction->>'mp_preference_id', '')
+    );
+
+    RETURN v_question_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION get_top_supporters(p_creator_id UUID)
 RETURNS TABLE (display_name TEXT, is_anonymous BOOLEAN, total_paid DECIMAL, email_hash TEXT) AS $$

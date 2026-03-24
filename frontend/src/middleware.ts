@@ -38,10 +38,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Rotas admin: exigem login + account_type = 'admin'
-  if (pathname.startsWith('/admin')) {
+  // Rotas admin (páginas e API): exigem login + account_type = 'admin'
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    const isApiRoute = pathname.startsWith('/api/admin')
     if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return isApiRoute
+        ? NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+        : NextResponse.redirect(new URL('/login', request.url))
     }
     const { data: profile } = await supabase
       .from('profiles')
@@ -49,7 +52,9 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
     if (profile?.account_type !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return isApiRoute
+        ? NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+        : NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
@@ -57,7 +62,7 @@ export async function middleware(request: NextRequest) {
   if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/setup'))) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('account_type, creator_setup_completed')
+      .select('account_type, creator_setup_completed, approval_status')
       .eq('id', user.id)
       .single()
 
@@ -81,11 +86,16 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // /dashboard: influencer sem setup → forçar setup
+    // /dashboard: influencer sem setup completo ou pendente de aprovação → forçar setup
     if (pathname.startsWith('/dashboard') && profile) {
       if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && !profile.creator_setup_completed) {
         return NextResponse.redirect(new URL('/setup/creator', request.url))
       }
+    }
+
+    // /dashboard: fan que submeteu pedido de criador (pending_review) → manter em setup
+    if (pathname.startsWith('/dashboard') && profile?.account_type === 'fan') {
+      return NextResponse.redirect(new URL('/setup', request.url))
     }
   }
 
@@ -113,5 +123,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/setup/:path*', '/login', '/admin/:path*', '/invite/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/setup/:path*', '/login', '/admin/:path*', '/api/admin/:path*', '/invite/:path*'],
 }

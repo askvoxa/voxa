@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 import { timingSafeEqual } from 'crypto'
-import { RESPONSE_DEADLINE_HOURS } from '@/lib/constants'
+// Deadline dinâmico: busca da platform_settings (não mais constante hardcoded)
 import { sendExpirationNotification, sendRefundConfirmation } from '@/lib/email'
 
 const mp = new MercadoPagoConfig({
@@ -51,26 +51,46 @@ export async function GET(request: Request) {
 
   // ── Etapa 1: Expirar perguntas pendentes que ultrapassaram o prazo ──
 
-  const deadlineDate = new Date(Date.now() - RESPONSE_DEADLINE_HOURS * 60 * 60 * 1000).toISOString()
+  // Buscar deadline padrão da plataforma (consistente com expire-questions cron)
+  const { data: platformSettings } = await supabaseAdmin
+    .from('platform_settings')
+    .select('response_deadline_hours')
+    .eq('id', 1)
+    .single()
+  const defaultDeadlineHours = platformSettings?.response_deadline_hours ?? 36
 
-  const { data: expiredQuestions, error: expireError } = await supabaseAdmin
+  // Buscar perguntas pendentes com deadline do criador
+  const { data: allPending, error: expireError } = await supabaseAdmin
     .from('questions')
-    .select('id, sender_name, sender_email, creator_id, created_at')
+    .select('id, sender_name, sender_email, creator_id, created_at, profiles!inner(custom_deadline_hours)')
     .eq('status', 'pending')
-    .lt('created_at', deadlineDate)
+    .eq('is_support_only', false) // Apoios nunca expiram (já são 'answered')
     .limit(50)
+
+  // Filtrar respeitando deadline customizado de cada criador
+  const now = Date.now()
+  const expiredQuestions = (allPending ?? []).filter(q => {
+    const profile = Array.isArray(q.profiles) ? q.profiles[0] : q.profiles
+    const deadlineHours = (profile as any)?.custom_deadline_hours ?? defaultDeadlineHours
+    const cutoff = now - deadlineHours * 60 * 60 * 1000
+    return new Date(q.created_at).getTime() < cutoff
+  })
 
   let expired = 0
 
   if (expireError) {
     console.error('[refunds] Erro ao buscar perguntas expiradas:', expireError)
-  } else if (expiredQuestions && expiredQuestions.length > 0) {
+  } else if (expiredQuestions.length > 0) {
     for (const question of expiredQuestions) {
-      // Marcar como expirada
-      await supabaseAdmin
+      // Guard TOCTOU: só expirar se ainda estiver pending (criador pode ter respondido)
+      const { data: updated } = await supabaseAdmin
         .from('questions')
         .update({ status: 'expired' })
         .eq('id', question.id)
+        .eq('status', 'pending')
+        .select('id')
+
+      if (!updated || updated.length === 0) continue // Já processada por outro caminho
 
       // Buscar transação associada para enfileirar reembolso
       const { data: transaction } = await supabaseAdmin

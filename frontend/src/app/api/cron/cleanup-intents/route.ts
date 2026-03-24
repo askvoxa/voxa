@@ -16,8 +16,9 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Limpar payment_intents abandonados (mais de 2 horas sem webhook do MP)
-  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  // Limpar payment_intents abandonados (mais de 48 horas sem webhook do MP)
+  // Mercado Pago pode retentar webhooks por até 48h — janela menor causaria perda de pagamentos
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
   const { error, count } = await supabase
     .from('payment_intents')
     .delete({ count: 'exact' })

@@ -45,6 +45,7 @@ export async function PATCH(request: Request) {
       .from('profiles')
       .update({
         approval_status: 'approved',
+        creator_setup_completed: true, // Libera acesso ao dashboard
         approval_reviewed_by: adminUser.id,
         approval_reviewed_at: new Date().toISOString(),
         rejection_reason: null,

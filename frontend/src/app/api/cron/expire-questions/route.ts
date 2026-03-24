@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         try {
           await refundClient.create({
             payment_id: String(tx.mp_payment_id),
-            body: {},
+            body: { amount: tx.amount }, // Refund explícito (consistente com refunds/process)
           })
           refunded++
         } catch (refundErr: any) {
