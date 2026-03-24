@@ -69,6 +69,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Criador não encontrado' }, { status: 404 })
     }
 
+    // Impedir auto-envio (criador enviando pergunta para si mesmo)
+    if (profile.id === user.id) {
+      return NextResponse.json({ error: 'Não é possível enviar uma pergunta para si mesmo' }, { status: 422 })
+    }
+
     // Verificar se o criador está aprovado (NULL = legado, tratado como aprovado)
     if (profile.approval_status && profile.approval_status !== 'approved') {
       return NextResponse.json({ error: 'Este criador ainda não foi aprovado na plataforma' }, { status: 422 })

@@ -287,3 +287,15 @@ BEGIN
   LIMIT 5;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Sanitiza sender_name quando a pergunta é anônima (proteção de privacidade no DB)
+-- Evita que o nome real do fã fique armazenado quando is_anonymous=true
+CREATE OR REPLACE FUNCTION sanitize_anonymous_sender_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.is_anonymous = TRUE THEN
+    NEW.sender_name := 'Anônimo';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

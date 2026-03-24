@@ -14,8 +14,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   }
 
-  const body = await request.json()
-  const { creator_id, action, rejection_reason } = body
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Corpo da requisição inválido' }, { status: 400 })
+  }
+  const { creator_id, action, rejection_reason } = body as any
 
   if (!creator_id || !action) {
     return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })

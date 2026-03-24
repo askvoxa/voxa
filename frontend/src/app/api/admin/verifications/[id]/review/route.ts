@@ -22,8 +22,13 @@ export async function POST(
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
   }
 
-  const body = await request.json()
-  const { action, rejection_reason } = body
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Corpo da requisição inválido' }, { status: 400 })
+  }
+  const { action, rejection_reason } = body as any
 
   if (action !== 'approve' && action !== 'reject') {
     return NextResponse.json({ error: 'Ação inválida. Use "approve" ou "reject"' }, { status: 400 })

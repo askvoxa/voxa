@@ -286,6 +286,8 @@ export default function DashboardPage() {
                       {q.status === 'answered' && <CheckCircle className="w-4 h-4 text-green-500" />}
                       {q.status === 'pending' && <Clock className="w-4 h-4 text-yellow-500" />}
                       {q.status === 'expired' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                      {q.status === 'rejected' && <AlertCircle className="w-4 h-4 text-orange-500" />}
+                      {q.status === 'reported' && <Clock className="w-4 h-4 text-gray-400" />}
                       <span className="text-xs font-medium text-gray-500">
                         Para @{q.creator?.username ?? 'desconhecido'}
                       </span>
@@ -313,9 +315,15 @@ export default function DashboardPage() {
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       q.status === 'answered' ? 'bg-green-100 text-green-700' :
                       q.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      q.status === 'rejected' ? 'bg-orange-100 text-orange-700' :
+                      q.status === 'reported' ? 'bg-gray-100 text-gray-600' :
                       'bg-red-100 text-red-700'
                     }`}>
-                      {q.status === 'answered' ? 'Respondida' : q.status === 'pending' ? 'Pendente' : 'Expirada'}
+                      {q.status === 'answered' ? 'Respondida' :
+                       q.status === 'pending' ? 'Pendente' :
+                       q.status === 'rejected' ? 'Recusada' :
+                       q.status === 'reported' ? 'Em análise' :
+                       'Expirada (reembolso)'}
                     </span>
                   </div>
                 </div>

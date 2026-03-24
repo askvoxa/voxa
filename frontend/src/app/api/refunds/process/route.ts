@@ -129,12 +129,14 @@ export async function GET(request: Request) {
     }
   }
 
-  // ── Etapa 2: Processar fila de reembolsos pendentes no Mercado Pago ──
+  // ── Etapa 2: Processar fila de reembolsos pendentes + retry de falhados ──
+  // Busca pendentes e falhados com menos de 3 tentativas (retry automático)
+  const MAX_RETRIES = 3
 
   const { data: pending, error: fetchError } = await supabaseAdmin
     .from('refund_queue')
-    .select('id, question_id, mp_payment_id, amount')
-    .eq('status', 'pending')
+    .select('id, question_id, mp_payment_id, amount, retry_count')
+    .or('status.eq.pending,and(status.eq.failed,retry_count.lt.' + MAX_RETRIES + ')')
     .limit(20)
 
   if (fetchError) {
@@ -185,10 +187,18 @@ export async function GET(request: Request) {
 
         refunded++
       } catch (err: any) {
-        console.error(`[refunds] Falha ao reembolsar ${item.mp_payment_id}:`, err?.message)
+        const retryCount = (item.retry_count ?? 0) + 1
+        const isFinalAttempt = retryCount >= MAX_RETRIES
+        console.error(`[refunds] Falha ao reembolsar ${item.mp_payment_id} (tentativa ${retryCount}/${MAX_RETRIES}):`, err?.message)
         await supabaseAdmin
           .from('refund_queue')
-          .update({ status: 'failed', processed_at: new Date().toISOString() })
+          .update({
+            // Mantém 'failed' para retry na próxima execução; marca 'exhausted' se esgotou tentativas
+            status: isFinalAttempt ? 'exhausted' : 'failed',
+            retry_count: retryCount,
+            last_error: String(err?.message ?? 'Erro desconhecido').slice(0, 500),
+            processed_at: new Date().toISOString(),
+          })
           .eq('id', item.id)
         failed++
       }

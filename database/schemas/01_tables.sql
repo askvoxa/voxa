@@ -104,6 +104,8 @@ CREATE TABLE refund_queue (
     mp_payment_id TEXT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     status TEXT DEFAULT 'pending',
+    retry_count INTEGER DEFAULT 0,
+    last_error TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP WITH TIME ZONE
 );

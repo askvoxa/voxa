@@ -27,8 +27,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'Não é possível alterar sua própria conta' }, { status: 422 })
   }
 
-  const body = await request.json()
-  const { is_active, is_verified } = body
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Corpo da requisição inválido' }, { status: 400 })
+  }
+  const { is_active, is_verified } = body as any
 
   if (typeof is_active !== 'boolean' && typeof is_verified !== 'boolean') {
     return NextResponse.json({ error: 'Campo is_active ou is_verified obrigatório (boolean)' }, { status: 400 })

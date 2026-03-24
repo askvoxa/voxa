@@ -31,3 +31,8 @@ FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
 CREATE TRIGGER trg_verification_requests_updated_at BEFORE UPDATE ON verification_requests
 FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+-- Sanitiza sender_name em perguntas anônimas (proteção no nível do banco)
+CREATE TRIGGER trg_sanitize_anonymous_sender
+  BEFORE INSERT ON questions
+  FOR EACH ROW EXECUTE FUNCTION sanitize_anonymous_sender_name();

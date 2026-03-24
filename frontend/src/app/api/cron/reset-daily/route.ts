@@ -11,6 +11,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Verificar se estamos na virada do dia em São Paulo (BRT/BRST)
+  // O cron deve rodar a cada hora; só resetar se for entre 00:00-00:59 BRT
+  const nowBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const currentHourBRT = nowBRT.getHours()
+
+  if (currentHourBRT !== 0) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      message: `Horário atual em BRT: ${currentHourBRT}h — reset só ocorre às 00:00 BRT`,
+    })
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -26,6 +39,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  console.log('[cron/reset-daily] reset concluído às', new Date().toISOString())
+  console.log('[cron/reset-daily] reset concluído às', new Date().toISOString(), '(00h BRT)')
   return NextResponse.json({ ok: true })
 }

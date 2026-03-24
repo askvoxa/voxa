@@ -38,6 +38,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Query de perfil única para todas as rotas que precisam (evita múltiplas queries)
+  // Campos: account_type (admin check), creator_setup_completed e approval_status (setup flow)
+  const needsProfile = user && (
+    pathname.startsWith('/admin') || pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/dashboard') || pathname.startsWith('/setup') ||
+    pathname === '/'
+  )
+
+  const profile = needsProfile
+    ? (await supabase
+        .from('profiles')
+        .select('id, account_type, creator_setup_completed, approval_status')
+        .eq('id', user!.id)
+        .single()
+      ).data
+    : null
+
   // Rotas admin (páginas e API): exigem login + account_type = 'admin'
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const isApiRoute = pathname.startsWith('/api/admin')
@@ -46,11 +63,6 @@ export async function middleware(request: NextRequest) {
         ? NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
         : NextResponse.redirect(new URL('/login', request.url))
     }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('account_type')
-      .eq('id', user.id)
-      .single()
     if (profile?.account_type !== 'admin') {
       return isApiRoute
         ? NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
@@ -60,12 +72,6 @@ export async function middleware(request: NextRequest) {
 
   // Proteção de rotas autenticadas que dependem do perfil
   if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/setup'))) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('account_type, creator_setup_completed, approval_status')
-      .eq('id', user.id)
-      .single()
-
     // /setup: se já tem perfil, redirecionar
     if (pathname === '/setup' && profile) {
       // Influencer sem setup completo → /setup/creator
@@ -107,16 +113,8 @@ export async function middleware(request: NextRequest) {
   // Homepage: se autenticado mas sem perfil, redirecionar para /setup
   // (safety net para quando o Supabase redireciona para a homepage após OAuth
   //  em vez do nosso /auth/callback)
-  if (pathname === '/' && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) {
-      return NextResponse.redirect(new URL('/setup', request.url))
-    }
+  if (pathname === '/' && user && !profile) {
+    return NextResponse.redirect(new URL('/setup', request.url))
   }
 
   return response

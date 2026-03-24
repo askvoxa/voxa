@@ -8,7 +8,8 @@ export async function GET(request: Request) {
   const inviteCode = searchParams.get('inviteCode') || ''
 
   // No Render, o request.url vem como localhost. Devemos forçar pela ENV do app original.
-  const origin = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || defaultOrigin
+  // NUNCA usar request.headers.get('origin') — cabeçalho controlável pelo atacante (open redirect)
+  const origin = process.env.NEXT_PUBLIC_APP_URL || defaultOrigin
 
   if (code) {
     const supabase = createClient()
