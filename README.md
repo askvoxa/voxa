@@ -1,89 +1,70 @@
 # VOXA 🎙️
 
-**VOXA** é uma plataforma de monetização para criadores de conteúdo (influencers) no mercado brasileiro. A plataforma permite que os fãs paguem para enviar perguntas ou mensagens de apoio aos criadores, com garantia de resposta em texto, áudio ou vídeo em até 36 horas. A plataforma atua tanto na Web quanto via Aplicativo Mobile.
+**VOXA** é uma plataforma inovadora de monetização para criadores de conteúdo (influencers) focada no público brasileiro. A plataforma viabiliza a interação Premium, em que fãs pagam para enviar perguntas diretas ou contribuição de apoio ao influenciador favorito, dispondo de uma barreira temporária máxima de 36 horas para as respostas em formato multimídia, com automação estrita de devoluções passivas estourado o tempo limite.
 
 ![Status](https://img.shields.io/badge/Status-Produção_&_Beta_Mobile-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-14.1-black)
 ![React Native](https://img.shields.io/badge/React_Native-Expo-blue)
 ![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e)
 
-## 🚀 Funcionalidades
+## 📦 Estrutura Macro do Projeto
 
-- **Autenticação:** Login social via Google OAuth (Supabase Auth).
-- **Perfis Premium:** Dark mode exclusivo, bio, avatar, preço mínimo por resposta, limites diários e link customizado (`/perfil/username`).
-- **Dashboard do Criador:** Gerenciamento de perguntas, métricas financeiras detalhadas, histórico paginado e gamificação (marcos/milestones, sequências).
-- **Múltiplos Formatos:** Respostas via texto, áudio (via MediaRecorder e Supabase Storage) ou upload de vídeos curtos.
-- **Modo Apoio:** Fãs podem enviar pagamentos de contribuição sem exigir resposta do criador.
-- **Aplicativo Mobile:** Versão nativa (Android/iOS) embrulhada em React Native WebView para acesso otimizado.
-- **Integração de Pagamentos:** Mercado Pago (PIX e Cartão de Crédito) com Webhooks verificados por assinaturas HMAC.
-- **Reembolsos Automáticos:** Acionados por Cron Jobs caso o prazo de 36h vença sem resposta do criador.
-- **Painel Admin:** Gerenciamento centralizado de usuários, configuração de taxas da plataforma nativas do Supabase, gestão de bugs e painel de análise.
-
-## 🛠️ Stack Tecnológico
-
-- **Frontend Web:** Next.js 14.1 (App Router), React 18, TypeScript, Tailwind CSS (Design Mobile-First).
-- **Frontend Mobile:** React Native com Expo, utilizando react-native-webview. Builds cloud gerenciadas pelo EAS (Expo Application Services).
-- **Backend & BD:** Supabase (Auth, PostgreSQL com RLS Meticuloso, Storage e Cron Jobs).
-- **Pagamentos:** Checkout do Mercado Pago.
-- **Hospedagem / Deploy:** Render.com (Web) e EAS (Mobile APK/IPA).
-
-## 📦 Estrutura do Projeto
+A stack do VOXA repousa sobre a premissa de um Monorepo simplificado contendo o Cliente Next.js, um Container Expo Nativo e os Schemas puros do Supabase.
 
 ```text
 voxa/
-├── CLAUDE.md                   # Guia detalhado de arquitetura (Leitura Obrigatória)
+├── CLAUDE.md                   # Resenha essencial de regras (Hub e Pointer Core Pointers AI)
 ├── README.md                   # Este arquivo (Visão geral e setup)
+├── docs/                       # Diretório Progressivo de Documentação (Fluxos, DB, Arch)
 ├── frontend/                   # Aplicação Next.js Core (Interface e lógicas de servidor)
-│   ├── src/app/                # Rotas App Router (dash, admin, setup, webhooks)
-│   ├── src/lib/                # Utilitários (Supabase clients, MercadoPago)
-│   ├── src/components/         # Componentes React reutilizáveis
-│   └── public/                 # Assets (imagens, favicon, etc)
 ├── mobile/                     # Aplicativo Expo React Native (Wrapper WebView)
-│   ├── App.tsx                 # Entrada principal contendo o WebView apontando para o app web
-│   ├── app.json & eas.json     # Configurações de Build para lojas Android/iOS
-│   └── assets/                 # Ícones nativos e splash screens
-├── database/                   # Definições do banco de dados (BD Fonte de Verdade)
-│   ├── schema.prisma           # Prisma Schema apenas visual (referencial)
-│   └── supabase_setup.sql      # Script completo executável no Supabase SQL Editor
-└── plans/                      # Histórico de planejamento de tarefas
+└── database/                   # Definições do banco de dados (SQL Source of Truth)
 ```
+
+## 📖 Documentação (Progressive Disclosure)
+
+Com o objetivo de manter fluência e facilitar leituras em alto nível (*Progressive Disclosure*), detalhes e restrições arquitetônicas, de banco e de pipelines estão alojados na pasta subordinada `docs/`.
+
+- [**Arquitetura & Design** (`docs/architecture.md`)](docs/architecture.md) => Stack, Mobile vs Web, Dark mode premium constraints e regras centrais de Frontend.
+- [**Database Supremo** (`docs/database.md`)](docs/database.md) => Modelagem de perfis, interações centrais (Questions/Payments), regras herméticas RLS e Triggers.
+- [**Webhooks & Cron Jobs** (`docs/workflows.md`)](docs/workflows.md) => Entendendo os limites sensíveis e irreversíveis da API MP, estornos passivos assíncronos e proteção contra sobreposição (overselling).
+
+> **Atenção (Importante):** Verifique essas sub-rotas nos documentos sempre que mexer na fundação destas funcionalidades. O arquivo `CLAUDE.md` aglutina regras basilares de convenção para contribuidores autônomos/IAs.
 
 ## 🏗️ Pré-requisitos (Desenvolvimento Local)
 
-- Node.js `18.x` ou versão superior
-- Uma conta no [Supabase](https://supabase.com/) e cli (opcional)
-- Conta no [Mercado Pago Developer](https://www.mercadopago.com.br/developers)
-- Conta [Expo](https://expo.dev) e EAS CLI instalado (`npm i -g eas-cli`) para lidar com builds Mobile.
+- Node.js `18.x` mínimo
+- Conta no serviço [Supabase](https://supabase.com/) e cli ativada e Mercado Pago em dev-mode.
+- A conta do [Expo](https://expo.dev/) acoplada ao EAS CLI (`npm i -g eas-cli`) para disparos de builds unificadas via cloud na estrutura _Mobile_.
 
 ## ⚙️ Instalação e Configuração
 
-### 1. Clonar o repositório
+### 1. Clonar
 ```bash
 git clone https://github.com/seu-usuario/voxa.git
 cd voxa
 ```
 
-### 2. Frontend Web
+### 2. Rodar o App Server Web
 ```bash
 cd frontend
 npm install
+# Configure variáveis baseadas no supabase/mercado pago no arquivo `frontend/.env.local`.
+npm run dev
 ```
-Configure as variáveis em `frontend/.env.local` usando seu Supabase e Mercado Pago (veja `.env.example`).
-Inicie a web com: `npm run dev`
 
-### 3. Aplicativo Mobile
+### 3. Subir e Emular Container Mobile
 ```bash
 cd mobile
 npm install
+npx expo start
 ```
-Inicie no simulador: `npx expo start`
-*(Nota: O mobile busca a versão em produção do app `askvoxa.com` por padrão. Para testar o app nativo no localhost, altere o endpoint no App.tsx temporariamente, mas retorne antes do commit.)*
+*(Nota: O front mobile acopla por padrão ao App em deploy `askvoxa.com`. Adapte os URIs locais do React Native Webview dentro de `App.tsx` para testes no _host machine_)*
 
-### 4. Setup do Banco
-Execute o `database/supabase_setup.sql` no painel SQL do Supabase. Certifique-se de ativar o Provider Google Autenticador.
+### 4. Setup Local do Supabase
+Lance o conteúdo de `database/supabase_setup.sql` sobre um SQL runner virgem em um novo workspace logado da Supabase e habilite o Sign-in Google de acordo na abas de Autenticações.
 
-## 📌 Documentação Aprofundada
-Sempre consulte o arquivo **[`CLAUDE.md`](./CLAUDE.md)** antes de realizar alterações core visando manter a estrutura e arquitetura originais intactas.
+---
 
 ## 📝 Licença
-Desenvolvido para uso comercial. Copyright (c) 2026 VOXA. Todos os direitos reservados.
+Desenvolvido para uso restrito/interno. Copyright (c) 2026 VOXA. Todos os direitos reservados.
