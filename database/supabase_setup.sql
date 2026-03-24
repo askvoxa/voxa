@@ -741,3 +741,33 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- WAITLIST DE FOUNDERS (PRÉ-CADASTRO)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS waitlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    instagram TEXT NOT NULL,
+    followers_range TEXT NOT NULL CHECK (followers_range IN ('1k-10k', '10k-50k', '50k-100k', '100k-500k', '500k+')),
+    niche TEXT NOT NULL,
+    whatsapp TEXT,
+    referral_code TEXT,
+    referred_by UUID REFERENCES waitlist(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS: apenas service_role acessa (formulário público insere via API route com service_role)
+ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+
+-- Admins veem a waitlist
+CREATE POLICY "Admin vê waitlist" ON waitlist
+    FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist(email);
+CREATE INDEX IF NOT EXISTS idx_waitlist_referral_code ON waitlist(referral_code);
+CREATE INDEX IF NOT EXISTS idx_waitlist_status ON waitlist(status, created_at);
