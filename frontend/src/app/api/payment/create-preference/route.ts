@@ -3,6 +3,7 @@ import MercadoPagoConfig, { Preference } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { randomUUID } from 'crypto'
+import { paymentLimiter } from '@/lib/rate-limit'
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -23,6 +24,12 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Autenticação necessária' }, { status: 401 })
+    }
+
+    // Rate limiting por usuário autenticado
+    const { success: rateLimitOk } = paymentLimiter.check(user.id)
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Muitas requisições. Tente novamente em breve.' }, { status: 429 })
     }
 
     // Buscar perfil do sender (fã)

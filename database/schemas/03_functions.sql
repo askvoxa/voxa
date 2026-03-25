@@ -86,14 +86,19 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
+-- Restrito a service_role — impede que usuários inflem contadores de outros criadores
 CREATE OR REPLACE FUNCTION increment_answered_today(profile_id UUID)
 RETURNS void AS $$
 BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
   UPDATE public.profiles SET questions_answered_today = questions_answered_today + 1 WHERE id = profile_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
+-- Restrito a service_role — impede DoS via row lock e unpause não autorizado
 CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID)
 RETURNS boolean AS $$
 DECLARE
@@ -104,6 +109,10 @@ DECLARE
   v_paused_until timestamptz;
   v_approval_status text;
 BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
   SELECT daily_limit, questions_answered_today, is_paused, paused_until, approval_status
     INTO v_daily_limit, v_answered_today, v_is_paused, v_paused_until, v_approval_status
     FROM public.profiles WHERE id = p_creator_id FOR UPDATE;
@@ -227,7 +236,14 @@ CREATE OR REPLACE FUNCTION insert_question_and_transaction(
 ) RETURNS UUID AS $$
 DECLARE
     v_question_id UUID;
+    v_status TEXT;
 BEGIN
+    -- Validar status permitido (previne bypass do fluxo de pagamento)
+    v_status := COALESCE(p_question->>'status', 'pending');
+    IF v_status NOT IN ('pending', 'answered') THEN
+      RAISE EXCEPTION 'Status de pergunta inválido: %', v_status;
+    END IF;
+
     INSERT INTO public.questions (
         creator_id, sender_id, sender_name, sender_email, content,
         price_paid, service_type, is_anonymous, is_shareable, is_support_only,
@@ -243,7 +259,7 @@ BEGIN
         COALESCE((p_question->>'is_anonymous')::BOOLEAN, FALSE),
         COALESCE((p_question->>'is_shareable')::BOOLEAN, FALSE),
         COALESCE((p_question->>'is_support_only')::BOOLEAN, FALSE),
-        COALESCE(p_question->>'status', 'pending'),
+        v_status,
         NULLIF(p_question->>'answered_at', '')::TIMESTAMPTZ,
         NULLIF(p_question->>'response_text', '')
     ) RETURNING id INTO v_question_id;
@@ -268,9 +284,16 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
+-- Auth check: apenas o próprio criador pode consultar seus top supporters
+-- Previne enumeração de PII (email hashes) por usuários não autorizados
 CREATE OR REPLACE FUNCTION get_top_supporters(p_creator_id UUID)
 RETURNS TABLE (display_name TEXT, is_anonymous BOOLEAN, total_paid DECIMAL, email_hash TEXT) AS $$
 BEGIN
+  IF current_setting('role', true) != 'service_role'
+     AND auth.uid() != p_creator_id THEN
+    RAISE EXCEPTION 'Acesso negado: apenas o próprio criador pode consultar top supporters';
+  END IF;
+
   RETURN QUERY
   SELECT
     (array_agg(sub.sender_name ORDER BY sub.created_at DESC))[1]::TEXT AS display_name,
@@ -299,6 +322,45 @@ BEGIN
   LIMIT 5;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- Protege campos sensíveis de questions contra alteração direta por criadores
+-- Apenas service_role (webhook) pode alterar campos financeiros e de identidade
+CREATE OR REPLACE FUNCTION protect_question_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    IF NEW.price_paid IS DISTINCT FROM OLD.price_paid THEN
+      RAISE EXCEPTION 'Não é permitido alterar price_paid';
+    END IF;
+    IF NEW.content IS DISTINCT FROM OLD.content THEN
+      RAISE EXCEPTION 'Não é permitido alterar content';
+    END IF;
+    IF NEW.sender_name IS DISTINCT FROM OLD.sender_name THEN
+      RAISE EXCEPTION 'Não é permitido alterar sender_name';
+    END IF;
+    IF NEW.sender_email IS DISTINCT FROM OLD.sender_email THEN
+      RAISE EXCEPTION 'Não é permitido alterar sender_email';
+    END IF;
+    IF NEW.creator_id IS DISTINCT FROM OLD.creator_id THEN
+      RAISE EXCEPTION 'Não é permitido alterar creator_id';
+    END IF;
+    IF NEW.sender_id IS DISTINCT FROM OLD.sender_id THEN
+      RAISE EXCEPTION 'Não é permitido alterar sender_id';
+    END IF;
+    IF NEW.is_support_only IS DISTINCT FROM OLD.is_support_only THEN
+      RAISE EXCEPTION 'Não é permitido alterar is_support_only';
+    END IF;
+    IF NEW.is_anonymous IS DISTINCT FROM OLD.is_anonymous THEN
+      RAISE EXCEPTION 'Não é permitido alterar is_anonymous';
+    END IF;
+    IF NEW.service_type IS DISTINCT FROM OLD.service_type THEN
+      RAISE EXCEPTION 'Não é permitido alterar service_type';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql
 SET search_path = '';
 
 -- Sanitiza sender_name quando a pergunta é anônima (proteção de privacidade no DB)

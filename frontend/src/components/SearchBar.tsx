@@ -36,7 +36,7 @@ export default function SearchBar() {
           .from('profiles')
           .select('username, bio, avatar_url, min_price, is_founder')
           .eq('is_active', true)
-          .ilike('username', `%${busca}%`)
+          .ilike('username', `%${busca.replace(/[%_\\]/g, '\\$&')}%`)
           .limit(5)
 
         if (isMounted) {

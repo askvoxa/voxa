@@ -32,6 +32,11 @@ FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 CREATE TRIGGER trg_verification_requests_updated_at BEFORE UPDATE ON verification_requests
 FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
+-- Protege campos sensíveis de questions (financeiros, identidade) contra alteração por criadores
+CREATE TRIGGER trg_protect_question_fields
+  BEFORE UPDATE ON questions
+  FOR EACH ROW EXECUTE FUNCTION protect_question_fields();
+
 -- Sanitiza sender_name em perguntas anônimas (proteção no nível do banco)
 CREATE TRIGGER trg_sanitize_anonymous_sender
   BEFORE INSERT ON questions

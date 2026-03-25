@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { setupLimiter } from '@/lib/rate-limit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,12 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  }
+
+  // Rate limiting por usuário
+  const { success: rateLimitOk } = setupLimiter.check(user.id)
+  if (!rateLimitOk) {
+    return NextResponse.json({ error: 'Muitas requisições. Tente novamente em breve.' }, { status: 429 })
   }
 
   // Verificar que é fan
@@ -37,9 +44,23 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { bio, min_price, daily_limit, social_link, accepted_terms_at, niche_ids } = body
 
-  // Validações
-  if (!social_link || !String(social_link).trim().startsWith('https://')) {
-    return NextResponse.json({ error: 'Link de rede social inválido' }, { status: 400 })
+  // Validações — permitir apenas domínios de redes sociais conhecidas (previne SSRF/phishing)
+  const allowedSocialDomains = [
+    'instagram.com', 'www.instagram.com',
+    'twitter.com', 'www.twitter.com', 'x.com', 'www.x.com',
+    'tiktok.com', 'www.tiktok.com',
+    'youtube.com', 'www.youtube.com', 'youtu.be',
+    'twitch.tv', 'www.twitch.tv',
+    'facebook.com', 'www.facebook.com',
+    'linkedin.com', 'www.linkedin.com',
+    'threads.net', 'www.threads.net',
+    'kwai.com', 'www.kwai.com',
+  ]
+  let socialUrl: URL | null = null
+  try { socialUrl = new URL(String(social_link).trim()) } catch { /* URL inválida */ }
+
+  if (!socialUrl || socialUrl.protocol !== 'https:' || !allowedSocialDomains.includes(socialUrl.hostname)) {
+    return NextResponse.json({ error: 'Link inválido. Use um perfil do Instagram, TikTok, YouTube, X ou outra rede social.' }, { status: 400 })
   }
   if (!accepted_terms_at) {
     return NextResponse.json({ error: 'Aceite dos termos é obrigatório' }, { status: 400 })

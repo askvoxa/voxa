@@ -11,6 +11,7 @@ import { SupporterRow } from '@/lib/supporters'
 import MilestoneBadgeRow from '@/components/milestones/MilestoneBadgeRow'
 import VerifiedBadge from '@/components/VerifiedBadge'
 import FounderBadge from '@/components/FounderBadge'
+import ScrollToAnswer from './ScrollToAnswer'
 
 type Profile = {
   id: string
@@ -491,12 +492,7 @@ export default async function PerfilPage({
       </div>
 
       {highlightQuestionId && (
-        <script dangerouslySetInnerHTML={{ __html: `
-          document.addEventListener('DOMContentLoaded', function() {
-            var el = document.getElementById('answer-${highlightQuestionId.replace(/[^a-zA-Z0-9-]/g, '')}');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          });
-        `}} />
+        <ScrollToAnswer answerId={highlightQuestionId} />
       )}
     </div>
   )

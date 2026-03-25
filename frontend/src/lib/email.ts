@@ -3,6 +3,16 @@ import { Resend } from 'resend'
 const FROM_EMAIL = 'VOXA <noreply@askvoxa.com>'
 const UNSUBSCRIBE_EMAIL = 'mailto:unsubscribe@askvoxa.com'
 
+/** Escapa caracteres HTML para prevenir injeção em templates de email */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) {
     console.warn('[email] RESEND_API_KEY não configurada — email não enviado')
@@ -135,7 +145,8 @@ export async function sendNewQuestionNotification(
   if (!resend) return
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
-  const displayName = isAnonymous ? 'Alguém (anônimo)' : senderName
+  const displayName = escapeHtml(isAnonymous ? 'Alguém (anônimo)' : senderName)
+  const safeUsername = escapeHtml(creatorUsername)
   const deadlineHours = Number(process.env.RESPONSE_DEADLINE_HOURS ?? 36)
 
   await resend.emails.send({
@@ -146,7 +157,7 @@ export async function sendNewQuestionNotification(
     html: emailLayout(`
       <div style="text-align:center">
         <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Você recebeu uma nova pergunta!</h1>
-        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. <strong style="color:#1C1B1B">${displayName}</strong> enviou uma pergunta e está aguardando sua resposta.</p>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${safeUsername}. <strong style="color:#1C1B1B">${displayName}</strong> enviou uma pergunta e está aguardando sua resposta.</p>
 
         <!-- Price/Value Highlight -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
@@ -172,7 +183,7 @@ export async function sendNewQuestionNotification(
                 Enviado por: ${displayName}
               </div>
               <div style="background-color:#FFFFFF;padding:20px;border-radius:12px;border:1px solid rgba(233,188,182,0.3);font-style:italic;color:#1C1B1B;line-height:1.6;font-size:15px">
-                "${question.substring(0, 300)}${question.length > 300 ? '...' : ''}"
+                "${escapeHtml(question.substring(0, 300))}${question.length > 300 ? '...' : ''}"
               </div>
             </td>
           </tr>
@@ -219,7 +230,8 @@ export async function sendSupportNotification({
   if (!resend) return
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
-  const displayName = isAnonymous ? 'Alguém (anônimo)' : senderName
+  const displayName = escapeHtml(isAnonymous ? 'Alguém (anônimo)' : senderName)
+  const safeUsername = escapeHtml(creatorUsername)
 
   await resend.emails.send({
     from: FROM_EMAIL,
@@ -229,7 +241,7 @@ export async function sendSupportNotification({
     html: emailLayout(`
       <div style="text-align:center">
         <h1 style="margin:0 0 12px;font-size:32px;font-weight:800;color:#1C1B1B;letter-spacing:-1px">Novo apoio recebido!</h1>
-        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${creatorUsername}. Alguém valoriza o seu conteúdo e acabou de enviar um apoio financeiro direto pra você.</p>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.5;color:#5F3F3A">Olá, @${safeUsername}. Alguém valoriza o seu conteúdo e acabou de enviar um apoio financeiro direto pra você.</p>
 
         <!-- Value Highlight Card -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px">
@@ -314,7 +326,7 @@ export async function sendUrgencyReminder({
           </tr>
         </table>
 
-        <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Atenção, @${creatorUsername}!</h1>
+        <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Atenção, @${escapeHtml(creatorUsername)}!</h1>
         <p style="margin:0 0 16px;font-size:16px;color:#5F3F3A;line-height:1.5">
           Você tem <strong style="color:#1C1B1B;font-size:18px">${pendingCount} ${plural}</strong> pendente${pendingCount > 1 ? 's' : ''} no dashboard.
         </p>
@@ -359,7 +371,7 @@ export async function sendResponseNotification({
       <div style="text-align:center">
         <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Sua pergunta foi respondida!</h1>
         <p style="margin:0 auto 36px;font-size:16px;line-height:1.6;color:#5F3F3A;max-width:90%">
-          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. <strong style="color:#BC000A">@${creatorUsername}</strong> acabou de responder à sua pergunta na VOXA. Entre para conferir o conteúdo exclusivo!
+          Olá, <strong style="color:#1C1B1B">${escapeHtml(fanName)}</strong>. <strong style="color:#BC000A">@${escapeHtml(creatorUsername)}</strong> acabou de responder à sua pergunta na VOXA. Entre para conferir o conteúdo exclusivo!
         </p>
 
         ${ctaButton(`${appUrl}/perfil/${creatorUsername}?q=${questionId}`, 'Ver resposta')}
@@ -401,7 +413,7 @@ export async function sendExpirationNotification({
       <div style="text-align:center">
         <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Pergunta expirada</h1>
         <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">
-          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. Infelizmente, <strong style="color:#BC000A">@${creatorUsername}</strong> não teve a oportunidade de responder sua pergunta dentro do prazo.
+          Olá, <strong style="color:#1C1B1B">${escapeHtml(fanName)}</strong>. Infelizmente, <strong style="color:#BC000A">@${escapeHtml(creatorUsername)}</strong> não teve a oportunidade de responder sua pergunta dentro do prazo.
         </p>
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
@@ -457,7 +469,7 @@ export async function sendRejectionNotification({
       <div style="text-align:center">
         <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Pergunta recusada</h1>
         <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">
-          Olá, <strong style="color:#1C1B1B">${fanName}</strong>. <strong style="color:#BC000A">@${creatorUsername}</strong> optou por não responder sua pergunta neste momento.
+          Olá, <strong style="color:#1C1B1B">${escapeHtml(fanName)}</strong>. <strong style="color:#BC000A">@${escapeHtml(creatorUsername)}</strong> optou por não responder sua pergunta neste momento.
         </p>
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
@@ -511,7 +523,7 @@ export async function sendRefundConfirmation({
     html: emailLayout(`
       <div style="text-align:center">
         <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Reembolso confirmado</h1>
-        <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">Olá, <strong style="color:#1C1B1B">${fanName}</strong>.</p>
+        <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#5F3F3A">Olá, <strong style="color:#1C1B1B">${escapeHtml(fanName)}</strong>.</p>
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
           <tr>
@@ -529,7 +541,7 @@ export async function sendRefundConfirmation({
         </table>
 
         <p style="margin:0 auto 16px;font-size:15px;color:#5F3F3A;line-height:1.6;max-width:90%">
-          Seu reembolso referente à pergunta para <strong style="color:#BC000A">@${creatorUsername}</strong> foi processado com sucesso.
+          Seu reembolso referente à pergunta para <strong style="color:#BC000A">@${escapeHtml(creatorUsername)}</strong> foi processado com sucesso.
         </p>
         <p style="margin:0 auto 36px;font-size:14px;color:#888888;line-height:1.6;max-width:90%">
           Os fundos já foram devolvidos ao seu método de pagamento. Para pagamentos em PIX é instantâneo, para cartão de crédito pode levar até 2 faturas.

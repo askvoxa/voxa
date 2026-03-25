@@ -42,6 +42,11 @@ function verifyMPSignature(
 
   if (!ts || !v1) return false
 
+  // Rejeitar webhooks com timestamp muito antigo (proteção contra replay attacks)
+  // Tolerância de 5 minutos para acomodar clock drift entre servidores
+  const tsNum = Number(ts)
+  if (isNaN(tsNum) || Math.abs(Date.now() / 1000 - tsNum) > 300) return false
+
   // MP envia o payment ID como query param ?data.id=XXX — usar para o manifest
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`
   const hash = createHmac('sha256', secret).update(manifest).digest('hex')

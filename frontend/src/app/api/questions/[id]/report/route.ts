@@ -1,24 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { reportLimiter } from '@/lib/rate-limit'
 
 const VALID_REASONS = ['offensive', 'harassment', 'spam', 'threat', 'other'] as const
-
-// Rate limiting em memória: máximo 5 reports por criador a cada 10 minutos
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
-const RATE_LIMIT_MAX = 5
-const reportTimestamps = new Map<string, number[]>()
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now()
-  const timestamps = reportTimestamps.get(userId) ?? []
-  // Limpar timestamps fora da janela
-  const recent = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return false
-  recent.push(now)
-  reportTimestamps.set(userId, recent)
-  return true
-}
 
 export async function POST(
   request: Request,
@@ -32,8 +17,9 @@ export async function POST(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    // Rate limiting por usuário
-    if (!checkRateLimit(user.id)) {
+    // Rate limiting por usuário (5 reports por 10 minutos)
+    const { success: rateLimitOk } = reportLimiter.check(user.id)
+    if (!rateLimitOk) {
       return NextResponse.json({ error: 'Muitas denúncias em pouco tempo. Tente novamente mais tarde.' }, { status: 429 })
     }
 

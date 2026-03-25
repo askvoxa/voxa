@@ -121,5 +121,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/setup/:path*', '/login', '/admin/:path*', '/api/admin/:path*', '/invite/:path*'],
+  // Cobrir todas as rotas exceto arquivos estáticos e _next
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 }

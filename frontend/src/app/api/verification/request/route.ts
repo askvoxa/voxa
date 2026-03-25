@@ -45,8 +45,23 @@ export async function POST(request: Request) {
   const socialLink = formData.get('social_link') as string | null
   const documentFile = formData.get('document') as File | null
 
-  if (!socialLink?.trim() || !socialLink.trim().startsWith('https://')) {
-    return NextResponse.json({ error: 'Link da rede social é obrigatório e deve iniciar com https://' }, { status: 400 })
+  // Validar que social_link é de um domínio de rede social conhecido (previne SSRF/phishing)
+  const allowedSocialDomains = [
+    'instagram.com', 'www.instagram.com',
+    'twitter.com', 'www.twitter.com', 'x.com', 'www.x.com',
+    'tiktok.com', 'www.tiktok.com',
+    'youtube.com', 'www.youtube.com', 'youtu.be',
+    'twitch.tv', 'www.twitch.tv',
+    'facebook.com', 'www.facebook.com',
+    'linkedin.com', 'www.linkedin.com',
+    'threads.net', 'www.threads.net',
+    'kwai.com', 'www.kwai.com',
+  ]
+  let parsedSocialUrl: URL | null = null
+  try { parsedSocialUrl = new URL(String(socialLink).trim()) } catch { /* URL inválida */ }
+
+  if (!parsedSocialUrl || parsedSocialUrl.protocol !== 'https:' || !allowedSocialDomains.includes(parsedSocialUrl.hostname)) {
+    return NextResponse.json({ error: 'Link inválido. Use um perfil do Instagram, TikTok, YouTube, X ou outra rede social.' }, { status: 400 })
   }
 
   if (!documentFile) {
@@ -101,7 +116,7 @@ export async function POST(request: Request) {
     .from('verification_requests')
     .insert({
       creator_id: user.id,
-      social_link: socialLink.trim(),
+      social_link: parsedSocialUrl.href,
       document_url: path,
       status: 'pending',
     })

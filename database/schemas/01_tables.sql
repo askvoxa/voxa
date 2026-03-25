@@ -7,7 +7,7 @@
 CREATE TABLE profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT UNIQUE NOT NULL CHECK (LENGTH(username) >= 3 AND username ~ '^[a-z0-9_-]+$'),
-    bio TEXT,
+    bio TEXT CHECK (LENGTH(bio) <= 500),
     avatar_url TEXT,
     min_price DECIMAL(10, 2) DEFAULT 10.00 CHECK (min_price >= 1.00),
     daily_limit INTEGER DEFAULT 10 CHECK (daily_limit BETWEEN 1 AND 100),
@@ -19,7 +19,7 @@ CREATE TABLE profiles (
     -- Garante consistência: is_admin=true <-> account_type='admin'
     CONSTRAINT chk_admin_consistency CHECK ((account_type = 'admin') = is_admin),
     creator_setup_completed BOOLEAN DEFAULT FALSE,
-    custom_creator_rate DECIMAL(5, 4),
+    custom_creator_rate DECIMAL(5, 4) CHECK (custom_creator_rate BETWEEN 0.0000 AND 0.9500),
     custom_deadline_hours INTEGER,
     fast_ask_suggestions JSONB,
     is_verified BOOLEAN DEFAULT FALSE,
@@ -92,7 +92,7 @@ CREATE TABLE platform_settings (
 CREATE TABLE payment_intents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    question_data JSONB NOT NULL,
+    question_data JSONB NOT NULL CHECK (question_data ? 'creator_id' AND question_data ? 'content' AND question_data ? 'price_paid'),
     amount DECIMAL(10, 2) NOT NULL,
     mp_preference_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -103,7 +103,7 @@ CREATE TABLE refund_queue (
     question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
     mp_payment_id TEXT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    status TEXT DEFAULT 'pending',
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processed', 'failed', 'exhausted')),
     retry_count INTEGER DEFAULT 0,
     last_error TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { waitlistLimiter, getRequestIP } from '@/lib/rate-limit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,13 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting por IP (endpoint público, sem auth)
+    const ip = getRequestIP(request)
+    const { success: rateLimitOk } = waitlistLimiter.check(ip)
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Muitas requisições. Tente novamente em breve.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const { name, email, instagram, followers_range, niche, whatsapp, referral_code } = body
 
