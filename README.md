@@ -41,7 +41,7 @@ Com o objetivo de manter fluência e facilitar leituras em alto nível (*Progres
 
 ### 1. Clonar
 ```bash
-git clone https://github.com/seu-usuario/voxa.git
+git clone https://github.com/askvoxa/voxa.git
 cd voxa
 ```
 
