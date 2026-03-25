@@ -69,5 +69,15 @@ CREATE POLICY "Criador gerencia seus nichos" ON creator_niches FOR INSERT WITH C
 CREATE POLICY "Criador remove seus nichos" ON creator_niches FOR DELETE USING (auth.uid() = creator_id);
 CREATE POLICY "Nichos são públicos" ON niches FOR SELECT USING (true);
 
+-- Payment Intents:
+-- Tabela operacional interna — acesso exclusivo via service_role (webhooks e crons)
+-- Nenhuma operação é feita pelo client do usuário; bloquear acesso público
+CREATE POLICY "payment_intents bloqueado para usuários" ON payment_intents FOR ALL USING (false);
+
+-- Refund Queue:
+-- Tabela operacional interna — acesso exclusivo via service_role (cron de reembolsos)
+-- Nenhuma operação é feita pelo client do usuário; bloquear acesso público
+CREATE POLICY "refund_queue bloqueado para usuários" ON refund_queue FOR ALL USING (false);
+
 -- Waitlist:
 CREATE POLICY "Admin vê waitlist" ON waitlist FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
