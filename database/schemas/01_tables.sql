@@ -32,6 +32,9 @@ CREATE TABLE profiles (
     approval_reviewed_by UUID REFERENCES profiles(id),
     approval_reviewed_at TIMESTAMPTZ,
     rejection_reason TEXT,
+    -- Campos de payout
+    available_balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (available_balance >= 0),
+    payouts_blocked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -86,6 +89,11 @@ CREATE TABLE platform_settings (
     id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     platform_fee_rate DECIMAL(5, 4) NOT NULL DEFAULT 0.1000,
     response_deadline_hours INTEGER NOT NULL DEFAULT 36,
+    -- Parâmetros de payout
+    payout_day_of_week INTEGER NOT NULL DEFAULT 1 CHECK (payout_day_of_week BETWEEN 0 AND 6),
+    min_payout_amount DECIMAL(10, 2) NOT NULL DEFAULT 50.00 CHECK (min_payout_amount > 0),
+    payout_release_days INTEGER NOT NULL DEFAULT 7 CHECK (payout_release_days >= 1),
+    payouts_paused BOOLEAN NOT NULL DEFAULT FALSE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -185,4 +193,50 @@ CREATE TABLE waitlist (
     referred_by UUID REFERENCES waitlist(id) ON DELETE SET NULL,
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- Tabelas do sistema de Payouts
+-- (Requer 00_enums.sql com os tipos pix_key_type, ledger_entry_type, etc.)
+-- ============================================================
+
+CREATE TABLE creator_pix_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    key_type pix_key_type NOT NULL,
+    -- Valor encriptado via pgp_sym_encrypt (pgcrypto)
+    key_value TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Apenas 1 chave PIX ativa por criador
+CREATE UNIQUE INDEX idx_creator_pix_keys_unique_active
+    ON creator_pix_keys(creator_id) WHERE is_active = TRUE;
+
+CREATE TABLE creator_ledger (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    type ledger_entry_type NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+    reference_type ledger_reference_type NOT NULL,
+    reference_id UUID NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    -- Impede lançamento duplicado para a mesma referência
+    CONSTRAINT uq_ledger_reference UNIQUE (reference_type, reference_id, type)
+);
+
+CREATE TABLE payout_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL,
+    pix_key_id UUID NOT NULL REFERENCES creator_pix_keys(id),
+    status payout_status DEFAULT 'pending',
+    mp_payout_id TEXT,
+    failure_reason TEXT,
+    retry_count INTEGER DEFAULT 0,
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE
 );

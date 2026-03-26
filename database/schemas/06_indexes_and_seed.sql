@@ -23,9 +23,16 @@ CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist(email);
 CREATE INDEX IF NOT EXISTS idx_waitlist_referral_code ON waitlist(referral_code);
 CREATE INDEX IF NOT EXISTS idx_waitlist_status ON waitlist(status, created_at);
 
--- Seed de platform settings
-INSERT INTO platform_settings (id, platform_fee_rate, response_deadline_hours)
-VALUES (1, 0.1000, 36)
+-- Indexes do sistema de Payouts
+CREATE INDEX IF NOT EXISTS idx_creator_pix_keys_creator_active ON creator_pix_keys(creator_id) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_creator_ledger_creator ON creator_ledger(creator_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_creator_ledger_reference ON creator_ledger(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_payout_requests_status ON payout_requests(status, requested_at);
+CREATE INDEX IF NOT EXISTS idx_payout_requests_creator ON payout_requests(creator_id, requested_at DESC);
+
+-- Seed de platform settings (com parâmetros de payout)
+INSERT INTO platform_settings (id, platform_fee_rate, response_deadline_hours, payout_day_of_week, min_payout_amount, payout_release_days, payouts_paused)
+VALUES (1, 0.1000, 36, 1, 50.00, 7, FALSE)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed de Nichos

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Mail, ShieldCheck, Flag, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Mail, ShieldCheck, Flag, Settings, LogOut, Wallet } from 'lucide-react'
 
 export default function AdminBottomNav() {
   const pathname = usePathname()
@@ -13,6 +13,7 @@ export default function AdminBottomNav() {
     { name: 'Convites', href: '/admin/invites', icon: Mail },
     { name: 'Verificar', href: '/admin/verifications', icon: ShieldCheck },
     { name: 'Denúncias', href: '/admin/reports', icon: Flag },
+    { name: 'Payouts', href: '/admin/payouts', icon: Wallet },
     { name: 'Config', href: '/admin/settings', icon: Settings },
     { name: 'Sair', href: '/dashboard', icon: LogOut },
   ]

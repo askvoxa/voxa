@@ -30,8 +30,8 @@ export default function Header({ username, hideDesktopNav = false, accountType, 
       ]
     : [
         { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Meu Perfil', path: username ? `/perfil/${username}` : '#' },
         { name: 'Histórico', path: '/dashboard/history' },
+        { name: 'Saques', path: '/dashboard/payouts' },
         { name: 'Configurações', path: '/dashboard/settings' },
       ]
 

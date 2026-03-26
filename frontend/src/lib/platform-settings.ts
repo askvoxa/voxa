@@ -4,12 +4,21 @@ import { createClient } from '@supabase/supabase-js'
 export type PlatformSettings = {
   platform_fee_rate: number       // e.g. 0.10 = 10%
   response_deadline_hours: number // e.g. 36
+  // Parâmetros de payout
+  payout_day_of_week: number      // 0=domingo, 1=segunda, ..., 6=sábado
+  min_payout_amount: number       // valor mínimo para saque em R$
+  payout_release_days: number     // dias após resposta para liberar valor
+  payouts_paused: boolean         // pausa global de payouts
 }
 
 /** Fallback used if the DB table hasn't been migrated yet */
 export const FALLBACK_SETTINGS: PlatformSettings = {
   platform_fee_rate: 0.1,
   response_deadline_hours: 36,
+  payout_day_of_week: 1,
+  min_payout_amount: 50,
+  payout_release_days: 7,
+  payouts_paused: false,
 }
 
 // Cache in-memory com TTL de 60s — evita query no banco a cada request
@@ -28,7 +37,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   )
   const { data } = await supabase
     .from('platform_settings')
-    .select('platform_fee_rate, response_deadline_hours')
+    .select('platform_fee_rate, response_deadline_hours, payout_day_of_week, min_payout_amount, payout_release_days, payouts_paused')
     .eq('id', 1)
     .single()
 
@@ -37,9 +46,19 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   cachedSettings = {
     platform_fee_rate: Number(data.platform_fee_rate),
     response_deadline_hours: Number(data.response_deadline_hours),
+    payout_day_of_week: Number(data.payout_day_of_week),
+    min_payout_amount: Number(data.min_payout_amount),
+    payout_release_days: Number(data.payout_release_days),
+    payouts_paused: Boolean(data.payouts_paused),
   }
   cacheExpiry = Date.now() + CACHE_TTL_MS
   return cachedSettings
+}
+
+/** Invalida o cache para forçar re-leitura do banco na próxima chamada */
+export function invalidateSettingsCache(): void {
+  cachedSettings = null
+  cacheExpiry = 0
 }
 
 /** Returns creator's effective take-home rate (0–1). Custom overrides platform default. */

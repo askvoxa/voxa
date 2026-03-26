@@ -81,3 +81,46 @@ CREATE POLICY "refund_queue bloqueado para usuários" ON refund_queue FOR ALL US
 
 -- Waitlist:
 CREATE POLICY "Admin vê waitlist" ON waitlist FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+
+-- ============================================================
+-- RLS do sistema de Payouts
+-- ============================================================
+
+-- Creator PIX Keys:
+ALTER TABLE creator_pix_keys ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Criador vê suas chaves PIX" ON creator_pix_keys
+  FOR SELECT USING (auth.uid() = creator_id);
+CREATE POLICY "Criador cadastra chave PIX" ON creator_pix_keys
+  FOR INSERT WITH CHECK (auth.uid() = creator_id);
+CREATE POLICY "Criador atualiza sua chave PIX" ON creator_pix_keys
+  FOR UPDATE USING (auth.uid() = creator_id);
+CREATE POLICY "Admin vê todas chaves PIX" ON creator_pix_keys
+  FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+
+-- Creator Ledger:
+-- Tabela operacional de auditoria — INSERT/UPDATE apenas via service_role (triggers e crons)
+ALTER TABLE creator_ledger ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Criador vê seus lançamentos" ON creator_ledger
+  FOR SELECT USING (auth.uid() = creator_id);
+CREATE POLICY "Admin vê todos lançamentos" ON creator_ledger
+  FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+-- Bloqueia INSERT/UPDATE/DELETE direto por usuários (apenas service_role via RPC/trigger)
+CREATE POLICY "creator_ledger bloqueado para escrita" ON creator_ledger
+  FOR INSERT WITH CHECK (false);
+CREATE POLICY "creator_ledger bloqueado para update" ON creator_ledger
+  FOR UPDATE USING (false);
+CREATE POLICY "creator_ledger bloqueado para delete" ON creator_ledger
+  FOR DELETE USING (false);
+
+-- Payout Requests:
+-- INSERT/UPDATE apenas via service_role (RPC request_payout e cron process-payouts)
+ALTER TABLE payout_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Criador vê seus saques" ON payout_requests
+  FOR SELECT USING (auth.uid() = creator_id);
+CREATE POLICY "Admin vê todos saques" ON payout_requests
+  FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
+-- Bloqueia INSERT/UPDATE direto (via RPC service_role)
+CREATE POLICY "payout_requests bloqueado para escrita" ON payout_requests
+  FOR INSERT WITH CHECK (false);
+CREATE POLICY "payout_requests bloqueado para update" ON payout_requests
+  FOR UPDATE USING (false);

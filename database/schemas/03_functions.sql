@@ -375,3 +375,150 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql
 SET search_path = '';
+
+-- ============================================================
+-- Funções do sistema de Payouts
+-- ============================================================
+
+-- Trigger: atualiza available_balance no profile quando um lançamento é inserido no ledger
+-- Usa FOR UPDATE para prevenir race condition em inserções concorrentes
+CREATE OR REPLACE FUNCTION update_balance_on_ledger_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.type = 'credit' THEN
+    UPDATE public.profiles
+    SET available_balance = available_balance + NEW.amount
+    WHERE id = NEW.creator_id;
+  ELSIF NEW.type = 'debit' THEN
+    -- O CHECK constraint (available_balance >= 0) protege contra saldo negativo
+    UPDATE public.profiles
+    SET available_balance = available_balance - NEW.amount
+    WHERE id = NEW.creator_id;
+  END IF;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Perfil não encontrado para creator_id: %', NEW.creator_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: solicita saque atômico (cria payout_request + debit no ledger)
+-- Apenas service_role pode chamar esta função
+CREATE OR REPLACE FUNCTION request_payout(p_creator_id UUID)
+RETURNS UUID AS $$
+DECLARE
+  v_balance DECIMAL(10, 2);
+  v_blocked BOOLEAN;
+  v_min_amount DECIMAL(10, 2);
+  v_paused BOOLEAN;
+  v_pix_key_id UUID;
+  v_payout_id UUID;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  -- Lock no profile para evitar race condition
+  SELECT available_balance, payouts_blocked
+    INTO v_balance, v_blocked
+    FROM public.profiles
+    WHERE id = p_creator_id
+    FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Criador não encontrado';
+  END IF;
+
+  IF v_blocked THEN
+    RAISE EXCEPTION 'Saques bloqueados para este criador';
+  END IF;
+
+  -- Buscar parâmetros da plataforma
+  SELECT min_payout_amount, payouts_paused
+    INTO v_min_amount, v_paused
+    FROM public.platform_settings
+    WHERE id = 1;
+
+  IF v_paused THEN
+    RAISE EXCEPTION 'Saques estão pausados globalmente';
+  END IF;
+
+  IF v_balance < v_min_amount THEN
+    RAISE EXCEPTION 'Saldo insuficiente. Mínimo: R$%, disponível: R$%', v_min_amount, v_balance;
+  END IF;
+
+  -- Buscar chave PIX ativa
+  SELECT id INTO v_pix_key_id
+    FROM public.creator_pix_keys
+    WHERE creator_id = p_creator_id AND is_active = TRUE;
+
+  IF v_pix_key_id IS NULL THEN
+    RAISE EXCEPTION 'Nenhuma chave PIX ativa cadastrada';
+  END IF;
+
+  -- Criar payout request
+  INSERT INTO public.payout_requests (creator_id, amount, pix_key_id, status)
+  VALUES (p_creator_id, v_balance, v_pix_key_id, 'pending')
+  RETURNING id INTO v_payout_id;
+
+  -- Inserir debit no ledger (o trigger decrementa available_balance automaticamente)
+  INSERT INTO public.creator_ledger (creator_id, type, amount, reference_type, reference_id, description)
+  VALUES (p_creator_id, 'debit', v_balance, 'payout', v_payout_id,
+          'Saque solicitado #' || v_payout_id::TEXT);
+
+  RETURN v_payout_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: retorna saldo disponível, pendente de liberação e total sacado do criador
+CREATE OR REPLACE FUNCTION get_creator_balance(p_creator_id UUID)
+RETURNS TABLE (
+  available_balance DECIMAL,
+  pending_release DECIMAL,
+  total_withdrawn DECIMAL
+) AS $$
+DECLARE
+  v_release_days INTEGER;
+BEGIN
+  -- Buscar dias de carência configurados
+  SELECT COALESCE(payout_release_days, 7) INTO v_release_days
+    FROM public.platform_settings WHERE id = 1;
+
+  RETURN QUERY
+  SELECT
+    -- Saldo disponível (cache materializado no profile)
+    COALESCE(p.available_balance, 0)::DECIMAL AS available_balance,
+
+    -- Saldo pendente de liberação (respondidas dentro do período de carência, sem entry no ledger)
+    COALESCE((
+      SELECT SUM(t.creator_net)
+      FROM public.transactions t
+      JOIN public.questions q ON q.id = t.question_id
+      WHERE q.creator_id = p_creator_id
+        AND t.status = 'approved'
+        AND q.status = 'answered'
+        AND q.answered_at > NOW() - INTERVAL '1 day' * v_release_days
+        AND NOT EXISTS (
+          SELECT 1 FROM public.creator_ledger cl
+          WHERE cl.reference_type = 'transaction'
+            AND cl.reference_id = t.id
+            AND cl.type = 'credit'
+        )
+    ), 0)::DECIMAL AS pending_release,
+
+    -- Total já sacado com sucesso
+    COALESCE((
+      SELECT SUM(pr.amount)
+      FROM public.payout_requests pr
+      WHERE pr.creator_id = p_creator_id AND pr.status = 'completed'
+    ), 0)::DECIMAL AS total_withdrawn
+
+  FROM public.profiles p
+  WHERE p.id = p_creator_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';

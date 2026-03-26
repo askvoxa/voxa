@@ -41,3 +41,17 @@ CREATE TRIGGER trg_protect_question_fields
 CREATE TRIGGER trg_sanitize_anonymous_sender
   BEFORE INSERT ON questions
   FOR EACH ROW EXECUTE FUNCTION sanitize_anonymous_sender_name();
+
+-- ============================================================
+-- Triggers do sistema de Payouts
+-- ============================================================
+
+-- Atualiza available_balance no profile a cada lançamento no ledger
+CREATE TRIGGER trg_ledger_update_balance
+  AFTER INSERT ON creator_ledger
+  FOR EACH ROW EXECUTE FUNCTION update_balance_on_ledger_insert();
+
+-- Atualiza updated_at na tabela de chaves PIX
+CREATE TRIGGER trg_pix_keys_updated_at
+  BEFORE UPDATE ON creator_pix_keys
+  FOR EACH ROW EXECUTE FUNCTION update_timestamp();
