@@ -99,10 +99,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // /dashboard: fan que submeteu pedido de criador (pending_review) → manter em setup
-    if (pathname.startsWith('/dashboard') && profile?.account_type === 'fan') {
-      return NextResponse.redirect(new URL('/setup', request.url))
-    }
+
   }
 
   // Se já está logado e tenta acessar /login, redireciona para /dashboard

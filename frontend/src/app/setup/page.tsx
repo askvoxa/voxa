@@ -92,7 +92,7 @@ function SetupContent() {
     const supabase = createClient()
 
     // Upload avatar se selecionado
-    let avatarUrl: string | null = null
+    let avatarUrl: string | null = userPhotoUrl || null
     if (avatarFile) {
       const path = `${userId}/${Date.now()}.jpg`
       const { data, error: uploadError } = await supabase.storage
@@ -198,7 +198,7 @@ function SetupContent() {
             <label className="relative cursor-pointer group">
               <div className="w-20 h-20 rounded-full bg-[#1a1a1a] border-2 border-white/20 flex items-center justify-center overflow-hidden group-hover:border-white/40 transition-colors">
                 {displayAvatar ? (
-                  <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={displayAvatar} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 ) : (
                   <Camera className="w-8 h-8 text-gray-500" />
                 )}
