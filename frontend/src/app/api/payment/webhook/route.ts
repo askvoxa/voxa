@@ -115,8 +115,13 @@ export async function POST(request: Request) {
       .eq('id', externalRef)
       .single()
 
-    if (intentError || !intent) {
-      // Pode ter sido já processado por uma notificação duplicada do MP
+    if (intentError) {
+      // Erro real de banco — retornar 500 para que o MP retente
+      console.error('[webhook] Erro ao buscar payment_intent:', intentError)
+      return NextResponse.json({ error: 'DB error' }, { status: 500 })
+    }
+    if (!intent) {
+      // Intent não encontrado — provavelmente já foi processado por notificação anterior (idempotência)
       return NextResponse.json({ received: true })
     }
 
@@ -141,9 +146,12 @@ export async function POST(request: Request) {
     }
 
     // Re-verificar limite diário atomicamente antes de inserir (evita race condition
-    // entre o check em create-preference e a inserção aqui no webhook)
+    // entre o check em create-preference e a inserção aqui no webhook).
+    // Passamos p_exclude_intent_id para excluir o intent do FÃ ATUAL da contagem —
+    // sem isso, o próprio intent sendo processado contaria contra o limite, causando
+    // falso-positivo de "limite atingido" para criadores com daily_limit baixo.
     const { data: canAccept } = await supabaseAdmin
-      .rpc('can_accept_question', { p_creator_id: qd.creator_id })
+      .rpc('can_accept_question', { p_creator_id: qd.creator_id, p_exclude_intent_id: externalRef })
 
     if (!canAccept) {
       // Limite atingido entre o momento do pagamento e a confirmação — reembolsar imediatamente

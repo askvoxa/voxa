@@ -105,8 +105,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
--- Restrito a service_role — impede DoS via row lock e unpause não autorizado
-CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID)
+-- Restrito a service_role — impede DoS via row lock e unpause não autorizado.
+-- p_exclude_intent_id: quando chamado pelo webhook, passar o UUID do intent sendo processado
+-- para excluí-lo da contagem de pendentes. Sem isso, o próprio intent do fã sendo confirmado
+-- seria contabilizado, causando falso-positivo de "limite atingido" para criadores com daily_limit baixo.
+CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID, p_exclude_intent_id UUID DEFAULT NULL)
 RETURNS boolean AS $$
 DECLARE
   v_daily_limit integer;
@@ -136,7 +139,14 @@ BEGIN
     END IF;
   END IF;
 
-  SELECT COUNT(*) INTO v_pending_intents FROM public.payment_intents WHERE creator_id = p_creator_id AND created_at > NOW() - INTERVAL '2 hours';
+  -- Excluir o intent atual (p_exclude_intent_id) da contagem quando chamado pelo webhook,
+  -- pois ele representa o pagamento em confirmação — não um slot adicional ocupado por outro fã.
+  SELECT COUNT(*) INTO v_pending_intents
+    FROM public.payment_intents
+    WHERE creator_id = p_creator_id
+      AND created_at > NOW() - INTERVAL '2 hours'
+      AND (p_exclude_intent_id IS NULL OR id != p_exclude_intent_id);
+
   RETURN (v_answered_today + v_pending_intents) < v_daily_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
@@ -266,7 +276,7 @@ BEGIN
         COALESCE((p_question->>'is_anonymous')::BOOLEAN, FALSE),
         COALESCE((p_question->>'is_shareable')::BOOLEAN, FALSE),
         COALESCE((p_question->>'is_support_only')::BOOLEAN, FALSE),
-        v_status,
+        v_status::public.question_status,
         NULLIF(p_question->>'answered_at', '')::TIMESTAMPTZ,
         NULLIF(p_question->>'response_text', '')
     ) RETURNING id INTO v_question_id;
