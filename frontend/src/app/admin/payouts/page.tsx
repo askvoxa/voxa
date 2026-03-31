@@ -2,16 +2,11 @@ export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/admin'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import PayoutSettingsForm from './PayoutSettingsForm'
 import PayoutPauseButton from './PayoutPauseButton'
 import PayoutRetryButton from './PayoutRetryButton'
 import BlockPayoutToggle from './BlockPayoutToggle'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -69,7 +64,7 @@ export default async function AdminPayoutsPage({
 
       {tab === 'dashboard' && <DashboardTab paused={settings?.payouts_paused ?? false} />}
       {tab === 'payouts' && <PayoutsTab statusFilter={searchParams.status} page={currentPage} perPage={perPage} />}
-      {tab === 'creators' && <CreatorsTab />}
+      {tab === 'creators' && <CreatorsTab page={currentPage} perPage={perPage} />}
     </div>
   )
 }
@@ -264,20 +259,26 @@ async function PayoutsTab({ statusFilter, page, perPage }: { statusFilter?: stri
 }
 
 // ===== Aba Criadores =====
-async function CreatorsTab() {
-  const { data: creators } = await supabaseAdmin
+async function CreatorsTab({ page, perPage }: { page: number; perPage: number }) {
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
+
+  const { data: creators, count } = await supabaseAdmin
     .from('profiles')
-    .select('id, username, avatar_url, available_balance, payouts_blocked')
+    .select('id, username, avatar_url, available_balance, payouts_blocked', { count: 'exact' })
     .eq('account_type', 'influencer')
     .order('available_balance', { ascending: false })
-    .limit(100)
+    .range(from, to)
+
+  const totalCreators = count ?? 0
+  const totalPages = Math.ceil(totalCreators / perPage)
 
   // Verificar quais têm chave PIX
   const creatorIds = (creators ?? []).map(c => c.id)
   const { data: pixKeys } = await supabaseAdmin
     .from('creator_pix_keys')
     .select('creator_id')
-    .in('creator_id', creatorIds)
+    .in('creator_id', creatorIds.length > 0 ? creatorIds : ['00000000-0000-0000-0000-000000000000'])
     .eq('is_active', true)
 
   const pixKeySet = new Set((pixKeys ?? []).map(k => k.creator_id))
@@ -325,6 +326,67 @@ async function CreatorsTab() {
           </tbody>
         </table>
       </div>
+
+      {/* Paginação com windowing (L4: não renderiza todos os números) */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          {/* Primeira página */}
+          {page > 1 && (
+            <a
+              href="/admin/payouts?tab=creators&page=1"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+            >
+              1
+            </a>
+          )}
+
+          {/* Reticências se houver gap > 1 */}
+          {page > 3 && (
+            <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
+          )}
+
+          {/* Janela de 5 páginas ao redor da página atual */}
+          {Array.from(
+            { length: Math.min(5, totalPages) },
+            (_, i) => {
+              const start = Math.max(2, page - 2)
+              const end = Math.min(totalPages - 1, page + 2)
+              const windowSize = end - start + 1
+              const offset = Math.max(0, 5 - windowSize)
+              return start + i - offset
+            }
+          )
+            .filter((p) => p >= 2 && p <= totalPages - 1 && p > 0)
+            .map((p) => (
+              <a
+                key={p}
+                href={`/admin/payouts?tab=creators&page=${p}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold ${
+                  p === page
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {p}
+              </a>
+            ))}
+
+          {/* Reticências se houver gap > 1 */}
+          {page < totalPages - 2 && (
+            <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
+          )}
+
+          {/* Última página */}
+          {page < totalPages && (
+            <a
+              href={`/admin/payouts?tab=creators&page=${totalPages}`}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+            >
+              {totalPages}
+            </a>
+          )}
+        </div>
+      )}
     </div>
   )
 }

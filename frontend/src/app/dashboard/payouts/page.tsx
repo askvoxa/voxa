@@ -51,6 +51,7 @@ export default function PayoutsPage() {
   // Estado do saldo
   const [balance, setBalance] = useState<BalanceData | null>(null)
   const [loadingBalance, setLoadingBalance] = useState(true)
+  const [balanceError, setBalanceError] = useState('')
 
   // Estado da chave PIX
   const [pixKey, setPixKey] = useState<PixKeyData | null>(null)
@@ -72,13 +73,21 @@ export default function PayoutsPage() {
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [historyPage, setHistoryPage] = useState(1)
   const [historyTotal, setHistoryTotal] = useState(0)
+  const [historyError, setHistoryError] = useState('')
 
   // Carregar dados
   const loadBalance = useCallback(async () => {
+    setBalanceError('')
     try {
       const res = await fetch('/api/payout/balance')
-      if (res.ok) setBalance(await res.json())
-    } catch { /* silenciar */ }
+      if (res.ok) {
+        setBalance(await res.json())
+      } else {
+        setBalanceError('Erro ao carregar saldo. Tente novamente.')
+      }
+    } catch (err) {
+      setBalanceError('Erro de conexão ao carregar saldo.')
+    }
     setLoadingBalance(false)
   }, [])
 
@@ -91,6 +100,7 @@ export default function PayoutsPage() {
 
   const loadHistory = useCallback(async (page = 1) => {
     setLoadingHistory(true)
+    setHistoryError('')
     try {
       const res = await fetch(`/api/payout/history?page=${page}&per_page=10`)
       if (res.ok) {
@@ -98,8 +108,12 @@ export default function PayoutsPage() {
         setPayouts(data.payouts)
         setHistoryTotal(data.total)
         setHistoryPage(page)
+      } else {
+        setHistoryError('Erro ao carregar histórico. Tente novamente.')
       }
-    } catch { /* silenciar */ }
+    } catch (err) {
+      setHistoryError('Erro de conexão ao carregar histórico.')
+    }
     setLoadingHistory(false)
   }, [])
 
@@ -169,13 +183,19 @@ export default function PayoutsPage() {
   // Formatação de moeda
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // Próximo dia de processamento
+  // Próximo dia de processamento (mesmo timezone que o cron: BRT)
   const nextPayoutDay = () => {
     if (!balance) return ''
     const day = balance.payout_day_of_week
-    const now = new Date()
-    const currentDay = now.getUTCDay()
-    const daysUntil = day >= currentDay ? day - currentDay : 7 - currentDay + day
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const currentDay = now.getDay()
+    let daysUntil = day >= currentDay ? day - currentDay : 7 - currentDay + day
+
+    // Se é o dia de processamento hoje, mostrar próxima semana (processamento já pode ter ocorrido)
+    if (daysUntil === 0) {
+      daysUntil = 7
+    }
+
     const nextDate = new Date(now.getTime() + daysUntil * 24 * 60 * 60 * 1000)
     return `${DAY_NAMES[day]}, ${nextDate.toLocaleDateString('pt-BR')}`
   }
@@ -199,6 +219,19 @@ export default function PayoutsPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-6 w-full">
       <h1 className="text-2xl font-bold text-zinc-100">Saques</h1>
+
+      {/* Erro ao carregar saldo */}
+      {balanceError && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+          <p className="text-red-400 text-sm font-semibold">{balanceError}</p>
+          <button
+            onClick={loadBalance}
+            className="text-red-400 text-xs underline mt-2 hover:text-red-300"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       {/* Painel de Saldo */}
       <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
@@ -337,6 +370,18 @@ export default function PayoutsPage() {
       <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
         <h2 className="font-bold text-base text-zinc-100 mb-4">Histórico de Saques</h2>
 
+        {historyError && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg mb-4">
+            <p className="text-red-400 text-sm font-semibold">{historyError}</p>
+            <button
+              onClick={() => loadHistory(1)}
+              className="text-red-400 text-xs underline mt-2 hover:text-red-300"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
         {loadingHistory ? (
           <div className="space-y-3">
             {[0, 1, 2].map(i => (
@@ -379,9 +424,20 @@ export default function PayoutsPage() {
 
       {/* Modal de Confirmação de Saque */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-zinc-900 rounded-2xl p-6 max-w-sm w-full border border-zinc-800 shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-zinc-100 mb-4">Confirmar Saque</h3>
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowModal(false)}
+          role="presentation"
+          aria-modal="true"
+        >
+          <div
+            className="bg-zinc-900 rounded-2xl p-6 max-w-sm w-full border border-zinc-800 shadow-xl"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="modal-title"
+            aria-modal="true"
+          >
+            <h3 id="modal-title" className="text-lg font-bold text-zinc-100 mb-4">Confirmar Saque</h3>
 
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
@@ -404,12 +460,14 @@ export default function PayoutsPage() {
               <button
                 onClick={handleRequestPayout}
                 disabled={requesting}
+                aria-label="Confirmar saque"
                 className="flex-1 bg-gradient-instagram text-white font-bold py-3 rounded-2xl disabled:opacity-50 text-sm"
               >
                 {requesting ? 'Processando...' : 'Confirmar Saque'}
               </button>
               <button
                 onClick={() => { setShowModal(false); setRequestError('') }}
+                aria-label="Cancelar saque"
                 className="px-6 py-3 text-sm text-zinc-400 font-semibold hover:text-zinc-200"
               >
                 Cancelar
