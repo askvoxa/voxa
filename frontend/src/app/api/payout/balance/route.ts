@@ -57,6 +57,7 @@ export async function GET() {
     has_pix_key: hasPixKey,
     min_payout_amount: settings.min_payout_amount,
     payout_day_of_week: settings.payout_day_of_week,
+    payout_release_days: settings.payout_release_days,
     payouts_paused: settings.payouts_paused,
     payouts_blocked: profile?.payouts_blocked ?? false,
     can_request: canRequest,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { formatPixKey, validatePixKey, stripMask, maskPixKey } from '@/lib/pix-validation'
+import { formatPixKey, validatePixKey, stripMask } from '@/lib/pix-validation'
 
 type BalanceData = {
   available_balance: number
@@ -10,6 +10,7 @@ type BalanceData = {
   has_pix_key: boolean
   min_payout_amount: number
   payout_day_of_week: number
+  payout_release_days: number
   payouts_paused: boolean
   payouts_blocked: boolean
   can_request: boolean
@@ -33,10 +34,10 @@ type PayoutItem = {
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 const STATUS_BADGE: Record<string, string> = {
-  pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  processing: 'bg-blue-50 text-blue-700 border-blue-200',
-  completed: 'bg-green-50 text-green-600 border-green-200',
-  failed: 'bg-red-50 text-red-600 border-red-200',
+  pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  processing: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  completed: 'bg-green-500/10 text-green-400 border-green-500/20',
+  failed: 'bg-red-500/10 text-red-400 border-red-500/20',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -185,9 +186,9 @@ export default function PayoutsPage() {
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-6 w-full">
         <div className="space-y-4">
           {[0, 1, 2].map(i => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-3" />
-              <div className="h-8 w-24 bg-gray-100 rounded animate-pulse" />
+            <div key={i} className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+              <div className="h-4 w-32 bg-zinc-800 rounded animate-pulse mb-3" />
+              <div className="h-8 w-24 bg-zinc-800 rounded animate-pulse" />
             </div>
           ))}
         </div>
@@ -197,37 +198,37 @@ export default function PayoutsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-6 w-full">
-      <h1 className="text-2xl font-bold text-gray-900">Saques</h1>
+      <h1 className="text-2xl font-bold text-zinc-100">Saques</h1>
 
       {/* Painel de Saldo */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <p className="text-sm text-gray-500 mb-1">Saldo disponível</p>
-        <p className="text-3xl font-bold text-gray-900">{fmtBRL(balance?.available_balance ?? 0)}</p>
+      <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+        <p className="text-sm text-zinc-400 mb-1">Saldo disponível</p>
+        <p className="text-3xl font-bold text-zinc-100">{fmtBRL(balance?.available_balance ?? 0)}</p>
 
         {(balance?.pending_release ?? 0) > 0 && (
           <div className="mt-3 flex items-center gap-2">
-            <p className="text-sm text-gray-500">
-              A liberar: <span className="font-semibold text-gray-700">{fmtBRL(balance!.pending_release)}</span>
+            <p className="text-sm text-zinc-400">
+              A liberar: <span className="font-semibold text-zinc-200">{fmtBRL(balance!.pending_release)}</span>
             </p>
             <span className="relative group">
-              <span className="text-gray-400 cursor-help text-xs border border-gray-300 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                Valores liberados {balance?.payout_day_of_week !== undefined ? `${balance.min_payout_amount}` : '7'} dias após resposta
+              <span className="text-zinc-500 cursor-help text-xs border border-zinc-600 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-700 text-zinc-100 text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Valores liberados {balance?.payout_release_days ?? 7} dias após resposta
               </span>
             </span>
           </div>
         )}
 
         {(balance?.total_withdrawn ?? 0) > 0 && (
-          <p className="text-xs text-gray-400 mt-2">Total já sacado: {fmtBRL(balance!.total_withdrawn)}</p>
+          <p className="text-xs text-zinc-500 mt-2">Total já sacado: {fmtBRL(balance!.total_withdrawn)}</p>
         )}
 
         <div className="mt-4">
           {balance?.payouts_paused && (
-            <p className="text-sm text-amber-600 font-medium mb-2">Saques temporariamente pausados pela plataforma.</p>
+            <p className="text-sm text-amber-400 font-medium mb-2">Saques temporariamente pausados pela plataforma.</p>
           )}
           {balance?.payouts_blocked && (
-            <p className="text-sm text-red-600 font-medium mb-2">Seus saques estão bloqueados. Entre em contato com o suporte.</p>
+            <p className="text-sm text-red-400 font-medium mb-2">Seus saques estão bloqueados. Entre em contato com o suporte.</p>
           )}
 
           <button
@@ -239,10 +240,10 @@ export default function PayoutsPage() {
           </button>
 
           {!balance?.has_pix_key && (
-            <p className="text-xs text-gray-500 mt-2">Cadastre uma chave PIX para solicitar saque.</p>
+            <p className="text-xs text-zinc-500 mt-2">Cadastre uma chave PIX para solicitar saque.</p>
           )}
           {balance?.has_pix_key && (balance?.available_balance ?? 0) < (balance?.min_payout_amount ?? 50) && (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-zinc-500 mt-2">
               Valor mínimo para saque: {fmtBRL(balance?.min_payout_amount ?? 50)}
             </p>
           )}
@@ -251,24 +252,24 @@ export default function PayoutsPage() {
 
       {/* Sucesso do saque */}
       {requestSuccess && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
-          <p className="text-green-700 font-semibold text-sm">Saque solicitado com sucesso!</p>
-          <p className="text-green-600 text-xs mt-1">Processamento previsto: {nextPayoutDay()}</p>
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl">
+          <p className="text-green-400 font-semibold text-sm">Saque solicitado com sucesso!</p>
+          <p className="text-green-500/80 text-xs mt-1">Processamento previsto: {nextPayoutDay()}</p>
         </div>
       )}
 
       {/* Chave PIX */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h2 className="font-bold text-base text-gray-900 mb-1">Chave PIX</h2>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+        <h2 className="font-bold text-base text-zinc-100 mb-1">Chave PIX</h2>
+        <p className="text-sm text-zinc-400 mb-4">
           Cadastre sua chave PIX para receber os pagamentos.
         </p>
 
         {pixKey?.has_key && !editingKey ? (
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{pixKey.key_type}</span>
-              <p className="text-base font-mono text-gray-800 mt-0.5">{pixKey.masked_value}</p>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{pixKey.key_type}</span>
+              <p className="text-base font-mono text-zinc-200 mt-0.5">{pixKey.masked_value}</p>
             </div>
             <button
               onClick={() => setEditingKey(true)}
@@ -283,7 +284,7 @@ export default function PayoutsPage() {
               <button
                 onClick={() => { setKeyType('cpf'); setKeyValue('') }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                  keyType === 'cpf' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  keyType === 'cpf' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                 }`}
               >
                 CPF
@@ -291,7 +292,7 @@ export default function PayoutsPage() {
               <button
                 onClick={() => { setKeyType('cnpj'); setKeyValue('') }}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                  keyType === 'cnpj' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  keyType === 'cnpj' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                 }`}
               >
                 CNPJ
@@ -305,11 +306,11 @@ export default function PayoutsPage() {
               value={keyValue}
               onChange={e => setKeyValue(formatPixKey(keyType, e.target.value))}
               maxLength={keyType === 'cpf' ? 14 : 18}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#DD2A7B]"
             />
 
-            {keyError && <p className="text-sm text-red-500">{keyError}</p>}
-            {keySuccess && <p className="text-sm text-green-600 font-semibold">Chave cadastrada com sucesso!</p>}
+            {keyError && <p className="text-sm text-red-400">{keyError}</p>}
+            {keySuccess && <p className="text-sm text-green-400 font-semibold">Chave cadastrada com sucesso!</p>}
 
             <div className="flex gap-2">
               <button
@@ -322,7 +323,7 @@ export default function PayoutsPage() {
               {pixKey?.has_key && (
                 <button
                   onClick={() => { setEditingKey(false); setKeyError(''); setKeyValue('') }}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2.5"
+                  className="text-sm text-zinc-400 hover:text-zinc-200 px-4 py-2.5"
                 >
                   Cancelar
                 </button>
@@ -333,29 +334,29 @@ export default function PayoutsPage() {
       </div>
 
       {/* Histórico de Saques */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h2 className="font-bold text-base text-gray-900 mb-4">Histórico de Saques</h2>
+      <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+        <h2 className="font-bold text-base text-zinc-100 mb-4">Histórico de Saques</h2>
 
         {loadingHistory ? (
           <div className="space-y-3">
             {[0, 1, 2].map(i => (
-              <div key={i} className="h-14 bg-gray-50 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-zinc-800 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : payouts.length === 0 ? (
-          <p className="text-sm text-gray-500">Nenhum saque realizado ainda.</p>
+          <p className="text-sm text-zinc-500">Nenhum saque realizado ainda.</p>
         ) : (
           <div className="space-y-3">
             {payouts.map(p => (
-              <div key={p.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+              <div key={p.id} className="flex items-center justify-between py-3 border-b border-zinc-800 last:border-0">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{fmtBRL(p.amount)}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm font-semibold text-zinc-100">{fmtBRL(p.amount)}</p>
+                  <p className="text-xs text-zinc-500">
                     {new Date(p.requested_at).toLocaleDateString('pt-BR')}
                     {p.processed_at && ` — Processado: ${new Date(p.processed_at).toLocaleDateString('pt-BR')}`}
                   </p>
                   {p.status === 'failed' && p.failure_reason && (
-                    <p className="text-xs text-red-500 mt-0.5">{p.failure_reason}</p>
+                    <p className="text-xs text-red-400 mt-0.5">{p.failure_reason}</p>
                   )}
                 </div>
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[p.status]}`}>
@@ -378,26 +379,26 @@ export default function PayoutsPage() {
 
       {/* Modal de Confirmação de Saque */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Confirmar Saque</h3>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-zinc-900 rounded-2xl p-6 max-w-sm w-full border border-zinc-800 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-zinc-100 mb-4">Confirmar Saque</h3>
 
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Valor</span>
-                <span className="text-sm font-bold text-gray-900">{fmtBRL(balance?.available_balance ?? 0)}</span>
+                <span className="text-sm text-zinc-400">Valor</span>
+                <span className="text-sm font-bold text-zinc-100">{fmtBRL(balance?.available_balance ?? 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Chave PIX</span>
-                <span className="text-sm font-mono text-gray-800">{pixKey?.masked_value}</span>
+                <span className="text-sm text-zinc-400">Chave PIX</span>
+                <span className="text-sm font-mono text-zinc-200">{pixKey?.masked_value}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Processamento</span>
-                <span className="text-sm text-gray-800">{nextPayoutDay()}</span>
+                <span className="text-sm text-zinc-400">Processamento</span>
+                <span className="text-sm text-zinc-200">{nextPayoutDay()}</span>
               </div>
             </div>
 
-            {requestError && <p className="text-sm text-red-500 mb-4">{requestError}</p>}
+            {requestError && <p className="text-sm text-red-400 mb-4">{requestError}</p>}
 
             <div className="flex gap-3">
               <button
@@ -409,7 +410,7 @@ export default function PayoutsPage() {
               </button>
               <button
                 onClick={() => { setShowModal(false); setRequestError('') }}
-                className="px-6 py-3 text-sm text-gray-600 font-semibold hover:text-gray-800"
+                className="px-6 py-3 text-sm text-zinc-400 font-semibold hover:text-zinc-200"
               >
                 Cancelar
               </button>
