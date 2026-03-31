@@ -3,14 +3,32 @@
 ## Fonte da Verdade
 
 Toda lógica central e restrições de integridade habitam estritamente o **Supabase Database** (PostgreSQL Serverless) e não o servidor web.
-O diretório `database/` possui o arquivo supremo `supabase_setup.sql` que orquestra todas as tabelas, RLS, Enum, Triggers e funções RPC em um único script que deve ser adotado como referência primordial para mudanças de schema.
 
-## Estruturas de Tabelas Centrais
+O schema está organizado em arquivos modulares em `database/schemas/`, executados em ordem numérica:
 
-1. **`profiles`**: Mantém a tabela mestre de usuários; define `is_admin`, limites de caixa por dia/semana, configuração de preços, custom link (`/perfil/username`) e afins.
-2. **`questions`**: Entidade principal de interações. Possui _status_ rígidos restritos (`pending`, `answered`, `expired`). Triggers no banco ativamente bloqueiam edições ou contaminações de estado inapropriadas.
-3. **`payment_intents` e `transactions`**: Mantém de forma resiliente as chaves de idempotência exigidas na reconciliação e validação de Webhooks do Mercado Pago, prevenindo estornos falhos ou aprovações duplicadas.
-4. **`creator_stats` e Views**: Mantidas estritamente via TRIGGERS a nível de servidor SQL para propiciar uma performance impecável. O Next.js não gasta tempo somando arrays pesados e lendo contadores, pois utiliza visões indexadas e contagens pré-atualizadas para os Milestones e Painéis Analíticos.
+| Arquivo | Conteúdo |
+|---------|----------|
+| `00_enums.sql` | Tipos ENUM: `question_status`, `pix_key_type`, `ledger_entry_type`, `payout_status` |
+| `01_tables.sql` | Todas as tabelas do sistema |
+| `02_storage.sql` | Buckets e políticas de Storage (avatars, responses) |
+| `03_functions.sql` | Funções RPC em PL/pgSQL |
+| `04_triggers.sql` | Triggers de integridade, timestamps e gamificação |
+| `05_rls_policies.sql` | Row Level Security de todas as tabelas |
+| `06_indexes_and_seed.sql` | Índices de performance e seed inicial do `platform_settings` |
+
+## Estruturas de Tabelas
+
+### Core
+1. **`profiles`** — Tabela mestre de usuários. Define `account_type` (`fan`/`influencer`/`admin`), limites diários, preços, status de aprovação, `available_balance` (saldo materializado) e `payouts_blocked`.
+2. **`questions`** — Entidade principal de interações. Status rígidos: `pending` → `answered` / `expired` / `rejected`. Triggers bloqueiam transições de estado inválidas.
+3. **`transactions`** — Extrato financeiro vinculado a cada question aprovada. Mantém idempotência via `mp_payment_id` único.
+4. **`payment_intents`** — Reserva temporária criada antes do redirect ao Mercado Pago. Limpa automaticamente pelo cron `cleanup-intents`.
+5. **`creator_stats`** — Contadores de gamificação (streak, total respondido, marathons). Atualizado exclusivamente por triggers — nunca pelo Next.js.
+
+### Sistema de Payouts
+6. **`creator_pix_keys`** — Chave PIX do criador armazenada criptografada via `pgp_sym_encrypt` (pgcrypto). Apenas 1 chave ativa por criador (unique index parcial).
+7. **`creator_ledger`** — Livro-razão contábil (credit/debit) que é o source of truth do saldo. Escrita exclusiva via service_role (RLS bloqueia INSERT/UPDATE/DELETE direto).
+8. **`payout_requests`** — Solicitações de saque. Criadas atomicamente pela RPC `request_payout`, que garante lock no saldo e debit simultâneo no ledger.
 
 ## RLS (Row Level Security - Segurança Absoluta)
 - **Criadores:** Possuem direitos apenas de leitura total a tudo indexado com o seu próprio ID numérico ou referencial.

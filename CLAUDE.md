@@ -25,10 +25,10 @@ Arquivos-guia essenciais localizados no diretório `/docs/`:
    `docs/database.md`  *(Não recrie cálculo no frontend que precise habitar em SQL)*
 3. Para tocar no fluxo sensível de **Pagamentos Mercado Pago, HMAC, Reembolso Pós-36h (Cron) e Webhooks**, leia as regras em:
    `docs/workflows.md`
-4. Para implementar testes (E2E ou Unitários de Banco), leia a suíte base `pgTAP` em:
+4. Para implementar ou planejar testes, consulte a estratégia planejada em:
    `docs/testing_strategy.md`
 
-Caso precise de visão geral das tabelas de banco, o source of truth habita sempre o arquivo `database/supabase_setup.sql`.
+Caso precise de visão geral das tabelas de banco, o source of truth habita os arquivos modulares em `database/schemas/` (ordem: 00→06).
 </TOOL_GUIDANCE>
 
 <OUTPUT_DESCRIPTION>

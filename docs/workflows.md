@@ -25,3 +25,24 @@ O arquivo _handler_ em `app/api/cron/expire-questions` desperta esporadicamente 
 - Executa imediatas chamadas Rest `POST` à API MP "Refund" pra ressarcir e estornar o usuário original daquele capital de forma passiva.
 
 Se for operar sobre essas APIs, certifique-se de realizar mocks precisos utilizando o Sandbox do MP para não ativar reembolsos falsos.
+
+## 3. Fluxo de Payouts (Saque via PIX)
+
+O sistema de saque segue um modelo de ledger contábil para garantir integridade do saldo mesmo sob concorrência.
+
+**Pré-requisito:** O criador deve ter uma chave PIX ativa cadastrada (`creator_pix_keys`) e saldo `available_balance >= min_payout_amount` (padrão: R$ 50,00).
+
+**Pipeline de saque:**
+
+1. **Liberação de Ganhos (Cron `release-earnings`):**
+   O cron varre `transactions` com status `approved` + question `answered` fora do período de carência (`payout_release_days`, padrão 7 dias). Para cada transação elegível, insere um `credit` no `creator_ledger`. O trigger `trg_ledger_update_balance` incrementa `profiles.available_balance` atomicamente.
+
+2. **Solicitação de Saque (`/api/payout/request`):**
+   Chama a RPC `request_payout(creator_id)` via service_role. A função faz `SELECT FOR UPDATE` no profile (lock anti race condition), valida saldo e ausência de saque pendente, cria o `payout_request` e insere um `debit` no ledger que decrementa o saldo imediatamente.
+
+3. **Processamento (Cron `process-payouts`):**
+   O cron busca `payout_requests` com `status = 'pending'`, decripta a chave PIX via `decrypt_pix_key()`, chama a API de transferência do Mercado Pago e atualiza o status para `completed` ou `failed`. Falhas permanentes (≥ 3 tentativas) revertem o debit no ledger para restaurar o saldo.
+
+**Regras críticas:**
+- O ledger é a única fonte de verdade do saldo — `available_balance` em `profiles` é apenas um cache materializado pelo trigger.
+- Nenhuma escrita direta em `creator_ledger` ou `payout_requests` é permitida via client: RLS bloqueia INSERT/UPDATE/DELETE para roles não-service.

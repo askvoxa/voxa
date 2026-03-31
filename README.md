@@ -28,7 +28,7 @@ Com o objetivo de manter fluência e facilitar leituras em alto nível (*Progres
 - [**Arquitetura & Design** (`docs/architecture.md`)](docs/architecture.md) => Stack, Mobile vs Web, Dark mode premium constraints e regras centrais de Frontend.
 - [**Database Supremo** (`docs/database.md`)](docs/database.md) => Modelagem de perfis, interações centrais (Questions/Payments), regras herméticas RLS e Triggers.
 - [**Webhooks & Cron Jobs** (`docs/workflows.md`)](docs/workflows.md) => Entendendo os limites sensíveis e irreversíveis da API MP, estornos passivos assíncronos e proteção contra sobreposição (overselling).
-- [**Testabilidade & QA** (`docs/testing_strategy.md`)](docs/testing_strategy.md) => Lógica de testes via `pgTAP` e simulação da pipeline de E2E do Mercado Pago localmente.
+- [**Testabilidade & QA** (`docs/testing_strategy.md`)](docs/testing_strategy.md) => Estratégia planejada de testes automatizados (pgTAP, Vitest, Playwright).
 
 > **Atenção (Importante):** Verifique essas sub-rotas nos documentos sempre que mexer na fundação destas funcionalidades. O arquivo `CLAUDE.md` aglutina regras basilares de convenção para contribuidores autônomos/IAs.
 
@@ -63,7 +63,7 @@ npx expo start
 *(Nota: O front mobile acopla por padrão ao App em deploy `askvoxa.com`. Adapte os URIs locais do React Native Webview dentro de `App.tsx` para testes no _host machine_)*
 
 ### 4. Setup Local do Supabase
-Lance o conteúdo de `database/supabase_setup.sql` sobre um SQL runner virgem em um novo workspace logado da Supabase e habilite o Sign-in Google de acordo na abas de Autenticações.
+Execute os arquivos de `database/schemas/` em ordem numérica (00 → 06) no SQL Editor do Supabase. Habilite o Sign-in Google nas configurações de Autenticação.
 
 ---
 
