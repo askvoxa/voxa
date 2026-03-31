@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ skipped: true, reason: 'Payouts pausados globalmente' })
   }
 
-  // Verificar se hoje é o dia configurado (UTC)
-  const today = new Date().getUTCDay()
+  // Verificar se hoje é o dia configurado (horário de Brasília)
+  const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay()
   if (today !== (settings?.payout_day_of_week ?? 1)) {
     return NextResponse.json({ skipped: true, reason: `Hoje não é o dia de processamento (configurado: ${settings?.payout_day_of_week})` })
   }
@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
 
     // Decriptar chave PIX via RPC (valor nunca transita em plaintext fora do DB)
     const { data: pixKeyData, error: decryptError } = await supabaseAdmin
-      .rpc('decrypt_pix_key', {
-        p_pix_key_id: payout.pix_key_id,
+      .rpc('get_decrypted_pix_key_for_payout', {
+        p_payout_id: payout.id,
         p_encryption_key: pixEncryptionKey,
       })
 

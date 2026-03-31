@@ -283,6 +283,14 @@ BEGIN
     RAISE EXCEPTION 'Saldo insuficiente. Mínimo: R$%, disponível: R$%', v_min_amount, v_balance;
   END IF;
 
+  -- Rejeitar se já existe payout pendente ou em processamento
+  IF EXISTS (
+    SELECT 1 FROM public.payout_requests
+    WHERE creator_id = p_creator_id AND status IN ('pending', 'processing')
+  ) THEN
+    RAISE EXCEPTION 'Já existe um saque pendente ou em processamento';
+  END IF;
+
   -- Buscar chave PIX ativa
   SELECT id INTO v_pix_key_id
     FROM public.creator_pix_keys

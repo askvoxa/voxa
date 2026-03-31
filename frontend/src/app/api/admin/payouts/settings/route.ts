@@ -57,16 +57,16 @@ export async function PATCH(request: Request) {
 
   if (body.min_payout_amount !== undefined) {
     const amount = Number(body.min_payout_amount)
-    if (isNaN(amount) || amount <= 0) {
-      return NextResponse.json({ error: 'Valor mínimo deve ser maior que R$0.' }, { status: 400 })
+    if (isNaN(amount) || amount <= 0 || amount > 10000) {
+      return NextResponse.json({ error: 'Valor mínimo deve ser entre R$0,01 e R$10.000.' }, { status: 400 })
     }
     update.min_payout_amount = amount
   }
 
   if (body.payout_release_days !== undefined) {
     const days = Number(body.payout_release_days)
-    if (isNaN(days) || days < 1 || !Number.isInteger(days)) {
-      return NextResponse.json({ error: 'Dias de carência deve ser pelo menos 1.' }, { status: 400 })
+    if (isNaN(days) || days < 1 || days > 90 || !Number.isInteger(days)) {
+      return NextResponse.json({ error: 'Dias de carência deve ser entre 1 e 90.' }, { status: 400 })
     }
     update.payout_release_days = days
   }

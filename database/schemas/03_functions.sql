@@ -489,6 +489,42 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
+-- RPC: retorna transações elegíveis para liberação de saldo (elimina N+1 do cron)
+-- Filtra transações approved+answered fora do período de carência e sem credit no ledger
+CREATE OR REPLACE FUNCTION get_eligible_earnings_for_release(p_release_days INTEGER)
+RETURNS TABLE (
+  transaction_id UUID,
+  creator_id UUID,
+  creator_net DECIMAL,
+  question_id UUID
+) AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    t.id AS transaction_id,
+    q.creator_id,
+    t.creator_net,
+    q.id AS question_id
+  FROM public.transactions t
+  JOIN public.questions q ON q.id = t.question_id
+  WHERE t.status = 'approved'
+    AND q.status = 'answered'
+    AND q.answered_at <= NOW() - INTERVAL '1 day' * p_release_days
+    AND t.creator_net IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM public.creator_ledger cl
+      WHERE cl.reference_type = 'transaction'
+        AND cl.reference_id = t.id
+        AND cl.type = 'credit'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
 -- Trigger: atualiza available_balance no profile quando um lançamento é inserido no ledger
 -- O UPDATE implícito do PostgreSQL garante atomicidade por row lock
 CREATE OR REPLACE FUNCTION update_balance_on_ledger_insert()
@@ -559,6 +595,14 @@ BEGIN
     RAISE EXCEPTION 'Saldo insuficiente. Mínimo: R$%, disponível: R$%', v_min_amount, v_balance;
   END IF;
 
+  -- Rejeitar se já existe payout pendente ou em processamento (H7)
+  IF EXISTS (
+    SELECT 1 FROM public.payout_requests
+    WHERE creator_id = p_creator_id AND status IN ('pending', 'processing')
+  ) THEN
+    RAISE EXCEPTION 'Já existe um saque pendente ou em processamento';
+  END IF;
+
   -- Buscar chave PIX ativa
   SELECT id INTO v_pix_key_id
     FROM public.creator_pix_keys
@@ -579,6 +623,82 @@ BEGIN
           'Saque solicitado #' || v_payout_id::TEXT);
 
   RETURN v_payout_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: atualiza PIX key de forma atômica (C2: desativa anterior + insere nova criptografada)
+-- Apenas service_role pode chamar esta função
+CREATE OR REPLACE FUNCTION upsert_pix_key(
+  p_creator_id UUID,
+  p_key_type pix_key_type,
+  p_key_value TEXT,
+  p_encryption_key TEXT
+)
+RETURNS UUID AS $$
+DECLARE
+  v_new_key_id UUID;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  -- Desativar chave anterior
+  UPDATE public.creator_pix_keys
+  SET is_active = FALSE
+  WHERE creator_id = p_creator_id AND is_active = TRUE;
+
+  -- Inserir nova chave criptografada
+  INSERT INTO public.creator_pix_keys (creator_id, key_type, key_value, is_active)
+  VALUES (p_creator_id, p_key_type, pgp_sym_encrypt(p_key_value, p_encryption_key), TRUE)
+  RETURNING id INTO v_new_key_id;
+
+  RETURN v_new_key_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: retorna chave PIX mascarada (decriptada apenas no DB, nunca no API layer)
+CREATE OR REPLACE FUNCTION get_masked_pix_key(p_creator_id UUID, p_encryption_key TEXT)
+RETURNS TABLE (key_type pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
+DECLARE
+  v_decrypted TEXT;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    cpk.key_type,
+    CASE cpk.key_type
+      WHEN 'cpf' THEN '***.***' || RIGHT(pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 5)
+      WHEN 'cnpj' THEN '**.***.***' || RIGHT(pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 8)
+    END AS masked_value,
+    cpk.created_at
+  FROM public.creator_pix_keys cpk
+  WHERE cpk.creator_id = p_creator_id AND cpk.is_active = TRUE
+  LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: retorna chave PIX decriptada (apenas para cron/webhook via service_role)
+-- Usada exclusivamente pelo cron de processamento de payouts
+CREATE OR REPLACE FUNCTION get_decrypted_pix_key_for_payout(p_payout_id UUID, p_encryption_key TEXT)
+RETURNS TABLE (key_type pix_key_type, key_value TEXT) AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    cpk.key_type,
+    pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key) AS key_value
+  FROM public.payout_requests pr
+  JOIN public.creator_pix_keys cpk ON cpk.id = pr.pix_key_id
+  WHERE pr.id = p_payout_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
