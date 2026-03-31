@@ -1,5 +1,6 @@
 // Server-side only — uses service role key. Do not import in client components.
 import { createClient } from '@supabase/supabase-js'
+import { Redis } from '@upstash/redis'
 
 export type PlatformSettings = {
   platform_fee_rate: number       // e.g. 0.10 = 10%
@@ -21,12 +22,30 @@ export const FALLBACK_SETTINGS: PlatformSettings = {
   payouts_paused: false,
 }
 
-// Cache in-memory com TTL de 60s — evita query no banco a cada request
+// Cache com Redis (multi-instância) + fallback in-memory (dev local)
 let cachedSettings: PlatformSettings | null = null
 let cacheExpiry = 0
-const CACHE_TTL_MS = 60_000
+const CACHE_KEY = 'voxa:platform_settings'
+const CACHE_TTL_MS = 5_000 // fallback: reduzido de 60s para 5s entre instâncias
+const REDIS_TTL_SECONDS = 30 // Redis: 30s, suficiente para settings com baixa frequência de mudança
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
+  // Tentar Redis primeiro (compartilhado entre instâncias serverless)
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN
+
+  if (redisUrl && redisToken) {
+    try {
+      const redis = new Redis({ url: redisUrl, token: redisToken })
+      const cached = await redis.get<PlatformSettings>(CACHE_KEY)
+      if (cached) return cached
+    } catch (err) {
+      // Fallback silencioso para DB se Redis falhar
+      console.warn('[platform-settings] Redis indisponível, usando fallback')
+    }
+  }
+
+  // Fallback: in-memory com TTL curto (sem Redis) ou cache local
   if (cachedSettings && Date.now() < cacheExpiry) {
     return cachedSettings
   }
@@ -52,13 +71,38 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     payouts_paused: Boolean(data.payouts_paused),
   }
   cacheExpiry = Date.now() + CACHE_TTL_MS
+
+  // Armazenar no Redis se disponível (para próximas instâncias)
+  if (redisUrl && redisToken) {
+    try {
+      const redis = new Redis({ url: redisUrl, token: redisToken })
+      await redis.setex(CACHE_KEY, REDIS_TTL_SECONDS, cachedSettings)
+    } catch {
+      // Silenciar erros de Redis — fallback in-memory já está em uso
+    }
+  }
+
   return cachedSettings
 }
 
-/** Invalida o cache para forçar re-leitura do banco na próxima chamada */
-export function invalidateSettingsCache(): void {
+/** Invalida o cache (Redis + in-memory) para forçar re-leitura do banco na próxima chamada */
+export async function invalidateSettingsCache(): Promise<void> {
+  // Invalidar in-memory
   cachedSettings = null
   cacheExpiry = 0
+
+  // Invalidar Redis se disponível
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN
+
+  if (redisUrl && redisToken) {
+    try {
+      const redis = new Redis({ url: redisUrl, token: redisToken })
+      await redis.del(CACHE_KEY)
+    } catch {
+      // Silenciar erros ao apagar Redis — in-memory already invalidated
+    }
+  }
 }
 
 /** Returns creator's effective take-home rate (0–1). Custom overrides platform default. */

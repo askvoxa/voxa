@@ -105,7 +105,8 @@ export default function PayoutsPage() {
       const res = await fetch(`/api/payout/history?page=${page}&per_page=10`)
       if (res.ok) {
         const data = await res.json()
-        setPayouts(data.payouts)
+        // Primeira carga (page=1) substitui, "Carregar mais" (page>1) appenda
+        setPayouts(prev => page === 1 ? data.payouts : [...prev, ...data.payouts])
         setHistoryTotal(data.total)
         setHistoryPage(page)
       } else {

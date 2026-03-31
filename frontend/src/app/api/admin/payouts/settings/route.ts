@@ -84,8 +84,8 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Erro ao salvar configurações.' }, { status: 500 })
   }
 
-  // Invalidar cache de settings
-  invalidateSettingsCache()
+  // Invalidar cache de settings (Redis + in-memory)
+  await invalidateSettingsCache()
 
   console.log(`[admin/audit] Admin ${admin.id} atualizou configurações de payout:`, JSON.stringify(update))
 
