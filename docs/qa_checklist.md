@@ -1,5 +1,5 @@
 # Roteiro de QA — VOXA
-**Versão:** 1.0 · **Atualizado:** 2026-03-31
+**Versão:** 1.1 · **Atualizado:** 2026-03-31
 
 ---
 
@@ -37,36 +37,38 @@ Ao identificar uma falha, preencha o **Registro de Falhas** no final do document
 
 ### Landing Page (`/`)
 
-- [ ] **J1-01** Acessar `/` → Página carrega sem erros, título "VOXA" aparece
-      Status: ___ Observação: ___
-- [ ] **J1-02** Verificar link de login visível na página → Botão/link "Entrar" ou "Login" está clicável
-      Status: ___ Observação: ___
-- [ ] **J1-03** Verificar CTA de criador visível → Botão "Sou criador" ou equivalente está presente
-      Status: ___ Observação: ___
-- [ ] **J1-04** Acessar em mobile (viewport 375px) → Layout responsivo, sem overflow horizontal, botões com altura mínima de 44px
-      Status: ___ Observação: ___
+- [x] **J1-01** Acessar `/` → Página carrega sem erros, título "VOXA" aparece
+      Status: ✅ OK
+- [x] **J1-02** Verificar link de login visível na página → Botão/link "Entrar" ou "Login" está clicável
+      Status: ✅ OK
+- [x] **J1-03** Verificar CTA de criador visível → Botão "Sou criador" ou equivalente está presente
+      Status: ✅ OK
+- [x] **J1-04** Acessar em mobile (viewport 375px) → Layout responsivo, sem overflow horizontal, botões com altura mínima de 44px
+      Status: ✅ OK
 
 ### Página Criador (`/sou-criador`)
 
-- [ ] **J1-05** Acessar `/sou-criador` → Página carrega sem erros, conteúdo visível
-      Status: ___ Observação: ___
-- [ ] **J1-06** Verificar em mobile → Layout correto, sem elementos cortados
-      Status: ___ Observação: ___
+- [x] **J1-05** Acessar `/sou-criador` → Página carrega sem erros, conteúdo visível
+      Status: ✅ OK
+- [x] **J1-06** Verificar em mobile → Layout correto, sem elementos cortados
+      Status: ✅ OK
 
 ### Waitlist (`/waitlist`)
 
-- [ ] **J1-07** Acessar `/waitlist` → Formulário de cadastro exibido
-      Status: ___ Observação: ___
-- [ ] **J1-08** Enviar formulário com dados válidos → Mensagem de confirmação exibida, sem redirecionamento com erro
-      Status: ___ Observação: ___
-- [ ] **J1-09** Enviar formulário com email inválido → Validação bloqueia envio e exibe erro
-      Status: ___ Observação: ___
-- [ ] **J1-10** Enviar o mesmo email duas vezes seguidas → Sistema trata duplicata sem crash
-      Status: ___ Observação: ___
+- [x] **J1-07** Acessar `/waitlist` → Formulário de cadastro exibido
+      Status: ✅ OK
+- [x] **J1-08** Enviar formulário com dados válidos → Mensagem de confirmação exibida, sem redirecionamento com erro
+      Status: ❌ Falha — Formulário não enviou. Ver registro F-01.
+- [x] **J1-09** Enviar formulário com email inválido → Validação bloqueia envio e exibe erro
+      Status: ⏭️ Pulado — bloqueado pela falha em J1-08
+- [x] **J1-10** Enviar o mesmo email duas vezes seguidas → Sistema trata duplicata sem crash
+      Status: ⏭️ Pulado — bloqueado pela falha em J1-08
 
 ### Perfil Público (`/perfil/[username]`)
 
-- [ ] **J1-11** Acessar `/perfil/exemplo` → Página carrega com nome, bio e feed de respostas do demo
+> ⚠️ O perfil `@exemplo` (demo hardcoded) foi removido do código em 2026-03-31. Os testes J1-11 a J1-17 devem ser reexecutados com um criador real cadastrado no banco.
+
+- [ ] **J1-11** Acessar `/perfil/[criador-real]` → Página carrega com nome, bio e feed de respostas
       Status: ___ Observação: ___
 - [ ] **J1-12** Verificar exibição de badges (Verificado, Founder) → Badges aparecem corretamente quando aplicável
       Status: ___ Observação: ___
@@ -76,7 +78,7 @@ Ao identificar uma falha, preencha o **Registro de Falhas** no final do document
       Status: ___ Observação: ___
 - [ ] **J1-15** Acessar `/perfil/username-que-nao-existe` → Página 404 exibida, não crash
       Status: ___ Observação: ___
-- [ ] **J1-16** Verificar feed de respostas públicas → Ao menos uma resposta visível no demo, conteúdo legível
+- [ ] **J1-16** Verificar feed de respostas públicas → Respostas marcadas como públicas aparecem, conteúdo legível
       Status: ___ Observação: ___
 - [ ] **J1-17** Acessar em mobile → Formulário de pergunta usável, campos com tamanho adequado para toque
       Status: ___ Observação: ___
@@ -425,13 +427,11 @@ Ao identificar uma falha, preencha o **Registro de Falhas** no final do document
 
 > Preencher para cada ❌ ou ⚠️ identificado acima.
 
-| # | ID do Teste | Severidade | Comportamento Observado | Passo a Passo para Reproduzir | Responsável | Status da Correção |
-|---|-------------|------------|------------------------|-------------------------------|-------------|--------------------|
-| 1 | | | | | | |
-| 2 | | | | | | |
-| 3 | | | | | | |
-| 4 | | | | | | |
-| 5 | | | | | | |
+| # | ID | Severidade | Comportamento Observado | Passo a Passo para Reproduzir | Responsável | Status da Correção |
+|---|----|------------|------------------------|-------------------------------|-------------|--------------------|
+| F-01 | J1-08 | 🟠 Alto | Formulário da waitlist não enviou — envio com dados válidos não resultou em confirmação | 1. Acessar `/waitlist` · 2. Preencher todos os campos com dados válidos · 3. Clicar em enviar | — | Pendente (decisão de não corrigir neste ciclo) |
+| F-02 | | | | | | |
+| F-03 | | | | | | |
 
 **Severidade:**
 - 🔴 Crítico — Bloqueia fluxo principal (pagamento, login, resposta de pergunta)
@@ -443,20 +443,24 @@ Ao identificar uma falha, preencha o **Registro de Falhas** no final do document
 
 ## Resumo da Sessão de Testes
 
+### Sessão 1 — J1 (2026-03-31)
+
+```
+Total de testes executados: 10 / 10 (J1-01 a J1-10)
+✅ Passou:   8  (J1-01 a J1-07, J1-07)
+❌ Falhou:   1  (J1-08 — Waitlist: formulário não envia)
+⏭️ Pulado:  2  (J1-09, J1-10 — bloqueados pela falha em J1-08)
+
+Nota: J1-11 a J1-17 pendentes — perfil @exemplo removido, reexecutar com criador real.
+
+Falhas altas (🟠): 1 (F-01 — Waitlist)
+Decisão: correção da Waitlist adiada para ciclo futuro.
+```
+
+### Próxima Sessão
+
 ```
 Data: ___/___/______
 Testador: _______________
-Ambiente: _______________
-Versão/Commit: _______________
-
-Total de testes executados: ___ / 100
-✅ Passou:   ___
-❌ Falhou:   ___
-⚠️ Parcial: ___
-⏭️ Pulado:  ___
-
-Falhas críticas (🔴): ___
-Falhas altas (🟠):    ___
-Falhas médias (🟡):   ___
-Falhas baixas (🟢):   ___
+Jornadas a testar: J1-11 a J1-17 (com criador real), J2 em diante
 ```
