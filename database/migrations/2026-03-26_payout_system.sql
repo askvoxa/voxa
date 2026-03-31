@@ -120,6 +120,102 @@ CREATE TABLE IF NOT EXISTS payout_requests (
 -- 5. Funções PL/pgSQL
 -- ============================================================
 
+-- RPC: cadastra/atualiza chave PIX atomicamente (desativa anterior + insere nova + criptografa)
+CREATE OR REPLACE FUNCTION upsert_pix_key(
+  p_creator_id UUID,
+  p_key_type pix_key_type,
+  p_key_value TEXT,
+  p_encryption_key TEXT
+)
+RETURNS UUID AS $$
+DECLARE
+  v_new_id UUID;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  UPDATE public.creator_pix_keys
+  SET is_active = FALSE
+  WHERE creator_id = p_creator_id AND is_active = TRUE;
+
+  INSERT INTO public.creator_pix_keys (creator_id, key_type, key_value, is_active)
+  VALUES (
+    p_creator_id,
+    p_key_type,
+    pgp_sym_encrypt(p_key_value, p_encryption_key),
+    TRUE
+  )
+  RETURNING id INTO v_new_id;
+
+  RETURN v_new_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: decripta chave PIX para processamento de payouts (apenas service_role)
+CREATE OR REPLACE FUNCTION decrypt_pix_key(
+  p_pix_key_id UUID,
+  p_encryption_key TEXT
+)
+RETURNS TABLE (key_type pix_key_type, key_value TEXT) AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    pk.key_type,
+    pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key) AS key_value
+  FROM public.creator_pix_keys pk
+  WHERE pk.id = p_pix_key_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: retorna chave PIX mascarada (decripta internamente, retorna mascarada)
+CREATE OR REPLACE FUNCTION get_masked_pix_key(
+  p_creator_id UUID,
+  p_encryption_key TEXT
+)
+RETURNS TABLE (id UUID, key_type pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
+DECLARE
+  v_raw TEXT;
+  v_type pix_key_type;
+  v_id UUID;
+  v_created TIMESTAMPTZ;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  SELECT pk.id, pk.key_type,
+         pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key),
+         pk.created_at
+    INTO v_id, v_type, v_raw, v_created
+    FROM public.creator_pix_keys pk
+    WHERE pk.creator_id = p_creator_id AND pk.is_active = TRUE;
+
+  IF v_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF v_type = 'cpf' AND LENGTH(v_raw) = 11 THEN
+    RETURN QUERY SELECT v_id, v_type,
+      '***.' || SUBSTRING(v_raw FROM 4 FOR 3) || '.' || SUBSTRING(v_raw FROM 7 FOR 3) || '-**',
+      v_created;
+  ELSIF v_type = 'cnpj' AND LENGTH(v_raw) = 14 THEN
+    RETURN QUERY SELECT v_id, v_type,
+      '**.' || SUBSTRING(v_raw FROM 3 FOR 3) || '.' || SUBSTRING(v_raw FROM 6 FOR 3) || '/' || SUBSTRING(v_raw FROM 9 FOR 4) || '-**',
+      v_created;
+  ELSE
+    RETURN QUERY SELECT v_id, v_type, '***mascarado***'::TEXT, v_created;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
 -- Trigger: atualiza available_balance quando lançamento é inserido no ledger
 CREATE OR REPLACE FUNCTION update_balance_on_ledger_insert()
 RETURNS TRIGGER AS $$
@@ -336,6 +432,10 @@ CREATE POLICY "payout_requests bloqueado para escrita" ON payout_requests
 DROP POLICY IF EXISTS "payout_requests bloqueado para update" ON payout_requests;
 CREATE POLICY "payout_requests bloqueado para update" ON payout_requests
   FOR UPDATE USING (false);
+
+DROP POLICY IF EXISTS "payout_requests bloqueado para delete" ON payout_requests;
+CREATE POLICY "payout_requests bloqueado para delete" ON payout_requests
+  FOR DELETE USING (false);
 
 -- ============================================================
 -- 8. Indexes

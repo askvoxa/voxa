@@ -119,8 +119,10 @@ CREATE POLICY "Criador vê seus saques" ON payout_requests
   FOR SELECT USING (auth.uid() = creator_id);
 CREATE POLICY "Admin vê todos saques" ON payout_requests
   FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND account_type = 'admin'));
--- Bloqueia INSERT/UPDATE direto (via RPC service_role)
+-- Bloqueia INSERT/UPDATE/DELETE direto (via RPC service_role)
 CREATE POLICY "payout_requests bloqueado para escrita" ON payout_requests
   FOR INSERT WITH CHECK (false);
 CREATE POLICY "payout_requests bloqueado para update" ON payout_requests
   FOR UPDATE USING (false);
+CREATE POLICY "payout_requests bloqueado para delete" ON payout_requests
+  FOR DELETE USING (false);

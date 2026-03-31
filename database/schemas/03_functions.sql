@@ -33,6 +33,13 @@ BEGIN
     IF NEW.approval_status IS DISTINCT FROM OLD.approval_status THEN
       RAISE EXCEPTION 'Não é permitido alterar approval_status diretamente';
     END IF;
+    -- Campos financeiros: apenas service_role pode alterar (H5)
+    IF NEW.available_balance IS DISTINCT FROM OLD.available_balance THEN
+      RAISE EXCEPTION 'Não é permitido alterar available_balance diretamente';
+    END IF;
+    IF NEW.payouts_blocked IS DISTINCT FROM OLD.payouts_blocked THEN
+      RAISE EXCEPTION 'Não é permitido alterar payouts_blocked diretamente';
+    END IF;
   END IF;
   RETURN NEW;
 END;
@@ -380,8 +387,110 @@ SET search_path = '';
 -- Funções do sistema de Payouts
 -- ============================================================
 
+-- RPC: cadastra/atualiza chave PIX de forma atômica (desativa anterior + insere nova + criptografa)
+-- Garante que o criador nunca fique sem chave ativa em caso de erro parcial
+CREATE OR REPLACE FUNCTION upsert_pix_key(
+  p_creator_id UUID,
+  p_key_type pix_key_type,
+  p_key_value TEXT,
+  p_encryption_key TEXT
+)
+RETURNS UUID AS $$
+DECLARE
+  v_new_id UUID;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  -- Desativar chave anterior (se existir)
+  UPDATE public.creator_pix_keys
+  SET is_active = FALSE
+  WHERE creator_id = p_creator_id AND is_active = TRUE;
+
+  -- Inserir nova chave com valor encriptado via pgcrypto
+  INSERT INTO public.creator_pix_keys (creator_id, key_type, key_value, is_active)
+  VALUES (
+    p_creator_id,
+    p_key_type,
+    pgp_sym_encrypt(p_key_value, p_encryption_key),
+    TRUE
+  )
+  RETURNING id INTO v_new_id;
+
+  RETURN v_new_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: decripta chave PIX para uso no processamento de payouts
+-- Apenas service_role pode chamar (usado pelo cron de process-payouts)
+CREATE OR REPLACE FUNCTION decrypt_pix_key(
+  p_pix_key_id UUID,
+  p_encryption_key TEXT
+)
+RETURNS TABLE (key_type pix_key_type, key_value TEXT) AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    pk.key_type,
+    pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key) AS key_value
+  FROM public.creator_pix_keys pk
+  WHERE pk.id = p_pix_key_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
+-- RPC: retorna chave PIX mascarada para exibição (sem expor valor real)
+-- Decripta internamente, retorna apenas os dígitos centrais mascarados
+CREATE OR REPLACE FUNCTION get_masked_pix_key(
+  p_creator_id UUID,
+  p_encryption_key TEXT
+)
+RETURNS TABLE (id UUID, key_type pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
+DECLARE
+  v_raw TEXT;
+  v_type pix_key_type;
+  v_id UUID;
+  v_created TIMESTAMPTZ;
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  SELECT pk.id, pk.key_type,
+         pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key),
+         pk.created_at
+    INTO v_id, v_type, v_raw, v_created
+    FROM public.creator_pix_keys pk
+    WHERE pk.creator_id = p_creator_id AND pk.is_active = TRUE;
+
+  IF v_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Mascarar: CPF → ***.456.789-** | CNPJ → **.345.678/0001-**
+  IF v_type = 'cpf' AND LENGTH(v_raw) = 11 THEN
+    RETURN QUERY SELECT v_id, v_type,
+      '***.' || SUBSTRING(v_raw FROM 4 FOR 3) || '.' || SUBSTRING(v_raw FROM 7 FOR 3) || '-**',
+      v_created;
+  ELSIF v_type = 'cnpj' AND LENGTH(v_raw) = 14 THEN
+    RETURN QUERY SELECT v_id, v_type,
+      '**.' || SUBSTRING(v_raw FROM 3 FOR 3) || '.' || SUBSTRING(v_raw FROM 6 FOR 3) || '/' || SUBSTRING(v_raw FROM 9 FOR 4) || '-**',
+      v_created;
+  ELSE
+    RETURN QUERY SELECT v_id, v_type, '***mascarado***'::TEXT, v_created;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
 -- Trigger: atualiza available_balance no profile quando um lançamento é inserido no ledger
--- Usa FOR UPDATE para prevenir race condition em inserções concorrentes
+-- O UPDATE implícito do PostgreSQL garante atomicidade por row lock
 CREATE OR REPLACE FUNCTION update_balance_on_ledger_insert()
 RETURNS TRIGGER AS $$
 BEGIN

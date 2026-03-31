@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
-import { validatePixKey, stripMask, maskPixKey } from '@/lib/pix-validation'
+import { validatePixKey, stripMask } from '@/lib/pix-validation'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,39 +43,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro interno de configuração.' }, { status: 500 })
   }
 
-  // Desativar chave anterior (se existir)
-  await supabaseAdmin
-    .from('creator_pix_keys')
-    .update({ is_active: false })
-    .eq('creator_id', user.id)
-    .eq('is_active', true)
-
-  // Inserir nova chave (valor armazenado — em produção, encriptar via pgp_sym_encrypt)
-  const { error: insertError } = await supabaseAdmin
-    .from('creator_pix_keys')
-    .insert({
-      creator_id: user.id,
-      key_type,
-      key_value: rawValue,
-      is_active: true,
+  // Operação atômica via RPC: desativa chave anterior + insere nova criptografada
+  const { data: newKeyId, error: rpcError } = await supabaseAdmin
+    .rpc('upsert_pix_key', {
+      p_creator_id: user.id,
+      p_key_type: key_type,
+      p_key_value: rawValue,
+      p_encryption_key: encryptionKey,
     })
 
-  if (insertError) {
-    console.error('[payout/pix-key] Erro ao inserir chave:', insertError.message)
+  if (rpcError) {
+    console.error('[payout/pix-key] Erro ao cadastrar chave:', rpcError.message)
     return NextResponse.json({ error: 'Erro ao cadastrar chave PIX.' }, { status: 500 })
   }
 
-  const masked = maskPixKey(key_type, rawValue)
-  console.log(`[payout/pix-key] Criador ${user.id} cadastrou chave ${key_type.toUpperCase()}: ${masked}`)
+  // Buscar valor mascarado via RPC (sem expor valor real na API)
+  const { data: masked } = await supabaseAdmin
+    .rpc('get_masked_pix_key', {
+      p_creator_id: user.id,
+      p_encryption_key: encryptionKey,
+    })
+
+  const maskedValue = masked?.[0]?.masked_value ?? '***'
+
+  console.log(`[payout/pix-key] Criador ${user.id} cadastrou chave ${key_type.toUpperCase()}: ${maskedValue}`)
 
   return NextResponse.json({
     success: true,
     key_type,
-    masked_value: masked,
+    masked_value: maskedValue,
   })
 }
 
-// GET — retorna a chave PIX ativa do criador (mascarada)
+// GET — retorna a chave PIX ativa do criador (mascarada, via decriptação no DB)
 export async function GET() {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -83,21 +83,28 @@ export async function GET() {
     return NextResponse.json({ error: 'Autenticação necessária' }, { status: 401 })
   }
 
-  const { data } = await supabaseAdmin
-    .from('creator_pix_keys')
-    .select('id, key_type, key_value, created_at')
-    .eq('creator_id', user.id)
-    .eq('is_active', true)
-    .single()
+  const encryptionKey = process.env.PIX_ENCRYPTION_KEY
+  if (!encryptionKey) {
+    console.error('[payout/pix-key] PIX_ENCRYPTION_KEY não configurada')
+    return NextResponse.json({ error: 'Erro interno de configuração.' }, { status: 500 })
+  }
 
-  if (!data) {
+  // Buscar chave mascarada via RPC (valor nunca sai decriptado do DB)
+  const { data, error } = await supabaseAdmin
+    .rpc('get_masked_pix_key', {
+      p_creator_id: user.id,
+      p_encryption_key: encryptionKey,
+    })
+
+  if (error || !data || data.length === 0) {
     return NextResponse.json({ has_key: false })
   }
 
+  const key = data[0]
   return NextResponse.json({
     has_key: true,
-    key_type: data.key_type,
-    masked_value: maskPixKey(data.key_type as 'cpf' | 'cnpj', data.key_value),
-    created_at: data.created_at,
+    key_type: key.key_type,
+    masked_value: key.masked_value,
+    created_at: key.created_at,
   })
 }

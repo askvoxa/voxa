@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
     .from('payout_requests')
     .select(`
       id, creator_id, amount, pix_key_id, status, retry_count,
-      creator_pix_keys!inner (key_type, key_value),
       profiles!inner (username, payouts_blocked)
     `)
     .or('status.eq.pending,and(status.eq.failed,retry_count.lt.3)')
@@ -63,6 +62,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erro de configuração do Mercado Pago.' }, { status: 500 })
   }
 
+  const pixEncryptionKey = process.env.PIX_ENCRYPTION_KEY
+  if (!pixEncryptionKey) {
+    console.error('[cron/process-payouts] PIX_ENCRYPTION_KEY não configurada')
+    return NextResponse.json({ error: 'Erro de configuração de criptografia.' }, { status: 500 })
+  }
+
   let processed = 0
   let succeeded = 0
   let failed = 0
@@ -76,8 +81,29 @@ export async function POST(req: NextRequest) {
       .update({ status: 'processing' })
       .eq('id', payout.id)
 
-    // Extrair dados da chave PIX
-    const pixKey = payout.creator_pix_keys as unknown as { key_type: string; key_value: string }
+    // Decriptar chave PIX via RPC (valor nunca transita em plaintext fora do DB)
+    const { data: pixKeyData, error: decryptError } = await supabaseAdmin
+      .rpc('decrypt_pix_key', {
+        p_pix_key_id: payout.pix_key_id,
+        p_encryption_key: pixEncryptionKey,
+      })
+
+    if (decryptError || !pixKeyData || pixKeyData.length === 0) {
+      const errorMsg = decryptError?.message || 'Chave PIX não encontrada ou falha na decriptação'
+      await supabaseAdmin
+        .from('payout_requests')
+        .update({
+          status: 'failed',
+          failure_reason: errorMsg.slice(0, 500),
+          retry_count: (payout.retry_count ?? 0) + 1,
+        })
+        .eq('id', payout.id)
+      failed++
+      console.error(`[cron/process-payouts] Payout ${payout.id} falha ao decriptar PIX: ${errorMsg}`)
+      continue
+    }
+
+    const pixKey = pixKeyData[0] as { key_type: string; key_value: string }
     const profile = payout.profiles as unknown as { username: string }
 
     // Montar payload para API de Payouts do MP (conforme design seção 3)
@@ -152,7 +178,51 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  console.log(`[cron/process-payouts] Processados: ${processed}, sucesso: ${succeeded}, falha: ${failed}`)
+  // C3: Reverter débitos de payouts que falharam permanentemente (retry_count >= 3)
+  // Insere credit compensatório no ledger para devolver o saldo ao criador
+  const { data: permanentFailures } = await supabaseAdmin
+    .from('payout_requests')
+    .select('id, creator_id, amount')
+    .eq('status', 'failed')
+    .gte('retry_count', 3)
 
-  return NextResponse.json({ processed, succeeded, failed })
+  let reversed = 0
+  for (const failedPayout of permanentFailures ?? []) {
+    // Verificar se já existe um credit de compensação para este payout
+    const { count } = await supabaseAdmin
+      .from('creator_ledger')
+      .select('id', { count: 'exact', head: true })
+      .eq('reference_type', 'payout')
+      .eq('reference_id', failedPayout.id)
+      .eq('type', 'credit')
+
+    if ((count ?? 0) > 0) continue // Já revertido
+
+    // Inserir credit compensatório (trigger atualiza available_balance automaticamente)
+    const { error: reverseError } = await supabaseAdmin
+      .from('creator_ledger')
+      .insert({
+        creator_id: failedPayout.creator_id,
+        type: 'credit',
+        amount: Number(failedPayout.amount),
+        reference_type: 'payout',
+        reference_id: failedPayout.id,
+        description: `Estorno automático - saque #${failedPayout.id} falhou permanentemente`,
+      })
+
+    if (reverseError) {
+      // Constraint UNIQUE previne duplicatas — ignorar conflitos silenciosamente
+      if (reverseError.code !== '23505') {
+        console.error(`[cron/process-payouts] Erro ao reverter payout ${failedPayout.id}:`, reverseError.message)
+      }
+      continue
+    }
+
+    reversed++
+    console.log(`[cron/process-payouts] Payout ${failedPayout.id} revertido — R$${failedPayout.amount} devolvido ao criador ${failedPayout.creator_id}`)
+  }
+
+  console.log(`[cron/process-payouts] Processados: ${processed}, sucesso: ${succeeded}, falha: ${failed}, revertidos: ${reversed}`)
+
+  return NextResponse.json({ processed, succeeded, failed, reversed })
 }
