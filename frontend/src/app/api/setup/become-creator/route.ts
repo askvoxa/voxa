@@ -56,10 +56,17 @@ export async function POST(request: Request) {
     'threads.net', 'www.threads.net',
     'kwai.com', 'www.kwai.com',
   ]
-  let socialUrl: URL | null = null
-  try { socialUrl = new URL(String(social_link).trim()) } catch { /* URL inválida */ }
 
-  if (!socialUrl || socialUrl.protocol !== 'https:' || !allowedSocialDomains.includes(socialUrl.hostname)) {
+  // Normalizar URL: aceitar sem https:// e adicionar automaticamente
+  let normalizedLink = String(social_link).trim()
+  if (!normalizedLink.startsWith('https://') && !normalizedLink.startsWith('http://')) {
+    normalizedLink = `https://${normalizedLink}`
+  }
+
+  let socialUrl: URL | null = null
+  try { socialUrl = new URL(normalizedLink) } catch { /* URL inválida */ }
+
+  if (!socialUrl || (socialUrl.protocol !== 'https:' && socialUrl.protocol !== 'http:') || !allowedSocialDomains.includes(socialUrl.hostname)) {
     return NextResponse.json({ error: 'Link inválido. Use um perfil do Instagram, TikTok, YouTube, X ou outra rede social.' }, { status: 400 })
   }
   if (!accepted_terms_at) {
@@ -80,7 +87,7 @@ export async function POST(request: Request) {
       bio: String(bio || '').trim().slice(0, 200) || null,
       min_price: sanitizedPrice,
       daily_limit: sanitizedLimit,
-      social_link: String(social_link).trim(),
+      social_link: normalizedLink,
       accepted_terms_at: new Date().toISOString(), // Timestamp do servidor para compliance legal
       approval_status: 'pending_review',
       rejection_reason: null,

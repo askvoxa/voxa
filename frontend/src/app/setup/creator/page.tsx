@@ -97,8 +97,63 @@ export default function CreatorSetupPage() {
     })
   }
 
+  // Valida se o link é um URL válido de rede social
+  // Aceita: https://instagram.com/user, instagram.com/user, ou @user para Instagram
+  const isValidSocialLink = (link: string): boolean => {
+    const trimmed = link.trim()
+    if (!trimmed) return false
+
+    // Padrões aceitos: domínios conhecidos com ou sem https://
+    const socialDomains = ['instagram.com', 'tiktok.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'twitch.tv', 'facebook.com', 'linkedin.com', 'threads.net', 'kwai.com']
+
+    // Se já começa com https://, validar normalmente
+    if (trimmed.startsWith('https://')) {
+      try {
+        const url = new URL(trimmed)
+        return socialDomains.some(domain => url.hostname === domain || url.hostname === `www.${domain}`)
+      } catch {
+        return false
+      }
+    }
+
+    // Se começa com um domínio conhecido (com ou sem www), é válido
+    if (socialDomains.some(domain => trimmed.startsWith(domain) || trimmed.startsWith(`www.${domain}`))) {
+      return true
+    }
+
+    // Se começa com @, assume Instagram
+    if (trimmed.startsWith('@')) {
+      return true
+    }
+
+    return false
+  }
+
+  // Normaliza o link para o formato https://domínio/...
+  const normalizeSocialLink = (link: string): string => {
+    const trimmed = link.trim()
+
+    // Se já tem https://, retorna como está
+    if (trimmed.startsWith('https://')) {
+      return trimmed
+    }
+
+    // Se é apenas username do Instagram (@usuario ou usuario), normaliza para instagram.com
+    if (trimmed.startsWith('@') || !trimmed.includes('.')) {
+      const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed
+      return `https://instagram.com/${username}`
+    }
+
+    // Se tem domínio mas sem protocolo, adiciona https://
+    if (trimmed.includes('.')) {
+      return `https://${trimmed}`
+    }
+
+    return trimmed
+  }
+
   const canAdvanceStep1 = selectedNiches.length >= 1
-  const canAdvanceStep2 = socialLink.trim().startsWith('https://')
+  const canAdvanceStep2 = isValidSocialLink(socialLink)
   const canSubmit = acceptedTerms
 
   const handleNext = () => {
@@ -108,7 +163,7 @@ export default function CreatorSetupPage() {
       return
     }
     if (step === 2 && !canAdvanceStep2) {
-      setError('Insira um link válido começando com https://')
+      setError('Insira um link válido (Instagram, TikTok, YouTube, Twitter/X, etc.)')
       return
     }
     setStep(prev => prev + 1)
@@ -125,6 +180,7 @@ export default function CreatorSetupPage() {
     setError('')
 
     const supabase = createClient()
+    const normalizedLink = normalizeSocialLink(socialLink)
 
     // Se é fan (sem convite), precisa promover via API
     if (!isFromInvite) {
@@ -135,7 +191,7 @@ export default function CreatorSetupPage() {
           bio: bio.trim() || null,
           min_price: minPrice,
           daily_limit: dailyLimit,
-          social_link: socialLink.trim(),
+          social_link: normalizedLink,
           accepted_terms_at: new Date().toISOString(),
           niche_ids: selectedNiches,
         }),
@@ -155,7 +211,7 @@ export default function CreatorSetupPage() {
           bio: bio.trim() || null,
           min_price: minPrice,
           daily_limit: dailyLimit,
-          social_link: socialLink.trim(),
+          social_link: normalizedLink,
           accepted_terms_at: new Date().toISOString(),
           creator_setup_completed: true,
         })
@@ -316,13 +372,13 @@ export default function CreatorSetupPage() {
                 Link do seu perfil principal <span className="text-red-400">*</span>
               </label>
               <input
-                type="url"
-                placeholder="https://instagram.com/seu_perfil"
+                type="text"
+                placeholder="instagram.com/seu_perfil ou @seu_perfil"
                 value={socialLink}
                 onChange={e => setSocialLink(e.target.value)}
                 className="w-full bg-[#1a1a1a] border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-white/40"
               />
-              <p className="text-xs text-gray-500 mt-1.5">Instagram, TikTok, YouTube ou Twitter/X</p>
+              <p className="text-xs text-gray-500 mt-1.5">Com ou sem https:// — instagram.com/usuario, @usuario, tiktok.com/usuario, etc.</p>
             </div>
 
             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-2">
