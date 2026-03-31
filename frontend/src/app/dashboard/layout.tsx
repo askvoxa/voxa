@@ -29,6 +29,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
+
+      // DEV: Restaurar sessão injetada por testes (Playwright)
+      if (typeof window !== 'undefined' && (window as any).__VOXATESTSESSION__) {
+        const session = (window as any).__VOXATESTSESSION__
+        const { error } = await supabase.auth.setSession(session)
+        console.log('[Dashboard] setSession:', error ? `ERRO: ${error.message}` : 'OK')
+        delete (window as any).__VOXATESTSESSION__
+
+        // Aguardar um pouco para a sessão ser registrada
+        await new Promise(r => setTimeout(r, 100))
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 

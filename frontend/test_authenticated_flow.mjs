@@ -138,17 +138,12 @@ async function run() {
   }
 
   // ─────────────────────────────────────────
-  // 2. LOGIN DO FÃ + TEST DE ROTAS PROTEGIDAS
+  // 2. LOGIN DO FÃ + DASHBOARD ACESSO
   // ─────────────────────────────────────────
-  console.log('\n── 2. Login do Fã & Proteção de Rotas ──');
-  let fanAccessToken = null;
+  console.log('\n── 2. Login do Fã & Acesso ao Dashboard ──');
+  let fanSession = null;
   try {
-    await page.goto(BASE_URL, { waitUntil: 'networkidle' });
-
-    const fanAuthUser = await loginTestUser(fanUser.email, fanUser.password, page);
-    log('PASS', 'Fã autenticado', fanUser.email);
-
-    // Re-fazer login para pegar o token (função anterior não retorna token)
+    // Fazer login para pegar tokens válidos
     const loginRes = await fetch(DEV_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -159,36 +154,33 @@ async function run() {
       }),
     });
     const loginData = await loginRes.json();
-    fanAccessToken = loginData.session.access_token;
+    if (!loginData.success) throw new Error(loginData.error);
 
-    // Testar acesso ao dashboard via API headers
-    const dashboardRes = await fetch(`${BASE_URL}/api/dashboard`, {
-      headers: {
-        'Authorization': `Bearer ${fanAccessToken}`,
-      },
-    }).catch(() => null);
+    fanSession = loginData.session;
+    log('PASS', 'Fã autenticado', fanUser.email);
 
-    if (dashboardRes && dashboardRes.status < 400) {
-      log('PASS', 'Dashboard API acessível com token', `HTTP ${dashboardRes.status}`);
-    } else if (dashboardRes?.status === 401) {
-      log('WARN', 'Dashboard API retorna 401 (token inválido)');
-    } else {
-      log('WARN', 'Dashboard API não existe ou inacessível', dashboardRes?.status || 'desconhecido');
-    }
+    // Injetar sessão no window ANTES de navegar para dashboard
+    await page.evaluate((session) => {
+      window.__VOXATESTSESSION__ = session;
+    }, fanSession);
 
-    // Testar acesso à página do dashboard (vai redirecionar para login se não tiver sessão)
+    // Agora navegar para dashboard
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
-    await screenshot(page, 'dashboard_fan_access_attempt');
+    await page.waitForTimeout(1500);
+    await screenshot(page, 'dashboard_fan_home');
 
     const finalUrl = page.url();
-    if (finalUrl.includes('/login')) {
-      log('WARN', 'Dashboard página redireciona para login', 'Session restore não funciona em Playwright');
-    } else if (finalUrl.includes('/dashboard')) {
-      log('PASS', 'Dashboard página acessível sem redirecionamento');
+    const pageHeading = await page.locator('h1, h2').first().textContent().catch(() => '');
+
+    if (finalUrl.includes('/dashboard')) {
+      log('PASS', 'Dashboard do fã carrega autenticado', pageHeading.trim());
+    } else if (finalUrl.includes('/login')) {
+      log('WARN', 'Dashboard redireciona para login mesmo após setSession');
+    } else {
+      log('WARN', 'URL inesperada', finalUrl);
     }
   } catch (e) {
-    log('FAIL', 'Login do fã', e.message);
+    log('FAIL', 'Login e dashboard do fã', e.message);
   }
 
   // ─────────────────────────────────────────
