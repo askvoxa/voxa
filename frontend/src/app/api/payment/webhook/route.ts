@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import MercadoPagoConfig, { Payment, PaymentRefund } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 import { createHmac, timingSafeEqual } from 'crypto'
-import { sendNewQuestionNotification, sendSupportNotification } from '@/lib/email'
+import { sendNewQuestionNotification, sendSupportNotification, sendQuestionConfirmation } from '@/lib/email'
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -254,6 +254,18 @@ export async function POST(request: Request) {
             qd.is_anonymous,
             creatorNet
           ).catch((e) => console.error('[webhook] erro ao notificar criador:', e))
+
+          // Confirmar ao fã que a pergunta foi recebida (fire-and-forget)
+          if (qd.sender_email) {
+            sendQuestionConfirmation({
+              fanEmail: qd.sender_email,
+              fanName: qd.sender_name,
+              creatorUsername: creatorProfileData.username,
+              amount: qd.price_paid,
+              question: qd.content,
+              questionId: String(questionId),
+            }).catch((e) => console.error('[webhook] erro ao confirmar pergunta ao fã:', e))
+          }
         }
       }
     } catch (e) {

@@ -343,6 +343,104 @@ export async function sendUrgencyReminder({
 /* ─── Emails para Fãs ───────────────────────────────────────────────────── */
 
 /**
+ * Confirma ao fã que sua pergunta paga foi recebida e está aguardando resposta.
+ * Fire-and-forget — não deve bloquear o webhook de pagamento.
+ */
+export async function sendQuestionConfirmation({
+  fanEmail,
+  fanName,
+  creatorUsername,
+  amount,
+  question,
+  questionId,
+}: {
+  fanEmail: string
+  fanName: string
+  creatorUsername: string
+  amount: number
+  question: string
+  questionId: string
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://askvoxa.com'
+  const deadlineHours = Number(process.env.RESPONSE_DEADLINE_HOURS ?? 36)
+  const safeCreator = escapeHtml(creatorUsername)
+  // Fallback defensivo: sender_name pode vir vazio em casos extremos
+  const safeFanName = escapeHtml(fanName || 'Fã')
+  // Truncar a pergunta para evitar emails excessivamente longos
+  const safeQuestion = escapeHtml(question.substring(0, 300)) + (question.length > 300 ? '...' : '')
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: fanEmail,
+    subject: `[VOXA] Sua pergunta para @${creatorUsername} foi enviada com sucesso!`,
+    headers: UNSUBSCRIBE_HEADERS,
+    html: emailLayout(`
+      <div style="text-align:center">
+
+        <!-- Ícone de confirmação -->
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background-color:#F6F3F2;border-radius:50%;margin-bottom:24px">
+          <span style="font-size:28px">✓</span>
+        </div>
+
+        <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#1C1B1B;letter-spacing:-0.5px">Pergunta enviada!</h1>
+        <p style="margin:0 auto 32px;font-size:16px;line-height:1.6;color:#5F3F3A;max-width:90%">
+          Olá, <strong style="color:#1C1B1B">${safeFanName}</strong>. Sua pergunta para <strong style="color:#BC000A">@${safeCreator}</strong> foi recebida e está aguardando resposta.
+        </p>
+
+        <!-- Card com valor pago -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+          <tr>
+            <td align="center">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#F6F3F2;border-radius:16px;padding:24px 32px;min-width:280px">
+                <tr>
+                  <td align="center">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;display:block;margin-bottom:8px;opacity:0.8">VALOR PAGO</span>
+                    <span style="font-size:36px;font-weight:900;color:#BC000A">${brl(amount)}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Card com trecho da pergunta -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;background-color:#F6F3F2;border-radius:16px;padding:24px;text-align:left">
+          <tr>
+            <td>
+              <div style="margin-bottom:12px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#5F3F3A;font-weight:700;opacity:0.8">SUA PERGUNTA</div>
+              <div style="background-color:#FFFFFF;padding:20px;border-radius:12px;border:1px solid rgba(233,188,182,0.3);font-style:italic;color:#1C1B1B;line-height:1.6;font-size:15px">
+                "${safeQuestion}"
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Banner de prazo com aviso de reembolso -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;background-color:#fef2f2;border-radius:12px;border:1px solid rgba(188,0,10,0.1)">
+          <tr>
+            <td style="padding:16px 20px;text-align:center">
+              <p style="margin:0;font-size:14px;color:#BC000A;font-weight:600;line-height:1.6">
+                ⏰ <strong>@${safeCreator}</strong> tem até <strong>${deadlineHours} horas</strong> para responder.<br/>
+                <span style="font-size:13px;font-weight:400;color:#5F3F3A">Se não houver resposta no prazo, você receberá reembolso integral automaticamente.</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        ${ctaButton(`${appUrl}/perfil/${creatorUsername}?q=${questionId}`, `Ver perfil de @${creatorUsername}`)}
+
+        <p style="margin:32px 0 0;font-size:12px;color:#A1A1AA;line-height:1.6">
+          Se você não fez essa pergunta ou não reconhece esta transação,<br/>entre em contato com o suporte em <a href="mailto:suporte@askvoxa.com" style="color:#BC000A;text-decoration:none">suporte@askvoxa.com</a>.
+        </p>
+      </div>
+    `, `Sua pergunta para @${creatorUsername} foi enviada — aguardando resposta`),
+  })
+}
+
+/**
  * Notifica o fã por email que sua pergunta foi respondida.
  * Fire-and-forget — não deve bloquear o fluxo de resposta do criador.
  */
