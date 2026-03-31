@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
-import { createRateLimiter } from '@/lib/rate-limit'
+import { checkPayoutRateLimit } from '@/lib/rate-limit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-// Rate limit: 1 solicitação de saque por hora por criador
-const payoutLimiter = createRateLimiter({ interval: 3_600_000, maxRequests: 1 })
 
 export async function POST(request: Request) {
   // Autenticação
@@ -19,8 +16,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Autenticação necessária' }, { status: 401 })
   }
 
-  // Rate limit
-  const { success: rateLimitOk } = payoutLimiter.check(user.id)
+  // Rate limit (Redis com fallback in-memory)
+  const { success: rateLimitOk } = await checkPayoutRateLimit(user.id)
   if (!rateLimitOk) {
     return NextResponse.json(
       { error: 'Limite de solicitações atingido. Tente novamente em 1 hora.' },

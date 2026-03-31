@@ -315,6 +315,25 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
+-- RPC: retorna resumo de saques para admin (week_total, pending_total, failed_count)
+-- Elimina N+1 queries ao agregar no SQL em vez de JS
+CREATE OR REPLACE FUNCTION get_payout_summary(p_week_ago TIMESTAMPTZ)
+RETURNS TABLE (week_total DECIMAL, pending_total DECIMAL, failed_count BIGINT) AS $$
+BEGIN
+  IF current_setting('role', true) != 'service_role' THEN
+    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    COALESCE(SUM(amount) FILTER (WHERE status = 'completed' AND processed_at >= p_week_ago), 0)::DECIMAL AS week_total,
+    COALESCE(SUM(amount) FILTER (WHERE status = 'pending'), 0)::DECIMAL AS pending_total,
+    COUNT(*) FILTER (WHERE status = 'failed' AND retry_count < 3) AS failed_count
+  FROM public.payout_requests;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
+
 -- RPC: retorna saldo disponível, pendente de liberação e total sacado
 CREATE OR REPLACE FUNCTION get_creator_balance(p_creator_id UUID)
 RETURNS TABLE (

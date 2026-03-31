@@ -76,19 +76,20 @@ export default async function AdminPayoutsPage({
 
 // ===== Aba Dashboard =====
 async function DashboardTab({ paused }: { paused: boolean }) {
-  const now = new Date()
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  // Dados resumo
-  const [weekData, pendingData, failedData] = await Promise.all([
-    supabaseAdmin.from('payout_requests').select('amount').eq('status', 'completed').gte('processed_at', weekAgo),
-    supabaseAdmin.from('payout_requests').select('amount').eq('status', 'pending'),
-    supabaseAdmin.from('payout_requests').select('id', { count: 'exact', head: true }).eq('status', 'failed').lt('retry_count', 3),
-  ])
+  // Dados resumo — usar RPC em vez de 3 queries (elimina N+1)
+  const { data: summaryData, error: summaryError } = await supabaseAdmin
+    .rpc('get_payout_summary', { p_week_ago: weekAgo })
 
-  const weekTotal = (weekData.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
-  const pendingTotal = (pendingData.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
-  const failedCount = failedData.count ?? 0
+  if (summaryError) {
+    console.error('[admin/payouts] Erro ao buscar resumo:', summaryError.message)
+  }
+
+  const summary = summaryData?.[0] ?? { week_total: 0, pending_total: 0, failed_count: 0 }
+  const weekTotal = Number(summary.week_total ?? 0)
+  const pendingTotal = Number(summary.pending_total ?? 0)
+  const failedCount = Number(summary.failed_count ?? 0)
 
   return (
     <div className="space-y-6">

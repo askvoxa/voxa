@@ -1,11 +1,20 @@
 /**
- * Rate limiter in-memory com cleanup automático.
- * Para produção com múltiplas instâncias, migrar para Redis (ex: @upstash/ratelimit).
+ * Rate limiter com Upstash Redis + fallback in-memory.
+ *
+ * Produção (com UPSTASH_REDIS_REST_URL): usa Redis persistente (multi-instância).
+ * Dev local (sem Redis): fallback para in-memory com cleanup automático.
+ * Fail-open: se Redis cair, permite requests (segurança financeira está na RPC).
  *
  * Uso:
  *   const limiter = createRateLimiter({ interval: 60_000, maxRequests: 10 })
  *   const { success } = limiter.check(identifier)
+ *
+ *   // Para pagamentos/saques (async, com Redis):
+ *   const { success } = await checkPayoutRateLimit(userId)
  */
+
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
 interface RateLimiterConfig {
   /** Janela de tempo em ms */
@@ -90,4 +99,40 @@ export function getRequestIP(request: Request): string {
   const real = request.headers.get('x-real-ip')
   if (real) return real
   return 'unknown'
+}
+
+/**
+ * Rate limiter para saques (pagamentos críticos).
+ * Usa Redis se disponível (UPSTASH_REDIS_REST_URL), senão fallback in-memory.
+ * Fail-open se Redis indisponível: segurança financeira real está na RPC (FOR UPDATE lock).
+ */
+export async function checkPayoutRateLimit(userId: string): Promise<RateLimitResult> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+
+  // Com Redis configurado: usar persistente (multi-instância)
+  if (url && token) {
+    try {
+      const redis = new Redis({ url, token })
+      const ratelimit = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(1, '1 h'),
+        prefix: 'voxa:payout',
+      })
+      const result = await ratelimit.limit(userId)
+      return {
+        success: result.success,
+        remaining: Math.max(0, result.remaining),
+        resetAt: result.reset,
+      }
+    } catch (err) {
+      // Fail-open: segurança financeira está no RPC request_payout (FOR UPDATE lock + existence check)
+      // Redis indisponível não deve bloquear saques legítimos de usuários
+      console.warn('[rate-limit] Redis indisponível, permitindo request:', err instanceof Error ? err.message : String(err))
+      return { success: true, remaining: 0, resetAt: Date.now() + 3_600_000 }
+    }
+  }
+
+  // Fallback in-memory para dev local (sem Redis configurado)
+  return paymentLimiter.check(userId)
 }
