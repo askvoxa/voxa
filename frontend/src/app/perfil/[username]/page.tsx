@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import QuestionForm from './QuestionForm'
 import AnswerFeedback from './AnswerFeedback'
@@ -200,7 +201,21 @@ export default async function PerfilPage({
   const creatorIsPaused = profile.is_paused === true &&
     (!profile.paused_until || new Date(profile.paused_until) > new Date())
 
-  const [{ data: publicAnswers }, { data: statsData }, { data: topSupporters }] = await Promise.all([
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Início do dia corrente no fuso de São Paulo (mesmo critério do can_accept_question).
+  // BRT = UTC-3 (sem horário de verão desde 2019).
+  // Subtrai 3h para obter a data BRT em UTC, pega meia-noite dessa data, soma 3h de volta.
+  const nowUTC = new Date()
+  const brtNow = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000)
+  const todayStartBRT = new Date(
+    Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
+  )
+
+  const [{ data: publicAnswers }, { data: statsData }, { data: topSupporters }, { count: pendingTodayCount }] = await Promise.all([
     supabase
       .from('questions')
       .select('id, sender_name, content, service_type, is_anonymous, price_paid, response_text, response_audio_url, answered_at')
@@ -216,6 +231,12 @@ export default async function PerfilPage({
       .select('*')
       .eq('creator_id', profile.id),
     supabase.rpc('get_top_supporters', { p_creator_id: profile.id }).returns<SupporterRow[]>(),
+    supabaseAdmin
+      .from('questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', profile.id)
+      .eq('status', 'pending')
+      .gte('created_at', todayStartBRT.toISOString()),
   ])
 
   const milestones = computeMilestones(statsData?.[0] ?? null)
@@ -223,7 +244,7 @@ export default async function PerfilPage({
   const responseRate = stats && stats.total_received >= 5
     ? Math.round((stats.total_answered / stats.total_received) * 100)
     : null
-  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today)
+  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today - (pendingTodayCount ?? 0))
   const avatarUrl = profile.avatar_url ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`
   const displayName = `@${profile.username}`
 

@@ -159,7 +159,7 @@ export default function DashboardPage() {
     const net = q.transactions?.[0]?.creator_net
     return sum + (net != null ? Number(net) : Number(q.price_paid) * CREATOR_NET_RATE)
   }, 0)
-  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today)
+  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today - questions.length)
 
   // Fan metrics
   const sentPending = sentQuestions.filter(q => q.status === 'pending').length

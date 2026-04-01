@@ -106,18 +106,19 @@ $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
 -- Restrito a service_role — impede DoS via row lock e unpause não autorizado.
--- p_exclude_intent_id: quando chamado pelo webhook, passar o UUID do intent sendo processado
--- para excluí-lo da contagem de pendentes. Sem isso, o próprio intent do fã sendo confirmado
--- seria contabilizado, causando falso-positivo de "limite atingido" para criadores com daily_limit baixo.
+-- Conta apenas perguntas com pagamento confirmado (status = 'pending' na tabela questions),
+-- garantindo que checkouts abandonados ou pagamentos não confirmados não ocupem slots.
+-- p_exclude_intent_id: mantido por compatibilidade com chamadas existentes, não é mais utilizado.
 CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID, p_exclude_intent_id UUID DEFAULT NULL)
 RETURNS boolean AS $$
 DECLARE
   v_daily_limit integer;
   v_answered_today integer;
-  v_pending_intents integer;
+  v_pending_confirmed integer;
   v_is_paused boolean;
   v_paused_until timestamptz;
   v_approval_status text;
+  v_today_start timestamptz;
 BEGIN
   IF current_setting('role', true) != 'service_role' THEN
     RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
@@ -139,15 +140,18 @@ BEGIN
     END IF;
   END IF;
 
-  -- Excluir o intent atual (p_exclude_intent_id) da contagem quando chamado pelo webhook,
-  -- pois ele representa o pagamento em confirmação — não um slot adicional ocupado por outro fã.
-  SELECT COUNT(*) INTO v_pending_intents
-    FROM public.payment_intents
-    WHERE creator_id = p_creator_id
-      AND created_at > NOW() - INTERVAL '2 hours'
-      AND (p_exclude_intent_id IS NULL OR id != p_exclude_intent_id);
+  -- Início do dia corrente no fuso de São Paulo
+  v_today_start := date_trunc('day', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo';
 
-  RETURN (v_answered_today + v_pending_intents) < v_daily_limit;
+  -- Conta apenas perguntas com pagamento confirmado aguardando resposta (criadas hoje).
+  -- Checkouts abandonados ou pagamentos não confirmados NÃO são contabilizados.
+  SELECT COUNT(*) INTO v_pending_confirmed
+    FROM public.questions
+    WHERE creator_id = p_creator_id
+      AND status = 'pending'
+      AND created_at >= v_today_start;
+
+  RETURN (v_answered_today + v_pending_confirmed) < v_daily_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
