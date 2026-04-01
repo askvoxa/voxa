@@ -405,7 +405,7 @@ SET search_path = '';
 -- Garante que o criador nunca fique sem chave ativa em caso de erro parcial
 CREATE OR REPLACE FUNCTION upsert_pix_key(
   p_creator_id UUID,
-  p_key_type pix_key_type,
+  p_key_type public.pix_key_type,
   p_key_value TEXT,
   p_encryption_key TEXT
 )
@@ -443,7 +443,7 @@ CREATE OR REPLACE FUNCTION decrypt_pix_key(
   p_pix_key_id UUID,
   p_encryption_key TEXT
 )
-RETURNS TABLE (key_type pix_key_type, key_value TEXT) AS $$
+RETURNS TABLE (key_type public.pix_key_type, key_value TEXT) AS $$
 BEGIN
   IF current_setting('role', true) != 'service_role' THEN
     RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
@@ -465,10 +465,10 @@ CREATE OR REPLACE FUNCTION get_masked_pix_key(
   p_creator_id UUID,
   p_encryption_key TEXT
 )
-RETURNS TABLE (id UUID, key_type pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
+RETURNS TABLE (id UUID, key_type public.pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
 DECLARE
   v_raw TEXT;
-  v_type pix_key_type;
+  v_type public.pix_key_type;
   v_id UUID;
   v_created TIMESTAMPTZ;
 BEGIN
@@ -645,7 +645,7 @@ SET search_path = '';
 -- Apenas service_role pode chamar esta função
 CREATE OR REPLACE FUNCTION upsert_pix_key(
   p_creator_id UUID,
-  p_key_type pix_key_type,
+  p_key_type public.pix_key_type,
   p_key_value TEXT,
   p_encryption_key TEXT
 )
@@ -674,7 +674,7 @@ SET search_path = '';
 
 -- RPC: retorna chave PIX mascarada (decriptada apenas no DB, nunca no API layer)
 CREATE OR REPLACE FUNCTION get_masked_pix_key(p_creator_id UUID, p_encryption_key TEXT)
-RETURNS TABLE (key_type pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
+RETURNS TABLE (key_type public.pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
 DECLARE
   v_decrypted TEXT;
 BEGIN
@@ -700,7 +700,7 @@ SET search_path = '';
 -- RPC: retorna chave PIX decriptada (apenas para cron/webhook via service_role)
 -- Usada exclusivamente pelo cron de processamento de payouts
 CREATE OR REPLACE FUNCTION get_decrypted_pix_key_for_payout(p_payout_id UUID, p_encryption_key TEXT)
-RETURNS TABLE (key_type pix_key_type, key_value TEXT) AS $$
+RETURNS TABLE (key_type public.pix_key_type, key_value TEXT) AS $$
 BEGIN
   IF current_setting('role', true) != 'service_role' THEN
     RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
