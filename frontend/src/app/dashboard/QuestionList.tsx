@@ -144,13 +144,16 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setTimeout(() => setSuccessMessage(''), 3500)
   }
 
-  const openRespond = (id: string, mode: ResponseMode) => {
+  const openRespond = async (id: string, mode: ResponseMode) => {
     setRespondingTo(id)
     setResponseMode(mode)
     setResponseText('')
     setAudioBlob(null)
-    setAudioUrl(null) // useEffect no audioUrl cuida da revogação
+    setAudioUrl(null)
     setSubmitError('')
+    if (mode === 'audio' && typeof window !== 'undefined' && !!window.MediaRecorder) {
+      await startRecording()
+    }
   }
 
   const closeRespond = () => {
@@ -166,8 +169,20 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
   // ── Gravação de áudio (desktop/Android) ────────────────────────
   const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setSubmitError('Gravação de áudio não disponível. Verifique se o site está acessível via HTTPS e se o navegador suporta gravação.')
+      return
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      const tracks = stream.getAudioTracks()
+      if (tracks.length === 0 || tracks[0].readyState !== 'live') {
+        stream.getTracks().forEach(t => t.stop())
+        setSubmitError('Nenhum microfone encontrado. Verifique se um microfone está conectado e com permissão concedida.')
+        return
+      }
+
       chunksRef.current = []
       cancelRecordingRef.current = false
 
@@ -179,23 +194,27 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
         : new MediaRecorder(stream)
 
       mr.ondataavailable = (e) => {
-        // Ignorar chunks vazios que alguns browsers emitem no final
         if (e.data.size > 0) chunksRef.current.push(e.data)
       }
       mr.onstop = () => {
-        // Sempre parar as tracks do microfone ao finalizar
         stream.getTracks().forEach(t => t.stop())
 
-        // Se a gravação foi cancelada (ex: closeRespond), não processar o blob
         if (cancelRecordingRef.current) {
           cancelRecordingRef.current = false
           return
         }
 
-        // Usar o mimeType real do MediaRecorder para garantir compatibilidade
-        // (Chrome usa audio/webm;codecs=opus, Firefox usa audio/ogg;codecs=opus)
+        if (chunksRef.current.length === 0) {
+          setSubmitError('Nenhum áudio foi capturado. Verifique se o microfone está funcionando e tente novamente.')
+          return
+        }
+
         const mimeType = mr.mimeType || 'audio/webm'
         const blob = new Blob(chunksRef.current, { type: mimeType })
+        if (blob.size === 0) {
+          setSubmitError('Gravação falhou — nenhum áudio capturado. Verifique seu microfone e tente novamente.')
+          return
+        }
         setAudioBlob(blob)
         setAudioUrl(URL.createObjectURL(blob))
       }
@@ -203,8 +222,14 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
       mr.start(250)
       mediaRecorderRef.current = mr
       setRecording(true)
-    } catch {
-      setSubmitError('Permissão de microfone negada. Verifique as configurações do navegador.')
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setSubmitError('Permissão de microfone negada. Clique no ícone de cadeado na barra de endereço e permita o acesso ao microfone.')
+      } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+        setSubmitError('Nenhum microfone encontrado. Conecte um microfone e tente novamente.')
+      } else {
+        setSubmitError('Não foi possível acessar o microfone. Verifique as permissões do navegador e tente novamente.')
+      }
     }
   }
 
@@ -509,10 +534,10 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                           <>
                             <audio controls src={audioUrl} className="w-full" preload="metadata" />
                             <button
-                              onClick={() => {
-                                if (audioUrl) URL.revokeObjectURL(audioUrl)
+                              onClick={async () => {
                                 setAudioBlob(null)
                                 setAudioUrl(null)
+                                await startRecording()
                               }}
                               className="text-sm text-gray-500 underline cursor-pointer py-1"
                             >
