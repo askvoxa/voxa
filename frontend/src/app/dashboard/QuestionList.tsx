@@ -47,7 +47,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   // Áudio
   const [recording, setRecording] = useState(false)
   const [recordingSeconds, setRecordingSeconds] = useState(0)
-  const [recordingBytes, setRecordingBytes] = useState(0)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -151,7 +150,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     setResponseText('')
     setAudioBlob(null)
     setAudioUrl(null)
-    setRecordingBytes(0)
     setSubmitError('')
     if (mode === 'audio' && typeof window !== 'undefined' && !!window.MediaRecorder) {
       await startRecording()
@@ -187,26 +185,17 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
 
       chunksRef.current = []
       cancelRecordingRef.current = false
-      setRecordingBytes(0)
 
       // Usar o formato padrão do browser (WebM no Chrome/Edge, OGG no Firefox).
       // audio/mp4 com timeslice gera fmp4 fragmentado: chunks concatenados num Blob
       // não têm o átomo moov completo, causando "0:00" e impossibilidade de reprodução.
       const mr = new MediaRecorder(stream)
-      console.log('[voxa] MediaRecorder iniciado, mimeType:', mr.mimeType)
 
       mr.ondataavailable = (e) => {
-        console.log(`[voxa] chunk: ${e.data.size}B, total chunks: ${chunksRef.current.length + 1}`)
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data)
-          setRecordingBytes(prev => prev + e.data.size)
-        }
+        if (e.data.size > 0) chunksRef.current.push(e.data)
       }
       mr.onstop = () => {
         stream.getTracks().forEach(t => t.stop())
-
-        const totalBytes = chunksRef.current.reduce((s, c) => s + (c as Blob).size, 0)
-        console.log(`[voxa] onstop — chunks: ${chunksRef.current.length}, totalBytes: ${totalBytes}, mimeType: ${mr.mimeType}`)
 
         if (cancelRecordingRef.current) {
           cancelRecordingRef.current = false
@@ -545,16 +534,10 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                             <audio key={audioUrl} controls className="w-full" preload="auto">
                               <source src={audioUrl} type={audioBlob?.type ?? 'audio/webm'} />
                             </audio>
-                            {audioBlob && (
-                              <p className="text-xs text-gray-400">
-                                Áudio gravado: {(audioBlob.size / 1024).toFixed(1)} KB · {audioBlob.type}
-                              </p>
-                            )}
                             <button
                               onClick={async () => {
                                 setAudioBlob(null)
                                 setAudioUrl(null)
-                                setRecordingBytes(0)
                                 await startRecording()
                               }}
                               className="text-sm text-gray-500 underline cursor-pointer py-1"
@@ -572,13 +555,6 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                                 ? `⏹ Parar gravação — ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`
                                 : <><span role="img" aria-label="Microfone">🎙️</span> Iniciar gravação</>}
                             </button>
-                            {recording && (
-                              <p className="text-xs text-center text-gray-500">
-                                {recordingBytes > 0
-                                  ? `🎙 ${(recordingBytes / 1024).toFixed(1)} KB capturados`
-                                  : 'Aguardando dados do microfone...'}
-                              </p>
-                            )}
                           </>
                         ) : (
                           <div>
