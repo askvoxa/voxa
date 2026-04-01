@@ -1,71 +1,150 @@
-# VOXA 🎙️
+# VOXA
 
-**VOXA** é uma plataforma inovadora de monetização para criadores de conteúdo (influencers) focada no público brasileiro. A plataforma viabiliza a interação Premium, em que fãs pagam para enviar perguntas diretas ou contribuição de apoio ao influenciador favorito, dispondo de uma barreira temporária máxima de 36 horas para as respostas em formato multimídia, com automação estrita de devoluções passivas estourado o tempo limite.
+**VOXA** é uma plataforma brasileira de monetização para criadores de conteúdo. Fãs pagam para enviar perguntas diretas ao criador favorito via PIX ou cartão. O criador tem até 36 horas para responder em texto ou áudio — caso não responda, o reembolso é automático.
 
 ![Status](https://img.shields.io/badge/Status-Produção_&_Beta_Mobile-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-14.1-black)
 ![React Native](https://img.shields.io/badge/React_Native-Expo-blue)
 ![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e)
 
-## 📦 Estrutura Macro do Projeto
+---
 
-A stack do VOXA repousa sobre a premissa de um Monorepo simplificado contendo o Cliente Next.js, um Container Expo Nativo e os Schemas puros do Supabase.
+## Estrutura do Monorepo
 
 ```text
 voxa/
-├── CLAUDE.md                   # Resenha essencial de regras (Hub e Pointer Core Pointers AI)
-├── README.md                   # Este arquivo (Visão geral e setup)
-├── docs/                       # Diretório Progressivo de Documentação (Fluxos, DB, Arch)
-├── frontend/                   # Aplicação Next.js Core (Interface e lógicas de servidor)
-├── mobile/                     # Aplicativo Expo React Native (Wrapper WebView)
-└── database/                   # Definições do banco de dados (SQL Source of Truth)
+├── CLAUDE.md              # Diretrizes para agentes de IA / contribuidores
+├── README.md              # Este arquivo
+├── docs/                  # Documentação detalhada por domínio
+│   ├── architecture.md    # Rotas, componentes, autenticação, emails
+│   ├── database.md        # Tabelas, RPCs, triggers, RLS
+│   ├── workflows.md       # Fluxos críticos: pagamento, payout, expiração
+│   ├── testing_strategy.md# Estratégia de testes (pgTAP, Vitest, Playwright)
+│   └── qa_checklist.md    # Checklist manual de QA por jornada
+├── frontend/              # App Next.js 14 (App Router)
+├── mobile/                # App Expo React Native (WebView wrapper)
+└── database/              # SQL source of truth
+    └── schemas/           # 00_enums → 06_indexes_and_seed
 ```
 
-## 📖 Documentação (Progressive Disclosure)
+---
 
-Com o objetivo de manter fluência e facilitar leituras em alto nível (*Progressive Disclosure*), detalhes e restrições arquitetônicas, de banco e de pipelines estão alojados na pasta subordinada `docs/`.
+## Documentação Detalhada
 
-- [**Arquitetura & Design** (`docs/architecture.md`)](docs/architecture.md) => Stack, Mobile vs Web, Dark mode premium constraints e regras centrais de Frontend.
-- [**Database Supremo** (`docs/database.md`)](docs/database.md) => Modelagem de perfis, interações centrais (Questions/Payments), regras herméticas RLS e Triggers.
-- [**Webhooks & Cron Jobs** (`docs/workflows.md`)](docs/workflows.md) => Entendendo os limites sensíveis e irreversíveis da API MP, estornos passivos assíncronos e proteção contra sobreposição (overselling).
-- [**Testabilidade & QA** (`docs/testing_strategy.md`)](docs/testing_strategy.md) => Estratégia planejada de testes automatizados (pgTAP, Vitest, Playwright).
+| Documento | Quando consultar |
+|-----------|-----------------|
+| [architecture.md](docs/architecture.md) | Criar/alterar interfaces, rotas, componentes, CSS |
+| [database.md](docs/database.md) | Alterar tabelas, triggers, RPCs ou políticas RLS |
+| [workflows.md](docs/workflows.md) | Tocar no fluxo de pagamento, payout ou expiração |
+| [testing_strategy.md](docs/testing_strategy.md) | Implementar ou executar testes |
+| [qa_checklist.md](docs/qa_checklist.md) | Sessões de QA manual |
 
-> **Atenção (Importante):** Verifique essas sub-rotas nos documentos sempre que mexer na fundação destas funcionalidades. O arquivo `CLAUDE.md` aglutina regras basilares de convenção para contribuidores autônomos/IAs.
+---
 
-## 🏗️ Pré-requisitos (Desenvolvimento Local)
+## Jornadas de Usuário
 
-- Node.js `18.x` mínimo
-- Conta no serviço [Supabase](https://supabase.com/) e cli ativada e Mercado Pago em dev-mode.
-- A conta do [Expo](https://expo.dev/) acoplada ao EAS CLI (`npm i -g eas-cli`) para disparos de builds unificadas via cloud na estrutura _Mobile_.
+### Fã
+Cria conta (Google OAuth) → acessa perfil de criador → preenche pergunta + email → paga via Mercado Pago (PIX/cartão) → aguarda resposta → recebe notificação por email quando respondida. Caso expire em 36h, recebe reembolso automático.
 
-## ⚙️ Instalação e Configuração
+### Criador
+Solicita acesso via convite ou candidatura → admin aprova → conclui setup do perfil → recebe perguntas pagas no dashboard → responde em texto ou áudio → saldo liberado após carência de 7 dias → solicita saque via PIX.
 
-### 1. Clonar
+### Admin
+Aprova/rejeita candidaturas de criadores → gerencia usuários → processa verificações de identidade → revisa perguntas reportadas → controla configurações da plataforma (taxa, prazo de resposta, saques).
+
+---
+
+## Mapa de Rotas
+
+| Rota | Acesso | Descrição |
+|------|--------|-----------|
+| `/` | Público | Landing page |
+| `/sou-criador` | Público | Página de captação de criadores |
+| `/waitlist` | Público | Formulário de pré-cadastro |
+| `/login` | Público | Login via Google OAuth |
+| `/perfil/[username]` | Público | Perfil do criador + formulário de pergunta |
+| `/auth/*` | Sistema | Callback OAuth do Supabase |
+| `/invite/[code]` | Autenticado | Ativação de convite de criador |
+| `/setup/creator` | Autenticado | Formulário de candidatura / setup do criador |
+| `/dashboard` | Autenticado | Dashboard principal (modo fã ou criador) |
+| `/dashboard/questions` | Criador | Lista de perguntas pendentes |
+| `/dashboard/history` | Autenticado | Histórico de perguntas |
+| `/dashboard/payouts` | Criador | Saldo e solicitação de saques PIX |
+| `/dashboard/spending` | Fã | Histórico de gastos |
+| `/dashboard/profile` | Autenticado | Edição de perfil |
+| `/dashboard/settings` | Autenticado | Configurações da conta |
+| `/dashboard/referral` | Criador | Link de referral |
+| `/dashboard/verification` | Criador | Solicitação de verificação de identidade |
+| `/admin` | Admin | Painel administrativo |
+| `/admin/approvals` | Admin | Candidaturas de criadores pendentes |
+| `/admin/users` | Admin | Gerenciamento de usuários |
+| `/admin/influencers/[id]` | Admin | Detalhes e controles de um criador |
+| `/admin/payouts` | Admin | Visão geral e controle de saques |
+| `/admin/verifications` | Admin | Solicitações de verificação de identidade |
+| `/admin/reports` | Admin | Perguntas reportadas como abusivas |
+| `/admin/invites` | Admin | Criação e listagem de convites |
+| `/admin/settings` | Admin | Taxa da plataforma, prazo de resposta |
+
+---
+
+## Variáveis de Ambiente
+
+Crie `frontend/.env.local` com as seguintes variáveis:
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=          # URL do projeto Supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Chave pública (anon)
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= # Chave publishable (SSR)
+SUPABASE_SERVICE_ROLE_KEY=         # Chave service_role (server only — nunca expor)
+
+# Mercado Pago
+MP_ACCESS_TOKEN=                   # Token privado do MP (server only)
+NEXT_PUBLIC_MP_PUBLIC_KEY=         # Chave pública do MP (checkout)
+MP_WEBHOOK_SECRET=                 # Secret HMAC para validar webhooks do MP
+
+# App
+NEXT_PUBLIC_APP_URL=               # URL base (ex: https://askvoxa.com)
+
+# Email (Resend)
+RESEND_API_KEY=                    # API key do Resend (server only)
+```
+
+---
+
+## Setup Local
+
+### 1. Clonar o repositório
 ```bash
 git clone https://github.com/askvoxa/voxa.git
 cd voxa
 ```
 
-### 2. Rodar o App Server Web
+### 2. Frontend (Next.js)
 ```bash
 cd frontend
 npm install
-# Configure variáveis baseadas no supabase/mercado pago no arquivo `frontend/.env.local`.
+cp .env.example .env.local   # preencha as variáveis acima
 npm run dev
 ```
 
-### 3. Subir e Emular Container Mobile
+### 3. Banco de dados (Supabase)
+Execute os arquivos de `database/schemas/` **em ordem** no SQL Editor do Supabase:
+```
+00_enums.sql → 01_tables.sql → 02_storage.sql → 03_functions.sql
+→ 04_triggers.sql → 05_rls_policies.sql → 06_indexes_and_seed.sql
+```
+Habilite também o **Sign-in com Google** nas configurações de Autenticação do Supabase.
+
+### 4. Mobile (Expo)
 ```bash
 cd mobile
 npm install
 npx expo start
 ```
-*(Nota: O front mobile acopla por padrão ao App em deploy `askvoxa.com`. Adapte os URIs locais do React Native Webview dentro de `App.tsx` para testes no _host machine_)*
-
-### 4. Setup Local do Supabase
-Execute os arquivos de `database/schemas/` em ordem numérica (00 → 06) no SQL Editor do Supabase. Habilite o Sign-in Google nas configurações de Autenticação.
+> O app mobile aponta por padrão para `askvoxa.com`. Para testar localmente, altere a URL do WebView em `mobile/App.tsx`.
 
 ---
 
-## 📝 Licença
+## Licença
 Desenvolvido para uso restrito/interno. Copyright (c) 2026 VOXA. Todos os direitos reservados.
