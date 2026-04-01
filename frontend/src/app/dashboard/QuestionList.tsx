@@ -542,7 +542,9 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
                         {audioUrl ? (
                           <>
-                            <audio controls src={audioUrl} className="w-full" preload="auto" />
+                            <audio key={audioUrl} controls className="w-full" preload="auto">
+                              <source src={audioUrl} type={audioBlob?.type ?? 'audio/webm'} />
+                            </audio>
                             {audioBlob && (
                               <p className="text-xs text-gray-400">
                                 Áudio gravado: {(audioBlob.size / 1024).toFixed(1)} KB · {audioBlob.type}
