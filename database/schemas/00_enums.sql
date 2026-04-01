@@ -3,6 +3,9 @@
 -- Tipos enumerados e complexos compartilhados
 -- ============================================================
 
+-- Extensão necessária para criptografia de chaves PIX (pgp_sym_encrypt/decrypt)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TYPE question_status AS ENUM ('pending', 'answered', 'expired', 'reported', 'rejected');
 
 -- Migração para bancos já existentes (rodar manualmente se o enum já foi criado):
