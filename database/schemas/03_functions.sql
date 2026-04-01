@@ -427,7 +427,7 @@ BEGIN
   VALUES (
     p_creator_id,
     p_key_type,
-    pgp_sym_encrypt(p_key_value, p_encryption_key),
+    extensions.pgp_sym_encrypt(p_key_value, p_encryption_key),
     TRUE
   )
   RETURNING id INTO v_new_id;
@@ -452,7 +452,7 @@ BEGIN
   RETURN QUERY
   SELECT
     pk.key_type,
-    pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key) AS key_value
+    extensions.pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key) AS key_value
   FROM public.creator_pix_keys pk
   WHERE pk.id = p_pix_key_id;
 END;
@@ -477,7 +477,7 @@ BEGIN
   END IF;
 
   SELECT pk.id, pk.key_type,
-         pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key),
+         extensions.pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key),
          pk.created_at
     INTO v_id, v_type, v_raw, v_created
     FROM public.creator_pix_keys pk
@@ -664,7 +664,7 @@ BEGIN
 
   -- Inserir nova chave criptografada
   INSERT INTO public.creator_pix_keys (creator_id, key_type, key_value, is_active)
-  VALUES (p_creator_id, p_key_type, pgp_sym_encrypt(p_key_value, p_encryption_key), TRUE)
+  VALUES (p_creator_id, p_key_type, extensions.pgp_sym_encrypt(p_key_value, p_encryption_key), TRUE)
   RETURNING id INTO v_new_key_id;
 
   RETURN v_new_key_id;
@@ -686,8 +686,8 @@ BEGIN
   SELECT
     cpk.key_type,
     CASE cpk.key_type
-      WHEN 'cpf' THEN '***.***' || RIGHT(pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 5)
-      WHEN 'cnpj' THEN '**.***.***' || RIGHT(pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 8)
+      WHEN 'cpf' THEN '***.***' || RIGHT(extensions.pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 5)
+      WHEN 'cnpj' THEN '**.***.***' || RIGHT(extensions.pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key), 8)
     END AS masked_value,
     cpk.created_at
   FROM public.creator_pix_keys cpk
@@ -709,7 +709,7 @@ BEGIN
   RETURN QUERY
   SELECT
     cpk.key_type,
-    pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key) AS key_value
+    extensions.pgp_sym_decrypt(cpk.key_value::BYTEA, p_encryption_key) AS key_value
   FROM public.payout_requests pr
   JOIN public.creator_pix_keys cpk ON cpk.id = pr.pix_key_id
   WHERE pr.id = p_payout_id;
