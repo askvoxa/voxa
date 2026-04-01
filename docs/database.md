@@ -253,6 +253,7 @@ Todas as funções usam `SET search_path = ''` para prevenir ataques de search_p
 | `get_top_supporters(creator_id)` | Criador próprio | Retorna top 5 apoiadores do mês com dados mascarados |
 | `get_eligible_earnings_for_release(release_days)` | service_role | Transações elegíveis para liberação de saldo pelo cron |
 | `get_payout_summary(week_ago)` | service_role | Resumo de saques para o painel admin |
+| `get_question_payout_status(creator_id)` | Autenticado (próprio criador) ou service_role | Retorna por `transaction_id` o status do pagamento (`pending`/`available`/`paid`) e a data de liberação. Usado pelas tags de status no Histórico. |
 | `upsert_pix_key(creator_id, key_type, key_value, encryption_key)` | service_role | Cadastra/atualiza chave PIX (desativa anterior + criptografa nova) |
 | `get_masked_pix_key(creator_id, encryption_key)` | service_role | Retorna chave PIX mascarada para exibição |
 | `get_decrypted_pix_key_for_payout(payout_id, encryption_key)` | service_role | Decripta chave PIX para uso no cron de processamento |

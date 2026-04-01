@@ -121,6 +121,18 @@ O sistema usa um **modelo de ledger contábil** para garantir integridade do sal
 - O `creator_ledger` é a única fonte de verdade do saldo. `profiles.available_balance` é um **cache materializado** pelo trigger — não confiar diretamente.
 - Nenhuma escrita direta em `creator_ledger` ou `payout_requests` é permitida via client (RLS bloqueia).
 - Se `payouts_paused = true` em `platform_settings`, nenhum saque pode ser solicitado.
+- **Saque sempre é o saldo total:** `request_payout` usa `available_balance` diretamente — não aceita valor parcial do caller. O mínimo de R$ 50 ainda se aplica.
+
+### Tags de status no Histórico (`/dashboard/history`)
+Cada card de pergunta exibe uma tag que reflete o estado do earning:
+
+| Tag | Condição |
+|-----|---------|
+| `🔒 Disponível em DD/MM` | Earning dentro do período de carência — sem crédito no ledger ainda |
+| `✓ Disponível` | Crédito lançado no ledger + nenhum payout completo posterior |
+| `✓ Pago` | Crédito lançado + existe payout completo com `processed_at` posterior ao crédito |
+
+A soma de todos os cards "Disponível" é matematicamente igual ao `available_balance` exibido na tela de Saques. A soma dos cards "A liberar" é igual ao `pending_release`. Esse invariante é garantido pelo fato de que cada saque consome o saldo completo.
 
 ---
 

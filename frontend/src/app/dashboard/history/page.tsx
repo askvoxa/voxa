@@ -17,7 +17,12 @@ type AnsweredQuestion = {
   response_text: string | null
   response_audio_url: string | null
   answered_at: string
-  transactions?: { creator_net: number | null }[]
+  transactions?: { id: string; creator_net: number | null }[]
+}
+
+type EarningStatus = {
+  status: 'pending' | 'available' | 'paid'
+  release_date: string
 }
 
 // Retorna o valor líquido real da transação, ou estimativa para registros antigos
@@ -67,7 +72,7 @@ export default async function HistoryPage({
 
   let query = supabase
     .from('questions')
-    .select('id, sender_name, content, price_paid, service_type, is_anonymous, is_shareable, response_text, response_audio_url, answered_at, transactions(creator_net)', { count: 'exact' })
+    .select('id, sender_name, content, price_paid, service_type, is_anonymous, is_shareable, response_text, response_audio_url, answered_at, transactions(id, creator_net)', { count: 'exact' })
     .eq('creator_id', profile.id)
     .eq('status', 'answered')
     .order('answered_at', { ascending: false })
@@ -79,6 +84,19 @@ export default async function HistoryPage({
   query = query.range(offset, offset + pageSize - 1)
 
   const { data: questions, count } = await query.returns<AnsweredQuestion[]>()
+
+  // Status de pagamento por transação — usa o client autenticado do usuário
+  type StatusRow = { transaction_id: string; status: 'pending' | 'available' | 'paid'; release_date: string }
+  const { data: statusRows, error: statusError } = await supabase
+    .rpc('get_question_payout_status', { p_creator_id: profile.id })
+
+  if (statusError) {
+    console.error('[history] get_question_payout_status falhou:', statusError.message)
+  }
+
+  const statusMap = new Map<string, EarningStatus>(
+    ((statusRows ?? []) as StatusRow[]).map(r => [r.transaction_id, { status: r.status, release_date: r.release_date }])
+  )
 
   // Totais (sem paginação — para métricas)
   let totalQuery = supabase
@@ -132,6 +150,9 @@ export default async function HistoryPage({
       minute: '2-digit',
     })
   }
+
+  const formatShortDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
   return (
       <main className="max-w-5xl mx-auto px-4 py-8 w-full">
@@ -237,11 +258,37 @@ export default async function HistoryPage({
                       <p className="text-xs text-gray-500 truncate">{formatDate(q.answered_at)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <VisibilityToggle questionId={q.id} initialVisible={q.is_shareable} />
-                    <span className="text-green-600 font-bold bg-green-50 border border-green-200 px-2 py-1 rounded-lg text-sm">
-                      +R$ {effectiveNet(q).toFixed(2).replace('.', ',')}
-                    </span>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <VisibilityToggle questionId={q.id} initialVisible={q.is_shareable} />
+                      <span className="text-green-600 font-bold bg-green-50 border border-green-200 px-2 py-1 rounded-lg text-sm">
+                        +R$ {effectiveNet(q).toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+                    {(() => {
+                      const txId = q.transactions?.[0]?.id
+                      const earning = txId ? statusMap.get(txId) : undefined
+                      if (!earning) return null
+                      if (earning.status === 'paid') {
+                        return (
+                          <span className="text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                            ✓ Pago
+                          </span>
+                        )
+                      }
+                      if (earning.status === 'available') {
+                        return (
+                          <span className="text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                            ✓ Disponível
+                          </span>
+                        )
+                      }
+                      return (
+                        <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          🔒 Disponível em {formatShortDate(earning.release_date)}
+                        </span>
+                      )
+                    })()}
                   </div>
                 </div>
 

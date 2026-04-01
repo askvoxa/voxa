@@ -742,3 +742,65 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
+
+-- RPC: retorna status de pagamento por transação para o histórico do criador
+-- Usado para exibir tags "Disponível", "Pago" ou "Disponível em DD/MM" nos cards
+-- status: 'pending' | 'available' | 'paid'
+--
+-- INVARIANTE: cada saque (request_payout) consome o available_balance completo.
+-- Portanto, qualquer crédito lançado antes do processed_at de um payout completo
+-- foi necessariamente coberto por aquele saque — sem necessidade de FIFO por valor.
+--
+-- Acesso: service_role OU usuário autenticado consultando seus próprios dados.
+CREATE OR REPLACE FUNCTION get_question_payout_status(p_creator_id UUID)
+RETURNS TABLE (
+  transaction_id UUID,
+  status         TEXT,
+  release_date   TIMESTAMPTZ
+) AS $$
+DECLARE
+  v_release_days INTEGER;
+BEGIN
+  -- Permite service_role (admin/cron) ou o próprio criador autenticado
+  IF current_setting('role', true) != 'service_role' THEN
+    IF auth.uid() IS NULL OR auth.uid() != p_creator_id THEN
+      RAISE EXCEPTION 'Acesso negado';
+    END IF;
+  END IF;
+
+  SELECT COALESCE(payout_release_days, 7) INTO v_release_days
+    FROM public.platform_settings WHERE id = 1;
+
+  RETURN QUERY
+  SELECT
+    t.id AS transaction_id,
+    CASE
+      WHEN cl_credit.id IS NULL THEN 'pending'::TEXT
+      WHEN pr_paid.id IS NOT NULL THEN 'paid'::TEXT
+      ELSE 'available'::TEXT
+    END AS status,
+    (q.answered_at + make_interval(days => v_release_days)) AS release_date
+  FROM public.transactions t
+  JOIN public.questions q
+    ON q.id = t.question_id
+  -- LEFT JOIN no crédito do ledger (único por transação por constraint uq_ledger_reference)
+  LEFT JOIN public.creator_ledger cl_credit
+    ON cl_credit.reference_type = 'transaction'
+   AND cl_credit.reference_id = t.id
+   AND cl_credit.type = 'credit'
+  -- LATERAL: busca o primeiro payout completo posterior ao crédito (se existir)
+  LEFT JOIN LATERAL (
+    SELECT pr.id
+    FROM public.payout_requests pr
+    WHERE pr.creator_id = p_creator_id
+      AND pr.status = 'completed'
+      AND pr.processed_at > cl_credit.created_at
+    ORDER BY pr.processed_at ASC
+    LIMIT 1
+  ) pr_paid ON cl_credit.id IS NOT NULL
+  WHERE q.creator_id = p_creator_id
+    AND q.status = 'answered'
+    AND t.status = 'approved';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
