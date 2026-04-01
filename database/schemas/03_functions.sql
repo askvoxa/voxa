@@ -459,50 +459,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
--- RPC: retorna chave PIX mascarada para exibição (sem expor valor real)
--- Decripta internamente, retorna apenas os dígitos centrais mascarados
-CREATE OR REPLACE FUNCTION get_masked_pix_key(
-  p_creator_id UUID,
-  p_encryption_key TEXT
-)
-RETURNS TABLE (id UUID, key_type public.pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
-DECLARE
-  v_raw TEXT;
-  v_type public.pix_key_type;
-  v_id UUID;
-  v_created TIMESTAMPTZ;
-BEGIN
-  IF current_setting('role', true) != 'service_role' THEN
-    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
-  END IF;
-
-  SELECT pk.id, pk.key_type,
-         extensions.pgp_sym_decrypt(pk.key_value::BYTEA, p_encryption_key),
-         pk.created_at
-    INTO v_id, v_type, v_raw, v_created
-    FROM public.creator_pix_keys pk
-    WHERE pk.creator_id = p_creator_id AND pk.is_active = TRUE;
-
-  IF v_id IS NULL THEN
-    RETURN;
-  END IF;
-
-  -- Mascarar: CPF → ***.456.789-** | CNPJ → **.345.678/0001-**
-  IF v_type = 'cpf' AND LENGTH(v_raw) = 11 THEN
-    RETURN QUERY SELECT v_id, v_type,
-      '***.' || SUBSTRING(v_raw FROM 4 FOR 3) || '.' || SUBSTRING(v_raw FROM 7 FOR 3) || '-**',
-      v_created;
-  ELSIF v_type = 'cnpj' AND LENGTH(v_raw) = 14 THEN
-    RETURN QUERY SELECT v_id, v_type,
-      '**.' || SUBSTRING(v_raw FROM 3 FOR 3) || '.' || SUBSTRING(v_raw FROM 6 FOR 3) || '/' || SUBSTRING(v_raw FROM 9 FOR 4) || '-**',
-      v_created;
-  ELSE
-    RETURN QUERY SELECT v_id, v_type, '***mascarado***'::TEXT, v_created;
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '';
-
 -- RPC: retorna transações elegíveis para liberação de saldo (elimina N+1 do cron)
 -- Filtra transações approved+answered fora do período de carência e sem credit no ledger
 CREATE OR REPLACE FUNCTION get_eligible_earnings_for_release(p_release_days INTEGER)
@@ -673,6 +629,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
 -- RPC: retorna chave PIX mascarada (decriptada apenas no DB, nunca no API layer)
+-- DROP necessário pois versão anterior tinha id UUID na assinatura de retorno
+DROP FUNCTION IF EXISTS get_masked_pix_key(UUID, TEXT);
 CREATE OR REPLACE FUNCTION get_masked_pix_key(p_creator_id UUID, p_encryption_key TEXT)
 RETURNS TABLE (key_type public.pix_key_type, masked_value TEXT, created_at TIMESTAMPTZ) AS $$
 DECLARE
