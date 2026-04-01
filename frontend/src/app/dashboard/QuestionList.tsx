@@ -51,6 +51,8 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
+  // Flag para cancelar a gravação sem processar o blob (evita race condition no closeRespond)
+  const cancelRecordingRef = useRef(false)
 
   // Revogar URL de áudio anterior sempre que uma nova é criada (evita memory leak)
   const audioUrlRef = useRef<string | null>(null)
@@ -152,6 +154,9 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
   }
 
   const closeRespond = () => {
+    // Marcar como cancelado ANTES de chamar stopRecording para evitar race condition:
+    // o onstop é assíncrono e pode disparar após os resets de estado abaixo
+    cancelRecordingRef.current = true
     setRespondingTo(null)
     setResponseMode(null)
     stopRecording()
@@ -164,15 +169,38 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       chunksRef.current = []
-      const mr = new MediaRecorder(stream)
-      mr.ondataavailable = (e) => chunksRef.current.push(e.data)
+      cancelRecordingRef.current = false
+
+      // Preferir audio/mp4 (AAC) por ser o único formato reproduzível em iOS Safari.
+      // Chrome 81+ e Safari suportam; Firefox não suporta mp4 e cai para seu padrão (ogg).
+      const preferMp4 = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4')
+      const mr = preferMp4
+        ? new MediaRecorder(stream, { mimeType: 'audio/mp4' })
+        : new MediaRecorder(stream)
+
+      mr.ondataavailable = (e) => {
+        // Ignorar chunks vazios que alguns browsers emitem no final
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
       mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        // Sempre parar as tracks do microfone ao finalizar
+        stream.getTracks().forEach(t => t.stop())
+
+        // Se a gravação foi cancelada (ex: closeRespond), não processar o blob
+        if (cancelRecordingRef.current) {
+          cancelRecordingRef.current = false
+          return
+        }
+
+        // Usar o mimeType real do MediaRecorder para garantir compatibilidade
+        // (Chrome usa audio/webm;codecs=opus, Firefox usa audio/ogg;codecs=opus)
+        const mimeType = mr.mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type: mimeType })
         setAudioBlob(blob)
         setAudioUrl(URL.createObjectURL(blob))
-        stream.getTracks().forEach(t => t.stop())
       }
-      mr.start()
+      // timeslice de 250ms garante captura incremental — evita perda de dados em gravações curtas
+      mr.start(250)
       mediaRecorderRef.current = mr
       setRecording(true)
     } catch {
@@ -215,12 +243,16 @@ export default function QuestionList({ questions: initial, creatorUsername, crea
         }
 
         const supabase = createClient()
-        const ext = audioBlob.type.includes('webm') ? 'webm' : 'mp3'
+        // Derivar extensão a partir do mimeType real do blob (corrige upload com formato errado)
+        const mimeType = audioBlob.type || 'audio/webm'
+        const ext = mimeType.includes('ogg') ? 'ogg'
+          : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a'
+          : 'webm'
         const fileName = `${creatorId}/${questionId}-${Date.now()}.${ext}`
 
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('responses')
-          .upload(fileName, audioBlob, { contentType: audioBlob.type || 'audio/webm', upsert: true })
+          .upload(fileName, audioBlob, { contentType: mimeType, upsert: true })
 
         // Verificar explicitamente se upload foi bem-sucedido antes de prosseguir
         if (uploadError || !uploadData) {
