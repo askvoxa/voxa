@@ -46,14 +46,6 @@ END;
 $$ LANGUAGE plpgsql
 SET search_path = '';
 
-CREATE OR REPLACE FUNCTION reset_daily_question_counts()
-RETURNS void AS $$
-BEGIN
-    UPDATE public.profiles SET questions_answered_today = 0;
-END;
-$$ LANGUAGE plpgsql
-SET search_path = '';
-
 CREATE OR REPLACE FUNCTION expire_pending_questions()
 RETURNS void AS $$
 DECLARE
@@ -93,21 +85,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = '';
 
--- Restrito a service_role — impede que usuários inflem contadores de outros criadores
-CREATE OR REPLACE FUNCTION increment_answered_today(profile_id UUID)
-RETURNS void AS $$
-BEGIN
-  IF current_setting('role', true) != 'service_role' THEN
-    RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
-  END IF;
-  UPDATE public.profiles SET questions_answered_today = questions_answered_today + 1 WHERE id = profile_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '';
-
 -- Restrito a service_role — impede DoS via row lock e unpause não autorizado.
--- Conta apenas perguntas com pagamento confirmado (status = 'pending' na tabela questions),
--- garantindo que checkouts abandonados ou pagamentos não confirmados não ocupem slots.
+-- Conta perguntas respondidas hoje + pendentes confirmadas para verificar capacidade.
 -- p_exclude_intent_id: mantido por compatibilidade com chamadas existentes, não é mais utilizado.
 CREATE OR REPLACE FUNCTION can_accept_question(p_creator_id UUID, p_exclude_intent_id UUID DEFAULT NULL)
 RETURNS boolean AS $$
@@ -124,8 +103,8 @@ BEGIN
     RAISE EXCEPTION 'Acesso negado: apenas service_role pode chamar esta função';
   END IF;
 
-  SELECT daily_limit, questions_answered_today, is_paused, paused_until, approval_status
-    INTO v_daily_limit, v_answered_today, v_is_paused, v_paused_until, v_approval_status
+  SELECT daily_limit, is_paused, paused_until, approval_status
+    INTO v_daily_limit, v_is_paused, v_paused_until, v_approval_status
     FROM public.profiles WHERE id = p_creator_id FOR UPDATE;
 
   IF v_approval_status IS NOT NULL AND v_approval_status != 'approved' THEN
@@ -140,11 +119,14 @@ BEGIN
     END IF;
   END IF;
 
-  -- Início do dia corrente no fuso de São Paulo
   v_today_start := date_trunc('day', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo';
 
-  -- Conta apenas perguntas com pagamento confirmado aguardando resposta (criadas hoje).
-  -- Checkouts abandonados ou pagamentos não confirmados NÃO são contabilizados.
+  SELECT COUNT(*) INTO v_answered_today
+    FROM public.questions
+    WHERE creator_id = p_creator_id
+      AND status = 'answered'
+      AND answered_at >= v_today_start;
+
   SELECT COUNT(*) INTO v_pending_confirmed
     FROM public.questions
     WHERE creator_id = p_creator_id

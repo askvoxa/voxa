@@ -20,10 +20,16 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
   const adminId = await requireAdmin()
   if (!adminId) redirect('/dashboard')
 
-  const [{ data: profile }, { data: questions }, platformSettings] = await Promise.all([
+  const nowUTC = new Date()
+  const brtNow = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000)
+  const todayStartBRT = new Date(
+    Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
+  )
+
+  const [{ data: profile }, { data: questions }, platformSettings, { count: answeredTodayCount }] = await Promise.all([
     supabaseAdmin
       .from('profiles')
-      .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active, is_verified, created_at')
+      .select('id, username, bio, avatar_url, min_price, daily_limit, is_active, is_verified, created_at')
       .eq('id', params.id)
       .single(),
     supabaseAdmin
@@ -32,6 +38,12 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
       .eq('creator_id', params.id)
       .order('created_at', { ascending: false }),
     getPlatformSettings(),
+    supabaseAdmin
+      .from('questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', params.id)
+      .eq('status', 'answered')
+      .gte('answered_at', todayStartBRT.toISOString()),
   ])
 
   if (!profile) notFound()
@@ -143,7 +155,7 @@ export default async function AdminCreatorDetailPage({ params }: { params: { id:
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ticket Médio</p>
           <p className="text-xl font-bold text-gray-900">{fmt(avgPrice)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Hoje: {profile.questions_answered_today}/{profile.daily_limit}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Hoje: {answeredTodayCount ?? 0}/{profile.daily_limit}</p>
         </div>
       </div>
 

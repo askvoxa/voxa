@@ -39,7 +39,6 @@ Tabela mestre de usuários. Criada automaticamente via trigger do Supabase Auth 
 | `approval_status` | TEXT | `pending_review` / `approved` / `rejected` |
 | `min_price` | DECIMAL | Preço mínimo por pergunta (padrão R$ 10,00, mín. R$ 1,00) |
 | `daily_limit` | INTEGER | Vagas diárias (padrão 10, máx. 100) |
-| `questions_answered_today` | INTEGER | Contador zerado pelo cron `reset-daily` à meia-noite |
 | `fast_ask_suggestions` | JSONB | Sugestões de perguntas rápidas configuradas pelo criador |
 | `custom_creator_rate` | DECIMAL | Taxa customizada pelo admin (sobrescreve taxa da plataforma) |
 | `custom_deadline_hours` | INTEGER | Prazo customizado (sobrescreve `platform_settings.response_deadline_hours`) |
@@ -258,10 +257,8 @@ Todas as funções usam `SET search_path = ''` para prevenir ataques de search_p
 | `get_masked_pix_key(creator_id, encryption_key)` | service_role | Retorna chave PIX mascarada para exibição |
 | `get_decrypted_pix_key_for_payout(payout_id, encryption_key)` | service_role | Decripta chave PIX para uso no cron de processamento |
 | `decrypt_pix_key(pix_key_id, encryption_key)` | service_role | Decripta chave PIX por ID |
-| `increment_answered_today(profile_id)` | service_role | Incrementa contador diário de respostas |
 | `expire_pending_questions()` | service_role | Varre perguntas vencidas e enfileira reembolsos |
 | `cleanup_stale_payment_intents()` | service_role | Remove PaymentIntents com mais de 48h |
-| `reset_daily_question_counts()` | service_role | Zera `questions_answered_today` em todos os perfis |
 
 ---
 

@@ -22,7 +22,6 @@
 --
 -- RESETA em profiles:
 --   available_balance → 0
---   questions_answered_today → 0
 --   is_paused → false
 --   paused_until → null
 -- ============================================================
@@ -58,10 +57,9 @@ TRUNCATE TABLE verification_requests;
 
 -- 10. Resetar campos financeiros e de status nos perfis
 UPDATE profiles SET
-    available_balance       = 0.00,
-    questions_answered_today = 0,
-    is_paused               = FALSE,
-    paused_until            = NULL;
+    available_balance = 0.00,
+    is_paused         = FALSE,
+    paused_until      = NULL;
 
 -- Confirmação
 DO $$

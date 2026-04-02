@@ -39,7 +39,6 @@ type ProfileData = {
   username: string
   min_price: number
   daily_limit: number
-  questions_answered_today: number
   account_type: string
   approval_status: string | null
   rejection_reason: string | null
@@ -49,6 +48,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const ctx = useDashboardContext()
   const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [answeredToday, setAnsweredToday] = useState(0)
   const [questions, setQuestions] = useState<Question[]>([])
   const [sentQuestions, setSentQuestions] = useState<SentQuestion[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, username, min_price, daily_limit, questions_answered_today, account_type, approval_status, rejection_reason')
+        .select('id, username, min_price, daily_limit, account_type, approval_status, rejection_reason')
         .eq('id', user.id)
         .single()
 
@@ -83,7 +83,12 @@ export default function DashboardPage() {
 
       // Carregar dados do criador (se influencer)
       if (isInfluencer) {
-        const [{ data: questionsData }, { data: statsData }] = await Promise.all([
+        const nowUTC = new Date()
+        const brtNow = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000)
+        const todayStartBRT = new Date(
+          Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
+        )
+        const [{ data: questionsData }, { data: statsData }, { count: answeredCount }] = await Promise.all([
           supabase
             .from('questions')
             .select('id, sender_name, content, price_paid, service_type, is_shareable, is_anonymous, created_at, status, transactions(creator_net)')
@@ -96,10 +101,17 @@ export default function DashboardPage() {
             .select('*')
             .eq('creator_id', user.id)
             .single<CreatorStats>(),
+          supabase
+            .from('questions')
+            .select('id', { count: 'exact', head: true })
+            .eq('creator_id', user.id)
+            .eq('status', 'answered')
+            .gte('answered_at', todayStartBRT.toISOString()),
         ])
 
         setQuestions(questionsData ?? [])
         setMilestones(computeMilestones(statsData ?? null))
+        setAnsweredToday(answeredCount ?? 0)
       }
 
       // Carregar perguntas enviadas (para todos - fã e influencer no modo fã)
@@ -159,7 +171,7 @@ export default function DashboardPage() {
     const net = q.transactions?.[0]?.creator_net
     return sum + (net != null ? Number(net) : Number(q.price_paid) * CREATOR_NET_RATE)
   }, 0)
-  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today - questions.length)
+  const questionsLeft = Math.max(0, profile.daily_limit - answeredToday - questions.length)
 
   // Fan metrics
   const sentPending = sentQuestions.filter(q => q.status === 'pending').length

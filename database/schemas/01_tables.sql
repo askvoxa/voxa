@@ -11,7 +11,6 @@ CREATE TABLE profiles (
     avatar_url TEXT,
     min_price DECIMAL(10, 2) DEFAULT 10.00 CHECK (min_price >= 1.00),
     daily_limit INTEGER DEFAULT 10 CHECK (daily_limit BETWEEN 1 AND 100),
-    questions_answered_today INTEGER DEFAULT 0,
     referred_by_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     is_admin BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,

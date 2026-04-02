@@ -28,6 +28,12 @@ export default async function AdminPage() {
 
   const platformSettings = await getPlatformSettings()
 
+  const nowUTC = new Date()
+  const brtNow = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000)
+  const todayStartBRT = new Date(
+    Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
+  )
+
   const [
     { data: approvedTx },
     { data: refundedTx },
@@ -41,7 +47,8 @@ export default async function AdminPage() {
     { count: refundQueueCount },
     { count: pendingReportsCount },
     { count: pendingApprovalsCount },
-    { data: creators },
+    { data: creatorsRaw },
+    { data: answeredRows },
   ] = await Promise.all([
     supabaseAdmin.from('transactions').select('amount, processing_fee, platform_fee, creator_net').eq('status', 'approved'),
     supabaseAdmin.from('transactions').select('amount').eq('status', 'refunded'),
@@ -54,14 +61,27 @@ export default async function AdminPage() {
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('is_active', false),
     supabaseAdmin.from('refund_queue').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabaseAdmin.from('question_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending_review'),
-    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending_review'),
+    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending_review').eq('account_type', 'influencer'),
     supabaseAdmin
       .from('profiles')
-      .select('id, username, avatar_url, is_active, questions_answered_today, account_type')
-      .in('account_type', ['influencer', 'admin'])
-      .order('questions_answered_today', { ascending: false })
-      .limit(20),
+      .select('id, username, avatar_url, is_active, account_type')
+      .in('account_type', ['influencer', 'admin']),
+    supabaseAdmin
+      .from('questions')
+      .select('creator_id')
+      .eq('status', 'answered')
+      .gte('answered_at', todayStartBRT.toISOString()),
   ])
+
+  const answeredTodayMap = (answeredRows ?? []).reduce<Record<string, number>>((acc, r) => {
+    acc[r.creator_id] = (acc[r.creator_id] ?? 0) + 1
+    return acc
+  }, {})
+
+  const creators = (creatorsRaw ?? [])
+    .map(c => ({ ...c, answered_today: answeredTodayMap[c.id] ?? 0 }))
+    .sort((a, b) => b.answered_today - a.answered_today)
+    .slice(0, 20)
 
   // Financial (still need row data for sum — transactions table is small)
   const gmv = (approvedTx ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
@@ -91,8 +111,8 @@ export default async function AdminPage() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-amber-800">Cron jobs desabilitados</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              O reset diário de limites (<code className="font-mono">questions_answered_today</code>) e a expiração automática de perguntas não estão rodando.
-              Criadores podem travar no limite diário após o primeiro dia.{' '}
+              A expiração automática de perguntas não está rodando.
+              Perguntas pendentes não serão expiradas automaticamente.{' '}
               <Link href="/admin/settings" className="underline font-medium">Configure pg_cron ou chame o endpoint manualmente.</Link>
             </p>
           </div>
@@ -163,7 +183,7 @@ export default async function AdminPage() {
                       <span className="font-medium text-gray-900">@{creator.username}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-600">{creator.questions_answered_today}</td>
+                  <td className="px-6 py-4 text-right text-gray-600">{creator.answered_today}</td>
                   <td className="px-6 py-4 text-center">
                     {creator.is_active === false ? (
                       <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 text-xs font-semibold px-2 py-0.5 rounded-full">

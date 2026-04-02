@@ -128,18 +128,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Erro ao salvar resposta' }, { status: 500 })
     }
 
-    // Admin client reutilizado para RPC e email
+    // Admin client para email
     const supabaseAdmin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
-
-    // Incrementar questions_answered_today no perfil (admin client garante permissão)
-    const { error: rpcError } = await supabaseAdmin.rpc('increment_answered_today', { profile_id: user.id })
-    if (rpcError) {
-      // Contador fora de sincronia afeta enforcement do daily_limit — logar com destaque
-      console.error('[CRITICAL] Falha ao incrementar contador diário para user:', user.id, rpcError)
-    }
 
     // Notificar fã por email (fire-and-forget)
     if (question.sender_email) {

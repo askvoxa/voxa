@@ -15,11 +15,34 @@ export default async function AdminCreatorsPage() {
   const adminId = await requireAdmin()
   if (!adminId) redirect('/dashboard')
 
-  const { data: creators } = await supabaseAdmin
-    .from('profiles')
-    .select('id, username, avatar_url, is_active, is_verified, questions_answered_today, min_price, created_at')
-    .in('account_type', ['influencer', 'admin'])
-    .order('created_at', { ascending: false })
+  const nowUTC = new Date()
+  const brtNow = new Date(nowUTC.getTime() - 3 * 60 * 60 * 1000)
+  const todayStartBRT = new Date(
+    Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
+  )
+
+  const [{ data: creatorsRaw }, { data: answeredRows }] = await Promise.all([
+    supabaseAdmin
+      .from('profiles')
+      .select('id, username, avatar_url, is_active, is_verified, min_price, created_at')
+      .in('account_type', ['influencer', 'admin'])
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('questions')
+      .select('creator_id')
+      .eq('status', 'answered')
+      .gte('answered_at', todayStartBRT.toISOString()),
+  ])
+
+  const answeredTodayMap = (answeredRows ?? []).reduce<Record<string, number>>((acc, r) => {
+    acc[r.creator_id] = (acc[r.creator_id] ?? 0) + 1
+    return acc
+  }, {})
+
+  const creators = (creatorsRaw ?? []).map(c => ({
+    ...c,
+    answered_today: answeredTodayMap[c.id] ?? 0,
+  }))
 
   return (
     <div className="p-4 md:p-8">
@@ -52,7 +75,7 @@ export default async function AdminCreatorsPage() {
                   <td className="px-6 py-4 text-right text-gray-600">
                     R$ {Number(creator.min_price).toFixed(2).replace('.', ',')}
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-600">{creator.questions_answered_today}</td>
+                  <td className="px-6 py-4 text-right text-gray-600">{creator.answered_today}</td>
                   <td className="px-6 py-4 text-center">
                     {creator.is_active === false ? (
                       <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 text-xs font-semibold px-2 py-0.5 rounded-full">

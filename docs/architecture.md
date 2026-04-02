@@ -109,7 +109,6 @@ O middleware em `frontend/src/middleware.ts` executa em **todas as requisições
 | `/api/cron/expire-questions` | A cada 1h | Expira perguntas > 36h, enfileira reembolsos |
 | `/api/cron/process-payouts` | Diário | Processa saques pendentes via MP, reverte falhas |
 | `/api/cron/release-earnings` | Diário | Libera ganhos após carência de 7 dias no ledger |
-| `/api/cron/reset-daily` | Meia-noite | Zera `questions_answered_today` em todos os perfis |
 | `/api/cron/cleanup-intents` | Diário | Remove PaymentIntents com mais de 48h |
 
 ---

@@ -21,7 +21,7 @@ type Profile = {
   avatar_url: string | null
   min_price: number
   daily_limit: number
-  questions_answered_today: number
+
   is_active: boolean | null
   is_verified?: boolean
   is_founder?: boolean
@@ -131,7 +131,7 @@ export default async function PerfilPage({
 
   const { data: profileRaw } = await supabase
     .from('profiles')
-    .select('id, username, bio, avatar_url, min_price, daily_limit, questions_answered_today, is_active, is_verified, is_founder, is_paused, paused_until, fast_ask_suggestions, creator_setup_completed, account_type, approval_status')
+    .select('id, username, bio, avatar_url, min_price, daily_limit, is_active, is_verified, is_founder, is_paused, paused_until, fast_ask_suggestions, creator_setup_completed, account_type, approval_status')
     .eq('username', params.username)
     .single()
 
@@ -215,7 +215,7 @@ export default async function PerfilPage({
     Date.UTC(brtNow.getUTCFullYear(), brtNow.getUTCMonth(), brtNow.getUTCDate()) + 3 * 60 * 60 * 1000
   )
 
-  const [{ data: publicAnswers }, { data: statsData }, { data: topSupporters }, { count: pendingTodayCount }] = await Promise.all([
+  const [{ data: publicAnswers }, { data: statsData }, { data: topSupporters }, { count: pendingTodayCount }, { count: answeredTodayCount }] = await Promise.all([
     supabase
       .from('questions')
       .select('id, sender_name, content, service_type, is_anonymous, price_paid, response_text, response_audio_url, answered_at')
@@ -237,6 +237,12 @@ export default async function PerfilPage({
       .eq('creator_id', profile.id)
       .eq('status', 'pending')
       .gte('created_at', todayStartBRT.toISOString()),
+    supabaseAdmin
+      .from('questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('creator_id', profile.id)
+      .eq('status', 'answered')
+      .gte('answered_at', todayStartBRT.toISOString()),
   ])
 
   const milestones = computeMilestones(statsData?.[0] ?? null)
@@ -244,7 +250,7 @@ export default async function PerfilPage({
   const responseRate = stats && stats.total_received >= 5
     ? Math.round((stats.total_answered / stats.total_received) * 100)
     : null
-  const questionsLeft = Math.max(0, profile.daily_limit - profile.questions_answered_today - (pendingTodayCount ?? 0))
+  const questionsLeft = Math.max(0, profile.daily_limit - (answeredTodayCount ?? 0) - (pendingTodayCount ?? 0))
   const avatarUrl = profile.avatar_url ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`
   const displayName = `@${profile.username}`
 
