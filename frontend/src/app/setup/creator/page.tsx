@@ -69,8 +69,9 @@ export default function CreatorSetupPage() {
         return
       }
 
-      // Se já é influencer (via convite), marcar para não mudar account_type
-      if (profile.account_type === 'influencer') {
+      // Se já é influencer via convite (não rejeitado), atualiza perfil direto sem aprovação
+      // Influenciadores rejeitados precisam passar pelo fluxo de aprovação novamente via API
+      if (profile.account_type === 'influencer' && profile.approval_status !== 'rejected') {
         setIsFromInvite(true)
       }
 
