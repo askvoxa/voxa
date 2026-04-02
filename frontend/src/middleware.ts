@@ -74,8 +74,8 @@ export async function middleware(request: NextRequest) {
   if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/setup'))) {
     // /setup: se já tem perfil, redirecionar
     if (pathname === '/setup' && profile) {
-      // Influencer sem setup completo → /setup/creator
-      if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && !profile.creator_setup_completed) {
+      // Influencer sem setup completo e sem solicitação pendente → /setup/creator
+      if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && !profile.creator_setup_completed && profile.approval_status !== 'pending_review' && profile.approval_status !== 'approved') {
         return NextResponse.redirect(new URL('/setup/creator', request.url))
       }
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -87,14 +87,18 @@ export async function middleware(request: NextRequest) {
       if (!profile) {
         return NextResponse.redirect(new URL('/setup', request.url))
       }
-      if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && profile.creator_setup_completed) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+      // Setup completo ou solicitação já enviada (pending/approved) → dashboard
+      if (profile.account_type === 'influencer' || profile.account_type === 'admin') {
+        if (profile.creator_setup_completed || profile.approval_status === 'pending_review' || profile.approval_status === 'approved') {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
       }
     }
 
-    // /dashboard: influencer sem setup completo ou pendente de aprovação → forçar setup
+    // /dashboard: influencer sem setup e sem solicitação enviada → forçar setup
+    // Exceções: pending_review (aguardando aprovação), approved (aprovado) e rejected (pode ver motivo e reenviar)
     if (pathname.startsWith('/dashboard') && profile) {
-      if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && !profile.creator_setup_completed) {
+      if ((profile.account_type === 'influencer' || profile.account_type === 'admin') && !profile.creator_setup_completed && profile.approval_status !== 'pending_review' && profile.approval_status !== 'approved' && profile.approval_status !== 'rejected') {
         return NextResponse.redirect(new URL('/setup/creator', request.url))
       }
     }
