@@ -82,6 +82,7 @@ O middleware em `frontend/src/middleware.ts` executa em **todas as requisições
 | `/admin/reports` | Perguntas reportadas como abusivas |
 | `/admin/invites` | Criação e listagem de convites |
 | `/admin/settings` | Taxa da plataforma, prazo de resposta padrão |
+| `/admin/jobs` | Execução manual de cron jobs e histórico de execuções |
 
 ### Rotas de API
 
@@ -106,10 +107,19 @@ O middleware em `frontend/src/middleware.ts` executa em **todas as requisições
 
 | Endpoint | Frequência | O que faz |
 |----------|-----------|-----------|
-| `/api/cron/expire-questions` | A cada 1h | Expira perguntas > 36h, enfileira reembolsos |
-| `/api/cron/process-payouts` | Diário | Processa saques pendentes via MP, reverte falhas |
-| `/api/cron/release-earnings` | Diário | Libera ganhos após carência de 7 dias no ledger |
-| `/api/cron/cleanup-intents` | Diário | Remove PaymentIntents com mais de 48h |
+| `/api/cron/expire-questions` | A cada 30min | Expira perguntas fora do prazo, emite reembolsos e envia nudges de urgência ao criador (24h, 12h, 6h) |
+| `/api/cron/process-payouts` | Diário | Processa saques pendentes via MP no dia configurado, reverte falhas permanentes |
+| `/api/cron/release-earnings` | Diário | Libera ganhos após carência configurada (`payout_release_days`) no ledger do criador |
+| `/api/cron/cleanup-intents` | Diário | Remove PaymentIntents abandonados com mais de 48h |
+
+Todos os cron jobs também podem ser **acionados manualmente** via `/admin/jobs`. As execuções (tanto automáticas quanto manuais) são registradas na tabela `admin_job_runs`.
+
+#### Autenticação dos Cron Jobs
+
+- `expire-questions` e `cleanup-intents`: header `x-cron-secret` com valor de `CRON_SECRET`
+- `process-payouts` e `release-earnings`: header `Authorization: Bearer` com valor de `PAYOUT_SECRET`
+
+O endpoint `/api/admin/jobs/run` injeta os secrets server-side — o cliente nunca os vê.
 
 ---
 
