@@ -98,7 +98,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header
-          username={profile!.username}
           accountType={profile!.accountType}
           dashboardMode={dashboardMode}
           onModeChange={isInfluencer ? handleModeChange : undefined}
