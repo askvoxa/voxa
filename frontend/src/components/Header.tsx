@@ -7,14 +7,13 @@ import { createClient } from '@/lib/supabase/client'
 import DashboardModeToggle from './DashboardModeToggle'
 
 type HeaderProps = {
-  username?: string
   hideDesktopNav?: boolean
   accountType?: string
   dashboardMode?: 'fan' | 'creator'
   onModeChange?: (mode: 'fan' | 'creator') => void
 }
 
-export default function Header({ username, hideDesktopNav = false, accountType, dashboardMode, onModeChange }: HeaderProps) {
+export default function Header({ hideDesktopNav = false, accountType, dashboardMode, onModeChange }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -46,7 +45,7 @@ export default function Header({ username, hideDesktopNav = false, accountType, 
       <div className="max-w-4xl mx-auto px-4 lg:px-0 h-16 flex justify-between items-center">
         {/* Logo + Mode Toggle */}
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="font-bold text-xl text-transparent bg-clip-text bg-gradient-instagram">
+          <Link href="/" className="font-bold text-xl text-transparent bg-clip-text bg-gradient-instagram">
             VOXA
           </Link>
           {isInfluencer && dashboardMode && onModeChange && (
