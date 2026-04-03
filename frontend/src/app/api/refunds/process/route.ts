@@ -29,11 +29,6 @@ const supabaseAdmin = createClient(
  *   Command: curl -s -H "Authorization: Bearer {REFUND_SECRET}" "{APP_URL}/api/refunds/process"
  */
 export async function GET(request: Request) {
-  // Feature flag — desabilitado enquanto não houver cron configurado
-  if (process.env.FEATURE_REFUNDS_ENABLED !== 'true') {
-    return NextResponse.json({ disabled: true, message: 'Reembolsos automáticos desabilitados' })
-  }
-
   // Autenticação via header (evita vazamento do secret em logs de proxy/CDN)
   const authHeader = request.headers.get('authorization')
   const secret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null

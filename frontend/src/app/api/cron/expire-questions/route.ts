@@ -13,18 +13,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const refundsEnabled = process.env.FEATURE_REFUNDS_ENABLED === 'true'
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-
-  // Se refunds/process está ativo, pular expiração aqui (evita duplicação de emails)
-  // Apenas enviar nudges de urgência ao criador
-  if (refundsEnabled) {
-    await sendUrgencyNudges(supabase)
-    return NextResponse.json({ ok: true, expired: 0, skipped: 'refunds/process handles expiration' })
-  }
 
   // Buscar deadline padrão da plataforma
   const { data: platformSettings } = await supabase
@@ -84,7 +76,7 @@ export async function POST(req: NextRequest) {
         try {
           await refundClient.create({
             payment_id: String(tx.mp_payment_id),
-            body: { amount: tx.amount }, // Refund explícito (consistente com refunds/process)
+            body: { amount: tx.amount },
           })
           refunded++
         } catch (refundErr: any) {
