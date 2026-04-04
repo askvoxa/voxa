@@ -6,8 +6,9 @@ import { CREATOR_NET_RATE } from '@/lib/constants'
 // Revalidar dados a cada 30s — evita queries em cada request
 export const revalidate = 30
 
-type AnsweredQuestion = {
+type Question = {
   id: string
+  status: 'answered' | 'expired'
   sender_name: string
   content: string
   price_paid: number
@@ -16,7 +17,8 @@ type AnsweredQuestion = {
   is_shareable: boolean
   response_text: string | null
   response_audio_url: string | null
-  answered_at: string
+  answered_at: string | null
+  created_at: string
   transactions?: { id: string; creator_net: number | null }[]
 }
 
@@ -57,7 +59,7 @@ export default async function HistoryPage({
   const pageSize = 20
   const offset = (page - 1) * pageSize
 
-  // Filtro por período
+  // Filtro por período — usa created_at (consistente para answered e expired)
   let dateFilter: string | null = null
   const now = new Date()
   if (periodo === 'semana') {
@@ -72,18 +74,19 @@ export default async function HistoryPage({
 
   let query = supabase
     .from('questions')
-    .select('id, sender_name, content, price_paid, service_type, is_anonymous, is_shareable, response_text, response_audio_url, answered_at, transactions(id, creator_net)', { count: 'exact' })
+    .select('id, status, sender_name, content, price_paid, service_type, is_anonymous, is_shareable, response_text, response_audio_url, answered_at, created_at, transactions(id, creator_net)', { count: 'exact' })
     .eq('creator_id', profile.id)
-    .eq('status', 'answered')
-    .order('answered_at', { ascending: false })
+    .in('status', ['answered', 'expired'])
+    .order('created_at', { ascending: false })
 
   if (dateFilter) {
-    query = query.gte('answered_at', dateFilter)
+    query = query.gte('created_at', dateFilter)
   }
 
   query = query.range(offset, offset + pageSize - 1)
 
-  const { data: questions, count } = await query.returns<AnsweredQuestion[]>()
+  const { data: questionsRaw, count } = await query
+  const questions = (questionsRaw ?? []) as Question[]
 
   // Status de pagamento por transação — usa o client autenticado do usuário
   type StatusRow = { transaction_id: string; status: 'pending' | 'available' | 'paid'; release_date: string }
@@ -98,7 +101,7 @@ export default async function HistoryPage({
     ((statusRows ?? []) as StatusRow[]).map(r => [r.transaction_id, { status: r.status, release_date: r.release_date }])
   )
 
-  // Totais (sem paginação — para métricas)
+  // Totais financeiros — somente perguntas respondidas (expiradas não geram receita)
   let totalQuery = supabase
     .from('questions')
     .select('price_paid, transactions(creator_net)', { count: 'exact' })
@@ -106,15 +109,15 @@ export default async function HistoryPage({
     .eq('status', 'answered')
 
   if (dateFilter) {
-    totalQuery = totalQuery.gte('answered_at', dateFilter)
+    totalQuery = totalQuery.gte('created_at', dateFilter)
   }
 
-  const { data: allAnswered } = await totalQuery
+  const { data: allAnswered, count: answeredCount } = await totalQuery
 
   const totalNetEarnings = (allAnswered ?? []).reduce((sum, q) => sum + effectiveNet(q), 0)
-  const totalCount = count ?? 0
+  const totalCount = answeredCount ?? 0
   const avgPerQuestion = totalCount > 0 ? totalNetEarnings / totalCount : 0
-  const totalPages = Math.ceil(totalCount / pageSize)
+  const totalPages = Math.ceil((count ?? 0) / pageSize)
 
   // Projeção mensal e comparativo semanal (sempre relativo a hoje, ignorando filtro de período)
   const last7DaysStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -124,13 +127,13 @@ export default async function HistoryPage({
   const [{ data: currentWeekData }, { data: prevWeekData }, { data: monthData }] = await Promise.all([
     supabase.from('questions').select('price_paid, transactions(creator_net)')
       .eq('creator_id', profile.id).eq('status', 'answered').eq('is_support_only', false)
-      .gte('answered_at', last7DaysStr),
+      .gte('created_at', last7DaysStr),
     supabase.from('questions').select('price_paid, transactions(creator_net)')
       .eq('creator_id', profile.id).eq('status', 'answered').eq('is_support_only', false)
-      .gte('answered_at', prev7DaysStr).lt('answered_at', last7DaysStr),
+      .gte('created_at', prev7DaysStr).lt('created_at', last7DaysStr),
     supabase.from('questions').select('price_paid, transactions(creator_net)')
       .eq('creator_id', profile.id).eq('status', 'answered').eq('is_support_only', false)
-      .gte('answered_at', monthStartStr),
+      .gte('created_at', monthStartStr),
   ])
 
   const currentWeekNet = (currentWeekData || []).reduce((s, q) => s + effectiveNet(q), 0)
@@ -232,10 +235,10 @@ export default async function HistoryPage({
         </div>
 
         {/* Lista */}
-        {!questions || questions.length === 0 ? (
+        {questions.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
             <p className="text-4xl mb-4" role="img" aria-label="Caixa vazia">📭</p>
-            <p className="text-xl font-bold text-gray-700">Nenhuma resposta {periodo !== 'tudo' ? 'neste período' : 'ainda'}</p>
+            <p className="text-xl font-bold text-gray-700">Nenhuma pergunta {periodo !== 'tudo' ? 'neste período' : 'ainda'}</p>
             <p className="text-gray-500 mt-2">
               {periodo !== 'tudo'
                 ? <a href="/dashboard/history?periodo=tudo" className="text-[#DD2A7B] underline">Ver todo o histórico</a>
@@ -244,69 +247,87 @@ export default async function HistoryPage({
           </div>
         ) : (
           <div className="space-y-4">
-            {questions.map(q => (
-              <div key={q.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <div className="flex items-start justify-between mb-3 gap-3">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm shrink-0">
-                      <span role="img" aria-label={q.is_anonymous ? 'Anônimo' : 'Usuário'}>{q.is_anonymous ? '👻' : '👤'}</span>
+            {questions.map(q => {
+              const isExpired = q.status === 'expired'
+              const displayDate = isExpired ? q.created_at : (q.answered_at ?? q.created_at)
+
+              return (
+                <div
+                  key={q.id}
+                  className={`bg-white rounded-2xl p-5 shadow-sm border ${isExpired ? 'border-gray-200 opacity-75' : 'border-gray-100'}`}
+                >
+                  <div className="flex items-start justify-between mb-3 gap-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm shrink-0">
+                        <span role="img" aria-label={q.is_anonymous ? 'Anônimo' : 'Usuário'}>{q.is_anonymous ? '👻' : '👤'}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm text-gray-800 truncate" title={q.is_anonymous ? 'Anônimo' : q.sender_name}>
+                          {q.is_anonymous ? 'Anônimo' : q.sender_name}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{formatDate(displayDate)}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm text-gray-800 truncate" title={q.is_anonymous ? 'Anônimo' : q.sender_name}>
-                        {q.is_anonymous ? 'Anônimo' : q.sender_name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{formatDate(q.answered_at)}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <VisibilityToggle questionId={q.id} initialVisible={q.is_shareable} />
-                      <span className="text-green-600 font-bold bg-green-50 border border-green-200 px-2 py-1 rounded-lg text-sm">
-                        +R$ {effectiveNet(q).toFixed(2).replace('.', ',')}
-                      </span>
-                    </div>
-                    {(() => {
-                      const txId = q.transactions?.[0]?.id
-                      const earning = txId ? statusMap.get(txId) : undefined
-                      if (!earning) return null
-                      if (earning.status === 'paid') {
-                        return (
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
-                            ✓ Pago
-                          </span>
-                        )
-                      }
-                      if (earning.status === 'available') {
-                        return (
-                          <span className="text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-                            ✓ Disponível
-                          </span>
-                        )
-                      }
-                      return (
-                        <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          🔒 Disponível em {formatShortDate(earning.release_date)}
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {isExpired ? (
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg">
+                          Expirada — reembolsado ao fã
                         </span>
-                      )
-                    })()}
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <VisibilityToggle questionId={q.id} initialVisible={q.is_shareable} />
+                          <span className="text-green-600 font-bold bg-green-50 border border-green-200 px-2 py-1 rounded-lg text-sm">
+                            +R$ {effectiveNet(q).toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                      )}
+                      {!isExpired && (() => {
+                        const txId = q.transactions?.[0]?.id
+                        const earning = txId ? statusMap.get(txId) : undefined
+                        if (!earning) return null
+                        if (earning.status === 'paid') {
+                          return (
+                            <span className="text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                              ✓ Pago
+                            </span>
+                          )
+                        }
+                        if (earning.status === 'available') {
+                          return (
+                            <span className="text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                              ✓ Disponível
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            🔒 Disponível em {formatShortDate(earning.release_date)}
+                          </span>
+                        )
+                      })()}
+                    </div>
                   </div>
-                </div>
 
-                <p className="text-gray-700 mb-3 leading-relaxed">&ldquo;{q.content}&rdquo;</p>
+                  <p className={`mb-3 leading-relaxed ${isExpired ? 'text-gray-400' : 'text-gray-700'}`}>
+                    &ldquo;{q.content}&rdquo;
+                  </p>
 
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  {q.response_audio_url && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs text-gray-500"><span role="img" aria-label="Microfone">🎙️</span> Resposta em áudio</span>
-                      <audio controls src={q.response_audio_url} className="flex-1" preload="none" style={{ height: 32 }} />
+                  {!isExpired && (
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      {q.response_audio_url && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-gray-500"><span role="img" aria-label="Microfone">🎙️</span> Resposta em áudio</span>
+                          <audio controls src={q.response_audio_url} className="flex-1" preload="none" style={{ height: 32 }} />
+                        </div>
+                      )}
+                      {q.response_text && !q.response_audio_url && (
+                        <p className="text-gray-600 text-sm leading-relaxed">{q.response_text}</p>
+                      )}
                     </div>
                   )}
-                  {q.response_text && !q.response_audio_url && (
-                    <p className="text-gray-600 text-sm leading-relaxed">{q.response_text}</p>
-                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
