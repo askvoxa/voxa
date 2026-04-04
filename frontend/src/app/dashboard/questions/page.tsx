@@ -3,14 +3,6 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { CheckCircle, Clock, AlertCircle, MessageSquare } from 'lucide-react'
 
-// Client service role — usado server-side para leitura das perguntas do fã.
-// O JWT do usuário não é encaminhado corretamente pelo @supabase/ssr em Server Components
-// aninhados, então usamos service role com filtro explícito por user.id validado.
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export default async function FanQuestionsPage({
   searchParams,
 }: {
@@ -26,6 +18,12 @@ export default async function FanQuestionsPage({
     .eq('id', user.id)
     .single()
   if (!profile) redirect('/setup')
+
+  // Criado dentro da função para garantir acesso às env vars no request time
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1') || 1)
   const perPage = 20

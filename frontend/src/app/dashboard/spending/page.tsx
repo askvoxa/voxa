@@ -3,13 +3,6 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { Receipt } from 'lucide-react'
 
-// Client service role — mesma razão que questions/page.tsx:
-// JWT não encaminhado corretamente pelo @supabase/ssr em Server Components aninhados.
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export default async function FanSpendingPage({
   searchParams,
 }: {
@@ -25,6 +18,12 @@ export default async function FanSpendingPage({
     .eq('id', user.id)
     .single()
   if (!profile) redirect('/setup')
+
+  // Criado dentro da função para garantir acesso às env vars no request time
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const period = searchParams.period ?? 'all'
   let dateFilter: string | null = null
