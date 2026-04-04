@@ -57,7 +57,7 @@ export async function GET(request: Request) {
   // Buscar perguntas pendentes com deadline do criador
   const { data: allPending, error: expireError } = await supabaseAdmin
     .from('questions')
-    .select('id, sender_name, sender_email, creator_id, created_at, profiles!inner(custom_deadline_hours)')
+    .select('id, sender_name, sender_email, creator_id, created_at, profiles!creator_id(custom_deadline_hours)')
     .eq('status', 'pending')
     .eq('is_support_only', false) // Apoios nunca expiram (já são 'answered')
     .limit(50)

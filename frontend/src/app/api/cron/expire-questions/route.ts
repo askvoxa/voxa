@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   // 1. Buscar perguntas pendentes com deadline do criador (custom_deadline_hours) ou padrão da plataforma
   const { data: expired, error: fetchError } = await supabase
     .from('questions')
-    .select('id, creator_id, price_paid, sender_email, sender_name, created_at, profiles!inner(username, custom_deadline_hours), transactions(mp_payment_id, amount)')
+    .select('id, creator_id, price_paid, sender_email, sender_name, created_at, profiles!creator_id(username, custom_deadline_hours), transactions(mp_payment_id, amount)')
     .eq('status', 'pending')
     .eq('is_support_only', false)
 
@@ -129,7 +129,7 @@ async function sendUrgencyNudges(supabase: SupabaseClient<any, any, any>) {
 
     const { data: questions } = await supabase
       .from('questions')
-      .select('id, creator_id, profiles!inner(username)')
+      .select('id, creator_id, profiles!creator_id(username)')
       .eq('status', 'pending')
       .eq('is_support_only', false)
       .gte('created_at', windowStart)
