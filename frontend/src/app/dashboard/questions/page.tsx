@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { CheckCircle, Clock, AlertCircle, MessageSquare } from 'lucide-react'
+
+// Client service role — usado server-side para leitura das perguntas do fã.
+// O JWT do usuário não é encaminhado corretamente pelo @supabase/ssr em Server Components
+// aninhados, então usamos service role com filtro explícito por user.id validado.
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export default async function FanQuestionsPage({
   searchParams,
@@ -22,7 +31,7 @@ export default async function FanQuestionsPage({
   const perPage = 20
   const offset = (page - 1) * perPage
 
-  const { data: questions, count, error: questionsError } = await supabase
+  const { data: questions, count, error: questionsError } = await supabaseAdmin
     .from('questions')
     .select('id, content, price_paid, status, created_at, response_text, response_audio_url, creator_id, is_support_only', { count: 'exact' })
     .eq('sender_id', user.id)
@@ -33,7 +42,7 @@ export default async function FanQuestionsPage({
     console.error('[fan/questions] erro ao buscar perguntas:', questionsError.message, '| user.id:', user.id)
   }
 
-  // Buscar usernames dos criadores
+  // Buscar usernames dos criadores (profiles é pública — client autenticado é suficiente)
   const creatorIds = [...new Set((questions ?? []).map((q: any) => q.creator_id))]
   let creatorMap = new Map<string, string>()
   if (creatorIds.length > 0) {

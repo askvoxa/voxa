@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { Receipt } from 'lucide-react'
+
+// Client service role — mesma razão que questions/page.tsx:
+// JWT não encaminhado corretamente pelo @supabase/ssr em Server Components aninhados.
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export default async function FanSpendingPage({
   searchParams,
@@ -27,7 +35,7 @@ export default async function FanSpendingPage({
     dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
   }
 
-  let query = supabase
+  let query = supabaseAdmin
     .from('questions')
     .select('id, content, price_paid, status, created_at, creator_id, is_support_only')
     .eq('sender_id', user.id)
@@ -40,10 +48,10 @@ export default async function FanSpendingPage({
   const { data: questions, error: questionsError } = await query
 
   if (questionsError) {
-    console.error('[fan/spending] erro ao buscar perguntas:', questionsError.message)
+    console.error('[fan/spending] erro ao buscar perguntas:', questionsError.message, '| user.id:', user.id)
   }
 
-  // Buscar usernames dos criadores
+  // Buscar usernames dos criadores (profiles é pública — client autenticado é suficiente)
   const creatorIds = [...new Set((questions ?? []).map((q: any) => q.creator_id))]
   let creatorMap = new Map<string, string>()
   if (creatorIds.length > 0) {
