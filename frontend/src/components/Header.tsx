@@ -23,7 +23,7 @@ export default function Header({ hideDesktopNav = false, accountType, dashboardM
   const navItems = isFanMode
     ? [
         { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Perguntas', path: '/dashboard/questions' },
+        { name: 'Histórico', path: '/dashboard/questions' },
         { name: 'Gastos', path: '/dashboard/spending' },
         { name: 'Perfil', path: '/dashboard/profile' },
       ]

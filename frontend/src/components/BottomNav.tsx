@@ -5,12 +5,11 @@ import { usePathname } from 'next/navigation'
 import { Home, User, Clock, Settings, MessageSquare, Receipt, Wallet } from 'lucide-react'
 
 type BottomNavProps = {
-  username: string
   accountType?: string
   dashboardMode?: 'fan' | 'creator'
 }
 
-export default function BottomNav({ username, accountType = 'fan', dashboardMode = 'fan' }: BottomNavProps) {
+export default function BottomNav({ accountType = 'fan', dashboardMode = 'fan' }: BottomNavProps) {
   const pathname = usePathname()
 
   const isFanMode = accountType === 'fan' || dashboardMode === 'fan'
@@ -18,7 +17,7 @@ export default function BottomNav({ username, accountType = 'fan', dashboardMode
   const navItems = isFanMode
     ? [
         { name: 'Início', href: '/dashboard', icon: Home },
-        { name: 'Perguntas', href: '/dashboard/questions', icon: MessageSquare },
+        { name: 'Histórico', href: '/dashboard/questions', icon: MessageSquare },
         { name: 'Gastos', href: '/dashboard/spending', icon: Receipt },
         { name: 'Perfil', href: '/dashboard/profile', icon: User },
       ]

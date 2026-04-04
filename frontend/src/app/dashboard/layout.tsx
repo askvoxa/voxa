@@ -106,7 +106,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
 
         <BottomNav
-          username={profile!.username}
           accountType={profile!.accountType}
           dashboardMode={dashboardMode}
         />

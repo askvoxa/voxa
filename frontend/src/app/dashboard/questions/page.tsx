@@ -44,7 +44,7 @@ export default async function FanQuestionsPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 w-full">
-      <h1 className="text-2xl font-bold text-gray-800">Minhas Perguntas</h1>
+      <h1 className="text-2xl font-bold text-gray-800">Meu Histórico</h1>
 
       {(!questions || questions.length === 0) ? (
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
