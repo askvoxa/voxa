@@ -22,12 +22,16 @@ export default async function FanQuestionsPage({
   const perPage = 20
   const offset = (page - 1) * perPage
 
-  const { data: questions, count } = await supabase
+  const { data: questions, count, error: questionsError } = await supabase
     .from('questions')
     .select('id, content, price_paid, status, created_at, response_text, response_audio_url, creator_id, is_support_only', { count: 'exact' })
     .eq('sender_id', user.id)
     .order('created_at', { ascending: false })
     .range(offset, offset + perPage - 1)
+
+  if (questionsError) {
+    console.error('[fan/questions] erro ao buscar perguntas:', questionsError.message, '| user.id:', user.id)
+  }
 
   // Buscar usernames dos criadores
   const creatorIds = [...new Set((questions ?? []).map((q: any) => q.creator_id))]

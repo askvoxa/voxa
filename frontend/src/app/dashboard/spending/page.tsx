@@ -37,7 +37,11 @@ export default async function FanSpendingPage({
     query = query.gte('created_at', dateFilter)
   }
 
-  const { data: questions } = await query
+  const { data: questions, error: questionsError } = await query
+
+  if (questionsError) {
+    console.error('[fan/spending] erro ao buscar perguntas:', questionsError.message)
+  }
 
   // Buscar usernames dos criadores
   const creatorIds = [...new Set((questions ?? []).map((q: any) => q.creator_id))]
