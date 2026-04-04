@@ -19,7 +19,7 @@ export default function BottomNav({ accountType = 'fan', dashboardMode = 'fan' }
         { name: 'Início', href: '/dashboard', icon: Home },
         { name: 'Histórico', href: '/dashboard/questions', icon: MessageSquare },
         { name: 'Gastos', href: '/dashboard/spending', icon: Receipt },
-        { name: 'Perfil', href: '/dashboard/profile', icon: User },
+        { name: 'Configurações', href: '/dashboard/profile', icon: User },
       ]
     : [
         { name: 'Início', href: '/dashboard', icon: Home },

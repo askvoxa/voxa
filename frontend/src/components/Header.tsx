@@ -25,7 +25,7 @@ export default function Header({ hideDesktopNav = false, accountType, dashboardM
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Histórico', path: '/dashboard/questions' },
         { name: 'Gastos', path: '/dashboard/spending' },
-        { name: 'Perfil', path: '/dashboard/profile' },
+        { name: 'Configurações', path: '/dashboard/profile' },
       ]
     : [
         { name: 'Dashboard', path: '/dashboard' },
